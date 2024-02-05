@@ -1,0 +1,150 @@
+#!/usr/bin/python3
+
+""" Script for MuPiHAT Charger IC (BQ25792)
+Parameters
+----------
+-l <logfile> : str
+    Enable Logging and specify file
+-h : print help
+
+Returns
+-------
+none
+
+Licence
+-------
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+"""
+__author__ = "Lars Stopfkuchen"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__email__ = "lars.stopfkuchen@mupibox.de"
+__status__ = "under development"
+
+import sys, getopt
+import time
+import json
+from datetime import datetime  
+
+from mupihat_bq25792 import bq25792
+
+def timestamp():
+    time_stamp = time.time()
+    date_time = datetime.fromtimestamp(time_stamp)
+    return date_time
+
+def SOC_Battery(CHG_STAT, VBAT):
+     """
+     Calculate State of Charge from VBat reading of charger IC
+     --------------
+     """
+     # TODO, this is only a rudimentary example
+     if (CHG_STAT == 0) or (CHG_STAT == 7):
+          if VBAT > 7400: soc = '5'
+          elif VBAT > 7000: soc = '4'
+          elif VBAT > 6600: soc = '3'
+          elif VBAT > 6200: soc = '2'
+          elif VBAT > 6000: soc = '1'
+          else: soc = '0'
+     else:
+          soc = 'charging' 
+     return soc
+
+def main(argv):
+    # parse command line
+    sys.stdout = sys.stdout
+    
+    try:
+        opts, args = getopt.getopt(argv,"h:l",["logfile="])
+    except getopt.GetoptError:
+        print ('mupihat.py -l <logfile>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('mupihat.py -l <logfile>')
+            sys.exit(0)
+        elif opt in ("-json"):
+             #logfile = '/home/dietpi/MuPiBox/media/hat/log.txt'
+             logfile = '/tmp/mupihat.json'
+             f= open(logfile, 'w')
+             sys.stdout = f
+        elif opt in ("-l"):
+             #logfile = '/home/dietpi/MuPiBox/media/hat/log.txt'
+             logfile = '/tmp/mupihat.log'
+             f= open(logfile, 'w')
+             sys.stdout = f
+             print ("----- \n Logfile mupyhat.py \n ----------")
+        elif opt in ("--logfile"):
+             logfile = arg
+             f= open(logfile, 'w')
+             sys.stdout = f
+             print ("----- \n Logfile mupyhat.py \n ----------")
+    # here it starts
+    try:
+        hat = bq25792() #instance of bq25792
+    except Exception as _error:
+            sys.stderr.write('MuPiHat initialisation failed with error: %s\n' % str(_error))
+            sys.exit(1)    
+    finally:
+        pass
+    
+    # BQ25792 write MuPiHAT Configuration
+    try:
+        hat.MuPiHAT_Default()
+    except Exception as _error:
+            sys.stderr.write('MuPiHat configuration failed with error: %s\n' % str(_error))
+            sys.exit(2)    
+    finally:
+        pass
+        
+
+    # loop
+    try:
+        while True:
+            hat.read_all_register()
+            if 0:
+                # Timestamp    
+                print ("*** Timestamp: ", timestamp(), flush=True)
+                print ("hat:   get_thermal_reg_threshold            ",hat.REG16_Temperature_Control.get_thermal_reg_threshold())
+                print ("hat:   get_thermal_shutdown_threshold       ",hat.REG16_Temperature_Control.get_thermal_shutdown_threshold())
+                print ("hat:   Temperature Charger IC               ",hat.REG41_TDIE_ADC.get_IC_temperature())
+                print ("hat:   Temperature Regulation Status        ",hat.REG1D_Charger_Status_2.get_thermal_regulation_status())
+                # Charger Status
+                print ("hat.REG1C_Charger_Status_1:                 ",hat.REG1C_Charger_Status_1.CHG_STAT_STRG)
+                # ADC Reading
+                print ("hat.REG31_IBUS_ADC.IBUS [mA]:               ",hat.get_ibus())
+                print ("hat.REG33_IBAT_ADC.IBAT [mA]:               ",hat.get_ibat())
+                print ("hat.REG35_VBUS_ADC.VBUS [mV]:               ",hat.get_vbus())
+                print ("hat.REG37_VAC1_ADC.VAC1 [mV]:               ",hat.REG37_VAC1_ADC.VAC1_ADC)
+                print ("hat.REG39_VAC2_ADC.VAC2 [mV]:               ",hat.REG39_VAC2_ADC.VAC2_ADC)
+                print ("hat.REG3B_VBAT_ADC.VBAT [mV]:               ",hat.get_vbat())
+                print ("hat.REG3D_VSYS_ADC.VSYS [mV]:               ",hat.REG3D_VSYS_ADC.VSYS_ADC)
+                print ("")
+            if 1:
+                # Writing to json
+                with open("/tmp/mupihat.json", "w") as outfile:
+                    json.dump(hat.to_json(), outfile)
+            time.sleep(5)
+
+    except KeyboardInterrupt:
+        print("mupyhat.py stopped by Key Interrupt")
+        sys.exit(0)
+    except Exception as _error:
+            sys.stderr.write('MuPiHat error: %s\n' % str(_error))
+    finally:
+         pass  
+
+    
+if __name__ == "__main__":
+    main(sys.argv[1:])
