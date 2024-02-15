@@ -64,9 +64,10 @@ def SOC_Battery(CHG_STAT, VBAT):
 def main(argv):
     # parse command line
     sys.stdout = sys.stdout
-    
+    log_flag = 0
+    json_flag = 0
     try:
-        opts, args = getopt.getopt(argv,"h:l",["logfile="])
+        opts, args = getopt.getopt(argv,"h:l:j",["logfile="])
     except getopt.GetoptError:
         print ('mupihat.py -l <logfile>')
         sys.exit(2)
@@ -74,14 +75,14 @@ def main(argv):
         if opt == '-h':
             print ('mupihat.py -l <logfile>')
             sys.exit(0)
-        elif opt in ("-json"):
+        elif opt in ("-j"):
              #logfile = '/home/dietpi/MuPiBox/media/hat/log.txt'
-             logfile = '/tmp/mupihat.json'
-             f= open(logfile, 'w')
-             sys.stdout = f
+             json_file = '/tmp/mupihat.json'
+             json_flag = 1
         elif opt in ("-l"):
              #logfile = '/home/dietpi/MuPiBox/media/hat/log.txt'
              logfile = '/tmp/mupihat.log'
+             log_flag = 1
              f= open(logfile, 'w')
              sys.stdout = f
              print ("----- \n Logfile mupyhat.py \n ----------")
@@ -111,9 +112,9 @@ def main(argv):
 
     # loop
     try:
-        while True:
-            hat.read_all_register()
-            if 0:
+        while True:          
+            if log_flag:
+                hat.read_all_register()
                 # Timestamp    
                 print ("*** Timestamp: ", timestamp(), flush=True)
                 print ("hat:   get_thermal_reg_threshold            ",hat.REG16_Temperature_Control.get_thermal_reg_threshold())
@@ -130,10 +131,18 @@ def main(argv):
                 print ("hat.REG39_VAC2_ADC.VAC2 [mV]:               ",hat.REG39_VAC2_ADC.VAC2_ADC)
                 print ("hat.REG3B_VBAT_ADC.VBAT [mV]:               ",hat.get_vbat())
                 print ("hat.REG3D_VSYS_ADC.VSYS [mV]:               ",hat.REG3D_VSYS_ADC.VSYS_ADC)
+                print ("hat.REG06_Input_Current_Limit.IINDPM[mA]:   ",hat.REG06_Input_Current_Limit.IINDPM)
+                print ("hat.REG06_Input_Current_Limit:              ",hat.REG06_Input_Current_Limit.get())
+                print ("hat.REG0F_Charger_Control_0:                ",hat.REG0F_Charger_Control_0.get())
+                print ("hat.REG0F_Charger_Control_1:                ",hat.REG10_Charger_Control_1.get())
+                #print ("hat.REG0F_Charger_Control_2:                ",hat.REG11_Charger_Control_2.get())
+                #print ("hat.REG0F_Charger_Control_3:                ",hat.REG12_Charger_Control_3.get())
+                print ("hat.REG0F_Charger_Control_4:                ",hat.REG13_Charger_Control_4.get())
+                print ("hat.REG0F_Charger_Control_5:                ",hat.REG14_Charger_Control_5.get())
                 print ("")
-            if 1:
+            if json_flag:
                 # Writing to json
-                with open("/tmp/mupihat.json", "w") as outfile:
+                with open(json_file, "w") as outfile:
                     json.dump(hat.to_json(), outfile)
             time.sleep(5)
 
