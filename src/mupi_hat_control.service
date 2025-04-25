@@ -1,0 +1,15 @@
+[Unit]
+Description=Control service, to automate warn and shutdown
+After=local-fs.target sysinit.target mupi_hat.service
+DefaultDependencies=no
+
+[Service]
+Type=simple
+WorkingDirectory=/tmp/
+User=root
+ExecStart=/bin/bash -c '/usr/local/bin/mupibox/mupihat_automation.sh'
+ExecStop=/bin/kill -TERM $(cat /run/mupi_hat_control.pid)
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
