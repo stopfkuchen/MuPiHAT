@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 __author__ = "Lars Stopfkuchen"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
@@ -33,6 +33,10 @@ import smbus2
 import sys
 import time
 import json
+
+class I2CError(Exception):
+    """Custom exception for I2C communication errors."""
+    pass
 
 class bq25792:
     """ 
@@ -1115,22 +1119,120 @@ class bq25792:
             return self.TDIE_ADC*0.5 
         
     # class methods
-    def read_all_register(self):
-        '''
-        This function reads all BQ29572 Charger IC I2C registers
-        Register values of Class are updated
-        Returns 0 if sucessful excecuted
-        Returne -1 if error occured
-        '''
+    def safe_execute(self, func, *args, **kwargs):
+        """
+        Executes a function safely, catching exceptions and handling errors.
+        If `_exit_on_error` is True, the program will exit on error.
+        """
         try:
-            val = [0xFF]*73
-            val[0:31] = self.bq.read_i2c_block_data(self.i2c_addr, 0x0, 32)
-            time.sleep(self.busWS_ms/1000)
-            val[32:63] = self.bq.read_i2c_block_data(self.i2c_addr, 0x20, 32)
-            time.sleep(self.busWS_ms/1000)
-            val[64:72] = self.bq.read_i2c_block_data(self.i2c_addr, 0x40, 9)
-            time.sleep(self.busWS_ms/1000)
+            return func(*args, **kwargs)
+        except Exception as e:
+            sys.stderr.write(f"Error in {func.__name__}: {str(e)}\n")
+            if self._exit_on_error:
+                sys.exit(1)
+            raise I2CError(f"Failed to execute {func.__name__}") from e
+
+    def read_register(self, reg_addr, length=1):
+        """
+        Reads data from a register safely using the `safe_execute` method.
+        """
+        return self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, length)
+
+    def write_register(self, reg):
+        """
+        Writes a single-byte register value safely.
+        """
+        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value)
+
+    def write_register_word(self, reg):
+        """
+        Writes a two-byte register value safely.
+        """
+        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value & 0xFF)
+        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr + 1, (reg._value >> 8) & 0xFF)
+
+   
+
+    def read_TDIE_Temp(self):
+        """
+        Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
+        If the read operation fails, it returns the last known value.
+        """
+        try:
+            reg_addr = self.REG41_TDIE_ADC._addr
+            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
+            if data:
+                self.REG41_TDIE_ADC.set((data[0] << 8) | data[1])
+        except I2CError:
+            sys.stderr.write("read_TDIE_Temp failed, returning previous value.\n")
+        return self.REG41_TDIE_ADC.get_IC_temperature()
+
+    def read_Vbat(self):
+        """
+        Reads the VBAT_ADC register and returns the battery voltage in mV.
+        """
+        try:
+            reg_addr = self.REG3B_VBAT_ADC._addr
+            data = self.read_register(reg_addr, length=2)
+            self.REG3B_VBAT_ADC.set((data[0] << 8) | data[1])
+        except I2CError:
+            sys.stderr.write("read_Vbat failed, returning previous value.\n")
+        return self.REG3B_VBAT_ADC.get_Vbat()
+
+
+    def read_Vbus(self):
+        """
+        Reads the VBUS_ADC register and returns the bus voltage in mV.
+        If the read operation fails, it returns the last known value.
+        """
+        try:
+            reg_addr = self.REG35_VBUS_ADC._addr
+            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
+            if data:
+                self.REG35_VBUS_ADC.set((data[0] << 8) | data[1])
+        except I2CError:
+            sys.stderr.write("read_Vbus failed, returning previous value.\n")
+        return self.REG35_VBUS_ADC.get_Vbus()
+
+    def read_Ibus(self):
+        """
+        Reads the IBUS_ADC register and returns the bus current in mA.
+        The IBUS ADC reading is reported in 2's complement.
+        If the read operation fails, it returns the last known value.
+        """
+        try:
+            reg_addr = self.REG31_IBUS_ADC._addr
+            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
+            if data:
+                self.REG31_IBUS_ADC.set((data[0] << 8) | data[1])
+        except I2CError:
+            sys.stderr.write("read_Ibus failed, returning previous value.\n")
+        return self.REG31_IBUS_ADC.get_Ibus()
+
+    def read_Ibat(self):
+        """
+        Reads the IBAT_ADC register and returns the battery current in mA.
+        """
+        try:
+            reg_addr = self.REG33_IBAT_ADC._addr
+            data = self.read_register(reg_addr, length=2)
+            self.REG33_IBAT_ADC.set((data[0] << 8) | data[1])
+        except I2CError:
+            sys.stderr.write("read_Ibat failed, returning previous value.\n")
+        return self.REG33_IBAT_ADC.get_Ibat()
+
+
+    def read_all_register(self):
+        """
+        Reads all BQ25792 registers and updates the class attributes.
+        """
+        try:
+            val = [0xFF] * 73
+            val[0:31] = self.read_register(0x0, 32)
+            val[32:63] = self.read_register(0x20, 32)
+            val[64:72] = self.read_register(0x40, 9)
             self.registers = val
+            # Update register values
             self.REG00_Minimal_System_Voltage.set(self.registers[self.REG00_Minimal_System_Voltage._addr])
             self.REG01_Charge_Voltage_Limit.set((self.registers[self.REG01_Charge_Voltage_Limit._addr] << 8) | (self.registers[self.REG01_Charge_Voltage_Limit._addr+1]))
             self.REG03_Charge_Current_Limit.set((self.registers[self.REG03_Charge_Current_Limit._addr] << 8) | (self.registers[self.REG03_Charge_Current_Limit._addr+1]))
@@ -1157,123 +1259,9 @@ class bq25792:
             self.REG3D_VSYS_ADC.set((self.registers[self.REG3D_VSYS_ADC._addr] << 8) | (self.registers[self.REG3D_VSYS_ADC._addr+1]))
             self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
             return 0
-        except Exception as _error:
-            sys.stderr.write('read_all_register failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
+        except I2CError:
+            sys.stderr.write("read_all_register failed.\n")
             return -1
-        finally:
-            pass
-
-    def read_TDIE_Temp(self):
-        '''
-        Read I2C and Return TDIE_ADC (IC Temperature) in degree
-                Range : -40°C-150°C 
-                Returns old value if read fails
-        '''
-        try:
-            reg_addr = self.REG41_TDIE_ADC._addr
-            val = [0xFF]*2
-            val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
-            self.registers[reg_addr:reg_addr+1] = val
-            self.REG41_TDIE_ADC.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
-        except Exception as _error:
-            sys.stderr.write('read_TDIE_Temp failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            return self.REG41_TDIE_ADC.get_IC_temperature()
-        finally:
-            return self.REG41_TDIE_ADC.get_IC_temperature()
-
-    def read_Vbat(self):
-        '''
-        Read I2C and Return VBAT_ADC in mV 
-                VBAT_ADC
-                The battery remote sensing voltage (VBATP-GND) ADC reading 
-                Type : R POR: 0mV (0h) 
-                Range : 0mV-20000mV 
-                returns previous value if read fails
-        '''
-        try:
-            reg_addr = self.REG3B_VBAT_ADC._addr
-            val = [0xFF]*2
-            val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
-            self.registers[reg_addr:reg_addr+1] = val
-            self.REG3B_VBAT_ADC.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
-        except Exception as _error:
-            sys.stderr.write('read_Vbat failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            return self.REG3B_VBAT_ADC.get_Vbat()
-        finally:
-            return self.REG3B_VBAT_ADC.get_Vbat()
-
-    def read_Vbus(self):
-        '''
-        Read I2C and Return VBUS_ADC in mV 
-                VBUS ADC reading 
-                Range : 0mV-30000mV 
-                Fixed Offset : 0mV Bit Step Size : 1mV
-                returns old value if read fails
-        '''
-        try:
-            reg_addr = self.REG35_VBUS_ADC._addr
-            val = [0xFF]*2
-            val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
-            self.registers[reg_addr:reg_addr+1] = val
-            self.REG35_VBUS_ADC.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
-        except Exception as _error:
-            sys.stderr.write('read_Vbus failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            return self.REG35_VBUS_ADC.get_Vbus()
-        finally:
-            return self.REG35_VBUS_ADC.get_Vbus()
-
-    def read_Ibus(self):
-        '''
-        Read I2C and Return IBUS_ADC in mA   
-                IBUS ADC reading Reported in 2 's Complement. 
-                When the current is flowing from VBUS to PMID, IBUS ADC reports positive value, 
-                and when the current is flowing from PMID to VBUS, 
-                IBUS ADC reports negative value. 
-                Range : 0mA-5000mA 
-                Return old value is read fails
-        '''
-        try:
-            reg_addr = self.REG31_IBUS_ADC._addr
-            val = [0xFF]*2
-            val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
-            self.registers[reg_addr:reg_addr+1] = val
-            self.REG31_IBUS_ADC.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
-        except Exception as _error:
-            sys.stderr.write('read_Ibus failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            return self.REG31_IBUS_ADC.get_Ibus()
-        finally:
-            return self.REG31_IBUS_ADC.get_Ibus()
-
-    def read_Ibat(self):
-        '''
-        Read I2C and Return IBAT_ADC in mA   
-                IBAT ADC reading Reported in 2 's Complement. 
-                The IBAT ADC reports positive value for the battery charging current, and negative value for the battery discharging current if EN_IBAT in REG0x14[5] = 1. 
-                Range : 0mA-8000mA 
-                Return old value is read fails
-        '''
-        try:
-            reg_addr = self.REG33_IBAT_ADC._addr
-            val = [0xFF]*2
-            val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
-            self.registers[reg_addr:reg_addr+1] = val
-            self.REG33_IBAT_ADC.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
-        except Exception as _error:
-            sys.stderr.write('read_Ibat failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            return self.REG33_IBAT_ADC.get_Ibat()
-        finally:
-            return self.REG33_IBAT_ADC.get_Ibat()
 
     def read_InputCurrentLimit(self):
         '''
@@ -1286,7 +1274,6 @@ class bq25792:
             reg_addr = self.REG19_ICO_Current_Limit._addr
             val = [0xFF]*2
             val[0:1] = self.bq.read_i2c_block_data(self.i2c_addr, reg_addr, 2)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr:reg_addr+1] = val
             self.REG19_ICO_Current_Limit.set((self.registers[reg_addr] << 8) | (self.registers[reg_addr+1]))
         except Exception as _error:
@@ -1315,7 +1302,6 @@ class bq25792:
         try:
             reg_addr = self.REG1C_Charger_Status_1._addr
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG1C_Charger_Status_1.set((self.registers[reg_addr]))
         except Exception as _error:
@@ -1328,7 +1314,6 @@ class bq25792:
         try:
             reg.get()
             self.bq.write_byte_data(self.i2c_addr, reg._addr, reg._value)
-            time.sleep(self.busWS_ms/1000)
             pass
         except Exception as _error:
             sys.stderr.write('write_register failed, %s\n' % str(_error))
@@ -1339,9 +1324,7 @@ class bq25792:
         try:
             reg.get()
             self.bq.write_byte_data(self.i2c_addr, reg._addr, (reg._value))
-            time.sleep(self.busWS_ms/1000)
             self.bq.write_byte_data(self.i2c_addr, reg._addr+1, (reg._value>>8))
-            time.sleep(self.busWS_ms/1000)
             pass
         except Exception as _error:
             sys.stderr.write('write_register failed, %s\n' % str(_error))
@@ -1422,7 +1405,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG14_Charger_Control_5._addr
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG14_Charger_Control_5.set((self.registers[reg_addr]))
             # then set bit
@@ -1447,7 +1429,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG14_Charger_Control_5._addr
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG14_Charger_Control_5.set((self.registers[reg_addr]))
             # then set bit
@@ -1473,7 +1454,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG11_Charger_Control_2._addr
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG11_Charger_Control_2.set((self.registers[reg_addr]))
             # then set bit
@@ -1499,7 +1479,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG14_Charger_Control_5._addr
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG14_Charger_Control_5.set((self.registers[reg_addr]))
             value, SFET_PRESENT, EN_IBAT, IBAT_REG, EN_IINDPM, EN_EXTILIM, EN_BATOC = self.REG14_Charger_Control_5.get()
@@ -1524,7 +1503,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG0F_Charger_Control_0._addr 
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG0F_Charger_Control_0.set((self.registers[reg_addr]))
             value, EN_AUTO_IBATDIS, FORCE_IBATDIS, EN_CHG, EN_ICO, FORCE_ICO, EN_HIZ, EN_TERM = self.REG0F_Charger_Control_0.get()
@@ -1548,7 +1526,6 @@ class bq25792:
             # first read register
             reg_addr = self.REG1D_Charger_Status_2._addr 
             val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            time.sleep(self.busWS_ms/1000)
             self.registers[reg_addr] = val
             self.REG1D_Charger_Status_2.set((self.registers[reg_addr]))
             value, ICO_STAT, TREG_STAT, DPDM_STAT, VBAT_PRESENT_STAT = self.REG1D_Charger_Status_2.get()
@@ -1569,9 +1546,7 @@ class bq25792:
             reg = self.REG06_Input_Current_Limit
             reg.set_input_current_limit(input_current_limit)
             self.bq.write_byte_data(self.i2c_addr, reg._addr, (reg._value >> 8))
-            time.sleep(self.busWS_ms/1000)
             self.bq.write_byte_data(self.i2c_addr, reg._addr+1, reg._value)
-            time.sleep(self.busWS_ms/1000)
             #sys.stderr.write('set_input_current_limit to: %s\n' % str(reg._value))
             #self.read_all_register()
             #sys.stderr.write('get_input_current_limit to: %s\n' % str(reg._value))

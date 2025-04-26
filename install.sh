@@ -30,6 +30,14 @@ if [ "$(uname -m)" != "armv7l" ] && [ "$(uname -m)" != "aarch64" ]; then
 fi
 
 
+# User Input: Installationspfad abfragen
+echo ""
+read -p "📁 Wo soll das MuPiHAT installiert werden? [Standard: $DEFAULT_APP_DIR] " APP_DIR
+APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
+
+info "➡️  Installation erfolgt nach: $APP_DIR"
+
+
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
 apt install -y git python3 python3-pip i2c-tools libgpiod-dev
