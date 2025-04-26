@@ -46,9 +46,9 @@ fi
 cd "$APP_DIR"
 
 # Python-Abhängigkeiten installieren
-if [ -f "requirements.txt" ]; then
+if [ -f "./src/requirements.txt" ]; then
     info "📦 Installiere Python-Abhängigkeiten..."
-    pip3 install --break-system-packages -r requirements.txt
+    pip3 install --break-system-packages -r ./src/requirements.txt
 else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
