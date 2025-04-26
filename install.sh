@@ -37,8 +37,8 @@ else
 fi
 
 case "$OS_ID" in
-    dietpi)
-        info "✅ DietPi erkannt."
+    debian)
+        info "✅ Debian erkannt."
         ;;
     raspbian)
         info "✅ Raspberry Pi OS (Raspbian) erkannt."
