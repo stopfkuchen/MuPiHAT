@@ -53,19 +53,19 @@ else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
 
-# I2C aktivieren
-info "⚙️ Aktiviere I2C im System..."
-if ! grep -q "^dtparam=i2c_arm=on" /boot/config.txt; then
-    echo "dtparam=i2c_arm=on" | tee -a /boot/config.txt
-fi
-modprobe i2c-dev
-echo "i2c-dev" | tee /etc/modules-load.d/i2c.conf
+# MuPiHAT aktivieren
+info "⚙️ Aktiviere MuPiHAT im System..."
+sudo sed -zi '/#--------MuPiHAT--------/!s/$/\n#--------MuPiHAT--------/' /boot/config.txt
+sudo sed -zi '/dtparam=i2c_arm=on/!s/$/\ndtparam=i2c_arm=on/' /boot/config.txt
+sudo sed -zi '/dtparam=i2c1=on/!s/$/\ndtparam=i2c1=on/' /boot/config.txt
+sudo sed -zi '/dtparam=i2c_arm_baudrate=50000/!s/$/\ndtparam=i2c_arm_baudrate=50000/' /boot/config.txt
+sudo sed -zi '/dtoverlay=max98357a,sdmode-pin=16/!s/$/\ndtoverlay=max98357a,sdmode-pin=16/' /boot/config.txt
+sudo sed -zi '/dtoverlay=i2s-mmap/!s/$/\ndtoverlay=i2s-mmap/' /boot/config.txt
+sudo sed -zi '/i2c-dev/!s/$/\ni2c-dev/' /etc/modules
+sudo sed -zi '/i2c-bcm2708/!s/$/\ni2c-bcm2708/' /etc/modules
+sudo modprobe i2c-dev
+sudo modprobe i2c-bcm2708
 
-# MAX98357A Audio-Overlay aktivieren
-info "🔊 Aktiviere MAX98357A Audio-Overlay..."
-if ! grep -q "^dtoverlay=max98357a,sdmode-pin=16" /boot/config.txt; then
-    echo "dtoverlay=max98357a,sdmode-pin=16" | tee -a /boot/config.txt
-fi
 
 # Systemd-Service erstellen
 info "⚙️ Erstelle Systemd-Service $SERVICE_NAME..."
