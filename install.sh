@@ -29,24 +29,6 @@ if [ "$(uname -m)" != "armv7l" ] && [ "$(uname -m)" != "aarch64" ]; then
     warn "⚠️ Dieses Skript ist für Raspberry Pi (ARM) optimiert. Weiter geht's trotzdem..."
 fi
 
-# Betriebssystem-Erkennung
-if [ -f /etc/os-release ]; then
-    OS_ID=$(grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"')
-else
-    error "❗ /etc/os-release nicht gefunden. Kann Betriebssystem nicht erkennen."
-fi
-
-case "$OS_ID" in
-    debian)
-        info "✅ Debian erkannt."
-        ;;
-    raspbian)
-        info "✅ Raspberry Pi OS (Raspbian) erkannt."
-        ;;
-    *)
-        error "❗ Unbekanntes System ($OS_ID). Installation abgebrochen!"
-        ;;
-esac
 
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
