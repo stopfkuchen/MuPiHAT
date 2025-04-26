@@ -4,7 +4,7 @@ set -e
 
 # Konfiguration
 REPO_URL="https://github.com/stopfkuchen/MuPiHAT.git"
-APP_DIR="/usr/local/bin/mupihat"
+DEFAULT_APP_DIR="/usr/local/bin/mupihat"
 SERVICE_NAME="mupi_hat"
 
 function info() {
