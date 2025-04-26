@@ -32,7 +32,8 @@ fi
 
 # User Input: Installationspfad abfragen
 echo ""
-read -p "📁 Wo soll das MuPiHAT installiert werden? [Standard: $DEFAULT_APP_DIR] " APP_DIR
+echo "📁 Wo soll das MuPiHAT installiert werden? [Standard: $DEFAULT_APP_DIR] "
+read -r -e -i "$DEFAULT_APP_DIR" APP_DIR < /dev/tty
 APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
 
 info "➡️  Installation erfolgt nach: $APP_DIR"
