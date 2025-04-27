@@ -1,3 +1,1 @@
-json
 smbus2
-time

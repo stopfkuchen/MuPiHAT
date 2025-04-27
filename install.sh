@@ -4,7 +4,7 @@ set -e
 
 # Konfiguration
 REPO_URL="https://github.com/stopfkuchen/MuPiHAT.git"
-APP_DIR="/usr/local/bin/mupihat"
+DEFAULT_APP_DIR="/usr/local/bin/mupihat"
 SERVICE_NAME="mupi_hat"
 
 function info() {
@@ -30,6 +30,15 @@ if [ "$(uname -m)" != "armv7l" ] && [ "$(uname -m)" != "aarch64" ]; then
 fi
 
 
+# User Input: Installationspfad abfragen
+echo ""
+echo "📁 Wo soll das MuPiHAT installiert werden? [Standard: $DEFAULT_APP_DIR] "
+read -r -e -i "$DEFAULT_APP_DIR" APP_DIR < /dev/tty
+APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
+
+info "➡️  Installation erfolgt nach: $APP_DIR"
+
+
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
 apt install -y git python3 python3-pip i2c-tools libgpiod-dev
@@ -40,7 +49,9 @@ if [ ! -d "$APP_DIR" ]; then
     mkdir -p "$(dirname "$APP_DIR")"
     git clone "$REPO_URL" "$APP_DIR"
 else
-    info "📁 Repository existiert bereits in $APP_DIR, überspringe Klonen."
+    info "🔄 Repository already exists, pulling latest changes..."
+    cd "$APP_DIR"
+    git pull
 fi
 
 cd "$APP_DIR"
