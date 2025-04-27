@@ -49,7 +49,9 @@ if [ ! -d "$APP_DIR" ]; then
     mkdir -p "$(dirname "$APP_DIR")"
     git clone "$REPO_URL" "$APP_DIR"
 else
-    info "📁 Repository existiert bereits in $APP_DIR, überspringe Klonen."
+    info "🔄 Repository already exists, pulling latest changes..."
+    cd "$APP_DIR"
+    git pull
 fi
 
 cd "$APP_DIR"
