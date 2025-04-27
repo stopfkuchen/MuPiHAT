@@ -20,6 +20,47 @@ function error() {
     exit 1
 }
 
+function ensure_config_in_file() {
+    local entry="$1"
+    local file="$2"
+    local comment="$3"
+
+    if ! grep -qF "$entry" "$file"; then
+        echo "" | sudo tee -a "$file" >/dev/null
+        if [ -n "$comment" ]; then
+            echo "# $comment" | sudo tee -a "$file" >/dev/null
+        fi
+        echo "$entry" | sudo tee -a "$file" >/dev/null
+        info "✅ Eintrag hinzugefügt in $file: $entry"
+    else
+        info "ℹ️ Eintrag schon vorhanden in $file: $entry"
+    fi
+}
+
+function ensure_kernel_modules() {
+    local modules=("i2c-dev" "i2c-bcm2708")
+    local file="/etc/modules-load.d/mupihat.conf"
+
+    info "🔧 Konfiguriere Kernelmodule für Autostart..."
+
+    sudo bash -c "echo '# MuPiHAT benötigte Kernelmodule' > $file"
+    for module in "${modules[@]}"; do
+        echo "$module" | sudo tee -a "$file" >/dev/null
+    done
+
+    info "✅ Kernelmodule für Autostart eingetragen: ${modules[*]}"
+
+    # Jetzt sofort laden:
+    for module in "${modules[@]}"; do
+        if ! lsmod | grep -q "^${module}"; then
+            info "📦 Lade Kernelmodul $module..."
+            sudo modprobe "$module"
+        else
+            info "ℹ️ Kernelmodul $module ist bereits geladen."
+        fi
+    done
+}
+
 # Prüfungen
 if [ "$(id -u)" -ne 0 ]; then
     error "❗ Bitte das Script als root oder mit sudo ausführen!"
@@ -49,9 +90,10 @@ if [ ! -d "$APP_DIR" ]; then
     mkdir -p "$(dirname "$APP_DIR")"
     git clone "$REPO_URL" "$APP_DIR"
 else
-    info "🔄 Repository already exists, pulling latest changes..."
+    info "🔄 Repository existiert bereits, aktualisiere..."
     cd "$APP_DIR"
-    git pull
+    git fetch origin
+    git reset --hard origin/main
 fi
 
 cd "$APP_DIR"
@@ -64,18 +106,16 @@ else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
 
-# MuPiHAT aktivieren
-info "⚙️ Aktiviere MuPiHAT im System..."
-sudo sed -zi '/#--------MuPiHAT--------/!s/$/\n#--------MuPiHAT--------/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c_arm=on/!s/$/\ndtparam=i2c_arm=on/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c1=on/!s/$/\ndtparam=i2c1=on/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c_arm_baudrate=50000/!s/$/\ndtparam=i2c_arm_baudrate=50000/' /boot/config.txt
-sudo sed -zi '/dtoverlay=max98357a,sdmode-pin=16/!s/$/\ndtoverlay=max98357a,sdmode-pin=16/' /boot/config.txt
-sudo sed -zi '/dtoverlay=i2s-mmap/!s/$/\ndtoverlay=i2s-mmap/' /boot/config.txt
-sudo sed -zi '/i2c-dev/!s/$/\ni2c-dev/' /etc/modules
-sudo sed -zi '/i2c-bcm2708/!s/$/\ni2c-bcm2708/' /etc/modules
-sudo modprobe i2c-dev
-sudo modprobe i2c-bcm2708
+info "🔧 Aktualisiere /boot/config.txt..."
+ensure_config_in_file "#--------MuPiHAT--------" "/boot/config.txt" "Marker für MuPiHAT Einstellungen"
+ensure_config_in_file "dtparam=i2c_arm=on" "/boot/config.txt" "I2C ARM aktivieren"
+ensure_config_in_file "dtparam=i2c1=on" "/boot/config.txt" "I2C1 aktivieren"
+ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "/boot/config.txt" "I2C Bus Baudrate auf 50kHz setzen"
+ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "/boot/config.txt" "Audio Overlay MAX98357A setzen"
+ensure_config_in_file "dtoverlay=i2s-mmap" "/boot/config.txt" "I2S Memory Map Overlay setzen"
+
+info "🔧 Aktualisiere Kernelmodule..."
+ensure_kernel_modules
 
 
 # Systemd-Service erstellen
