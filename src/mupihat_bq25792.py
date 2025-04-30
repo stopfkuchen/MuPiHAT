@@ -1359,7 +1359,7 @@ class bq25792:
         ''' 
         Write MuPiHAT Default Settings to Charger IC
         '''
-        self.soft_reset()
+        #self.soft_reset()
         self.read_all_register()
         self.write_defaults()
         #tries = 0
