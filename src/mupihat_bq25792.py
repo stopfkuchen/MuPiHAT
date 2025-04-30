@@ -1309,6 +1309,10 @@ class bq25792:
             reg.REG_RST = 1
             self.write_register(reg)
             time.sleep(0.1)
+            reg = self.REG09_Termination_Control
+            reg.REG_RST = 0
+            self.write_register(reg)
+            time.sleep(0.1)
             return 0
         except I2CError:
             sys.stderr.write("soft_reset failed.\n")
