@@ -32,6 +32,7 @@ import sys
 import time
 import json
 import logging
+import argparse
 from datetime import datetime
 from flask import Flask, render_template, jsonify
 from mupihat_bq25792 import bq25792
@@ -97,28 +98,38 @@ def api_registers():
         return jsonify({"error": str(e)}), 500
 
 
+def parse_arguments():
+    """Parses command-line arguments using argparse."""
+    parser = argparse.ArgumentParser(
+        description="MuPiHAT Charger IC (BQ25792) Service"
+    )
+    parser.add_argument(
+        "-l", "--logfile",
+        type=str,
+        help="Enable logging and specify the log file path",
+        default="/tmp/mupihat.log"
+    )
+    parser.add_argument(
+        "-j", "--json",
+        type=str,
+        help="Enable JSON file generation and specify the JSON file path",
+        default="/tmp/mupihat.json"
+    )
+    return parser.parse_args()
+
 def main(argv):
     global hat, log_flag, json_flag, json_file
 
     # Parse command-line arguments
-    logfile = "/tmp/mupihat.log"
-    try:
-        opts, args = getopt.getopt(argv, "h:l:j:", ["logfile=", "json="])
-    except getopt.GetoptError:
-        print("Usage: mupihat.py -l <logfile> -j <json file>")
-        sys.exit(2)
+    args = parse_arguments()
+    logfile = args.logfile
+    json_file = args.json
+    log_flag = bool(logfile)
+    json_flag = bool(json_file)
 
-    for opt, arg in opts:
-        if opt == "-h":
-            print("Usage: mupihat.py -l <logfile> -j <json file>")
-            sys.exit(0)
-        elif opt in ["-j", "--json"]:
-            json_file = arg
-            json_flag = True
-        elif opt in ["-l", "--logfile"]:
-            logfile = arg
-            log_flag = True
-            setup_logging(logfile)
+    # Set up logging if enabled
+    if log_flag:
+        setup_logging(logfile)
 
     # Initialize BQ25792
     try:
