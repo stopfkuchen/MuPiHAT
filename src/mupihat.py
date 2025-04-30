@@ -35,6 +35,7 @@ import logging
 import argparse
 from datetime import datetime
 from flask import Flask, render_template, jsonify
+from threading import Thread
 from mupihat_bq25792 import bq25792
 
 app = Flask(__name__)
@@ -98,6 +99,20 @@ def api_registers():
         return jsonify({"error": str(e)}), 500
 
 
+def periodic_json_dump():
+    """Periodically writes the register values to a JSON file."""
+    global json_flag, json_file
+    while True:
+        if json_flag:
+            try:
+                with open(json_file, "w") as outfile:
+                    json.dump(hat.to_json(), outfile, indent=4)
+                logging.info("JSON dump written to %s", json_file)
+            except Exception as e:
+                logging.error("Failed to write JSON dump: %s", str(e))
+        time.sleep(5)  # Run every 5 seconds
+
+
 def parse_arguments():
     """Parses command-line arguments using argparse."""
     parser = argparse.ArgumentParser(
@@ -117,7 +132,8 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-def main(argv):
+
+def main():
     global hat, log_flag, json_flag, json_file
 
     # Parse command-line arguments
@@ -139,6 +155,11 @@ def main(argv):
         logging.error("MuPiHAT initialization failed: %s", str(e))
         sys.exit(1)
 
+    # Start the periodic JSON dump in a background thread
+    if json_flag:
+        json_thread = Thread(target=periodic_json_dump, daemon=True)
+        json_thread.start()
+
     # Flask web server
     try:
         app.run(host="0.0.0.0", port=5000, debug=False)
@@ -151,4 +172,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
