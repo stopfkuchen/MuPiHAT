@@ -84,16 +84,19 @@ info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
 apt install -y git python3 python3-pip i2c-tools libgpiod-dev
 
+read -p "Welche Git-Branch soll verwendet werden? [main]: " GIT_BRANCH
+GIT_BRANCH=${GIT_BRANCH:-main}
+
 # Repository klonen
 if [ ! -d "$APP_DIR" ]; then
-    info "📁 Klone Repository nach $APP_DIR..."
+    echo "📥 Klone Repo Branch $GIT_BRANCH nach $APP_DIR ..."
     mkdir -p "$(dirname "$APP_DIR")"
-    git clone "$REPO_URL" "$APP_DIR"
+    git clone --branch "$GIT_BRANCH" --single-branch "$REPO_URL" "$APP_DIR"
 else
-    info "🔄 Repository existiert bereits, aktualisiere..."
-    cd "$APP_DIR"
-    git fetch origin
-    git reset --hard origin/main
+    echo "📁 Projektverzeichnis existiert bereits. Aktualisiere Branch $GIT_BRANCH ..."
+    git -C "$APP_DIR" fetch
+    git -C "$APP_DIR" checkout "$GIT_BRANCH"
+    git -C "$APP_DIR" pull
 fi
 
 cd "$APP_DIR"
