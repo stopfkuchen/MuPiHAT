@@ -110,6 +110,9 @@ def periodic_json_dump():
                 logging.info("JSON dump written to %s", json_file)
             except Exception as e:
                 logging.error("Failed to write JSON dump: %s", str(e))
+        if log_flag:
+            log_register_values()
+            
         time.sleep(5)  # Run every 5 seconds
 
 
