@@ -80,11 +80,28 @@ APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
 
 info "➡️  Installation erfolgt nach: $APP_DIR"
 
+echo "📡 Lade verfügbare Branches aus dem Repository..."
 
-echo "📁 Welche Git-Branch soll verwendet werden? [Standard: $DEFAULT_GIT_BRANCH] "
-read -r -e -i "$DEFAULT_GIT_BRANCH" GIT_BRANCH < /dev/tty
-GIT_BRANCH=${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}
+# Branchliste abrufen
+BRANCHES=$(git ls-remote --heads "$REPO_URL" | awk -F'/' '{print $NF}')
+BRANCH_ARRAY=($BRANCHES)
 
+# Menü anzeigen
+echo "🔽 Verfügbare Branches:"
+PS3="Bitte eine Branch auswählen (oder Enter für '$DEFAULT_GIT_BRANCH'): "
+
+select GIT_BRANCH in "${BRANCH_ARRAY[@]}"; do
+    if [[ -z "$REPLY" ]]; then
+        GIT_BRANCH="$DEFAULT_GIT_BRANCH"
+        echo "➡️  Standard-Branch '$GIT_BRANCH' gewählt."
+        break
+    elif [[ -n "$GIT_BRANCH" ]]; then
+        echo "➡️  Du hast Branch '$GIT_BRANCH' gewählt."
+        break
+    else
+        echo "❌ Ungültige Auswahl, bitte erneut versuchen."
+    fi
+done
 
 
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
