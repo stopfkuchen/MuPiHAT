@@ -139,7 +139,7 @@ DefaultDependencies=no
 Type=simple
 WorkingDirectory=/usr/local/bin/mupihat/
 User=root
-ExecStart=/usr/bin/python3 -B /usr/local/bin/mupihat/mupihat.py -j /tmp/mupihat.json
+ExecStart=/usr/bin/python3 -B /usr/local/bin/mupihat/src/mupihat.py -j /tmp/mupihat.json
 Restart=on-failure
 
 [Install]
