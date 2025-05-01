@@ -765,6 +765,7 @@ class bq25792:
             elif self.TSHUT == 0x2: return "120°C"
             elif self.TSHUT == 0x3: return "85°C"
             else: return "unknown" 
+    
     class REG19_ICO_Current_Limit(BQ25795_REGISTER):
         """
         BQ25795 - REG19_ICO_Current_Limit
@@ -1153,12 +1154,14 @@ class bq25792:
         """
         Writes a single-byte register value safely.
         """
+        reg.get()
         self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value)
 
     def write_register_word(self, reg):
         """
         Writes a two-byte register value safely.
         """
+        reg.get()
         self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value & 0xFF)
         self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr + 1, (reg._value >> 8) & 0xFF)
 
