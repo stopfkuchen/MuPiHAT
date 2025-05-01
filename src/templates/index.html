@@ -4,6 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MuPiHAT Register Values</title>
+    <script>
+        // Function to fetch and update register values
+        function updateRegisters() {
+            fetch('/api/registers')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('registers-table-body');
+                    tableBody.innerHTML = ''; // Clear the table body
+
+                    // Populate the table with updated register values
+                    for (const [register, value] of Object.entries(data)) {
+                        const row = document.createElement('tr');
+                        const registerCell = document.createElement('td');
+                        const valueCell = document.createElement('td');
+
+                        registerCell.textContent = register;
+                        valueCell.textContent = value;
+
+                        row.appendChild(registerCell);
+                        row.appendChild(valueCell);
+                        tableBody.appendChild(row);
+                    }
+                })
+                .catch(error => console.error('Error fetching register values:', error));
+        }
+
+        // Update registers every 5 seconds
+        setInterval(updateRegisters, 5000);
+
+        // Fetch registers immediately when the page loads
+        window.onload = updateRegisters;
+    </script>
 </head>
 <body>
     <h1>MuPiHAT Register Values</h1>
@@ -14,13 +46,8 @@
                 <th>Value</th>
             </tr>
         </thead>
-        <tbody>
-            {% for register, value in registers.items() %}
-            <tr>
-                <td>{{ register }}</td>
-                <td>{{ value }}</td>
-            </tr>
-            {% endfor %}
+        <tbody id="registers-table-body">
+            <!-- Register values will be dynamically inserted here -->
         </tbody>
     </table>
 </body>
