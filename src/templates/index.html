@@ -1,12 +1,27 @@
-curl -sSL https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/refs/heads/main/install.sh | bash
-
-dtparam=i2c_arm=on
-dtparam=i2c1=on
-dtparam=i2c_arm_baudrate=50000
-dtoverlay=max98357a,sdmode-pin=16
-dtoverlay=i2s-mmapdtoverlay=sdtweak,overclock_50=100
-dtoverlay=disable-wifi
-
-dtparam=gpio=on
-
-dtoverlay=gpio-poweroff,gpiopin=4,active_low=1
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuPiHAT Register Values</title>
+</head>
+<body>
+    <h1>MuPiHAT Register Values</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Register</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for register, value in registers.items() %}
+            <tr>
+                <td>{{ register }}</td>
+                <td>{{ value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
