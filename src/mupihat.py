@@ -84,7 +84,7 @@ def index():
     """Flask route to display register values."""
     try:
         hat.read_all_register()
-        return render_template("index.html", registers=hat.to_json())
+        return render_template("index.html", registers=hat.to_json_registers())
     except Exception as e:
         return f"Error reading registers: {str(e)}", 500
 
