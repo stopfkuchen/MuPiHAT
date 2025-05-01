@@ -1658,4 +1658,24 @@ class bq25792:
         return {
             'dump': str(self.registers)
         }
+    
+    def to_json_registers(self):
+        """
+        Returns a JSON object containing all variables with their names and values
+        from instances of BQ25795_REGISTER.
+        """
+        registers_data = {}
+
+        # Iterate over all attributes of the bq25792 class
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            # Check if the attribute is an instance of BQ25795_REGISTER
+            if isinstance(attr, self.BQ25795_REGISTER):
+                # Collect all variables and their values from the instance
+                register_values = {}
+                for var_name, var_value in vars(attr).items():
+                    if not var_name.startswith("_"):  # Skip private/internal variables
+                        register_values[var_name] = var_value
+                registers_data[attr_name] = register_values
+        return registers_data
 ####

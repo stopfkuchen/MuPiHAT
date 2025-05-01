@@ -1,3 +1,0 @@
-Flask==2.2.2
-smbus2==0.4.1
-jsonschema==4.4.0
