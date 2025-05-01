@@ -93,8 +93,10 @@ def index():
 def api_registers():
     """Flask API endpoint to return register values as JSON."""
     try:
+        
+        
         hat.read_all_register()
-        return jsonify(hat.to_json())
+        return jsonify(hat.to_json_registers())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -112,7 +114,7 @@ def periodic_json_dump():
                 logging.error("Failed to write JSON dump: %s", str(e))
         if log_flag:
             log_register_values()
-            
+
         time.sleep(5)  # Run every 5 seconds
 
 
