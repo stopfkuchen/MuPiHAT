@@ -88,7 +88,7 @@ class bq25792:
             self.REG08_Precharge_Control = self.REG08_Precharge_Control()
             self.REG09_Termination_Control = self.REG09_Termination_Control()
             self.REG0A_Recharge_Control = self.REG0A_Recharge_Control() 
-            self.REG0B_VOTG_regulation = 0xB
+            self.REG0B_VOTG_regulation = self.REG0B_VOTG_regulation()
             self.REG0D_IOTG_regulation = 0xD
             self.REG0E_Timer_Control = 0xE
             self.REG0F_Charger_Control_0 = self.REG0F_Charger_Control_0()
@@ -404,6 +404,29 @@ class bq25792:
             self.TRECHG     = ((self._value & 0b00110000) >> 4)
             self.VRECHG     = ((self._value & 0b00001111) >> 0)
 
+    class REG0B_VOTG_regulation(BQ25795_REGISTER):
+        """
+        BQ25795 - REG0B_VOTG_regulation
+        ----------
+        VOTG: 
+            OTG mode regulation voltage
+            Type : RW 
+            POR: 5000mV (DCh) 
+            Range : 2800mV-22000mV 
+            Fixed Offset : 2800mV 
+            Bit Step Size : 10mV 
+            Clamped High
+        """
+        def __init__(self, addr=0xb, value=0):
+            super().__init__(addr, value)
+            self.VOTG = ((self._value & 0b11111111111))
+        def set (self, value):
+            super().set(value)
+            self.VOTG = ((self._value & 0b11111111111))
+        def get (self):
+            self._value = self.VOTG
+            return self._value, self.VOTG
+        
     class REG0F_Charger_Control_0(BQ25795_REGISTER):
         """
         BQ25795 - REG0F_Charger_Control_0
@@ -1119,16 +1142,18 @@ class bq25792:
         def __init__(self, addr=0x41, value = 0):
             super().__init__(addr, value)
             self.TDIE_ADC             = super().twos_complement()
+            self.TemperatureIC       = self.TDIE_ADC*0.5
         def set (self, value):
             super().set(value)
             self.TDIE_ADC             = super().twos_complement()
+            self.TemperatureIC       = self.TDIE_ADC*0.5
         def get(self):
-            return self._value, self.TDIE_ADC
+            return self._value, self.TDIE_ADC, self.TemperatureIC
         def get_IC_temperature(self):
             '''
             Get Temperature of BQ2595 IC in °C
             '''
-            return self.TDIE_ADC*0.5 
+            return self.TemperatureIC 
         
     # class methods
     def safe_execute(self, func, *args, **kwargs):
@@ -1255,6 +1280,7 @@ class bq25792:
             self.REG08_Precharge_Control.set(self.registers[self.REG08_Precharge_Control._addr])
             self.REG09_Termination_Control.set(self.registers[self.REG09_Termination_Control._addr])
             self.REG0A_Recharge_Control.set(self.registers[self.REG0A_Recharge_Control._addr])
+            self.REG0B_VOTG_regulation.set(self.registers[self.REG0B_VOTG_regulation._addr]<< 8) | (self.registers[self.REG0B_VOTG_regulation._addr+1])  
             self.REG0F_Charger_Control_0.set(self.registers[self.REG0F_Charger_Control_0._addr])
             self.REG10_Charger_Control_1.set(self.registers[self.REG10_Charger_Control_1._addr])
             self.REG11_Charger_Control_2.set(self.registers[self.REG11_Charger_Control_2._addr])
