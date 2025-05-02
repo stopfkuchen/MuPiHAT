@@ -1,4 +1,3 @@
-readme_content = """
 <p align="center">
   <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/MuPiHAT_Logo.png" width="200" alt="MuPiHAT Logo">
 </p>
