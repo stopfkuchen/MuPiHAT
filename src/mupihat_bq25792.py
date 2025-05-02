@@ -1280,7 +1280,7 @@ class bq25792:
             self.REG08_Precharge_Control.set(self.registers[self.REG08_Precharge_Control._addr])
             self.REG09_Termination_Control.set(self.registers[self.REG09_Termination_Control._addr])
             self.REG0A_Recharge_Control.set(self.registers[self.REG0A_Recharge_Control._addr])
-            self.REG0B_VOTG_regulation.set(self.registers[self.REG0B_VOTG_regulation._addr]<< 8) | (self.registers[self.REG0B_VOTG_regulation._addr+1])  
+            self.REG0B_VOTG_regulation.set((self.registers[self.REG0B_VOTG_regulation._addr]<< 8) | (self.registers[self.REG0B_VOTG_regulation._addr+1]))  
             self.REG0F_Charger_Control_0.set(self.registers[self.REG0F_Charger_Control_0._addr])
             self.REG10_Charger_Control_1.set(self.registers[self.REG10_Charger_Control_1._addr])
             self.REG11_Charger_Control_2.set(self.registers[self.REG11_Charger_Control_2._addr])
