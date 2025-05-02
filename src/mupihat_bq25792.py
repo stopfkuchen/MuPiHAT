@@ -213,7 +213,7 @@ class bq25792:
 
     def battery_conf_load(self):
         '''
-        load the battery configuration from yaml file
+        load the battery configuration from json file
         '''
         try:
             with open(self.battery_conf_file) as file:
@@ -230,12 +230,11 @@ class bq25792:
                     self.battery_conf["v_0"] = int(bt["config"]["v_0"])
                     self.battery_conf["th_warning"] = int(bt["config"]["th_warning"])
                     self.battery_conf["th_shutdown"] = int(bt["config"]["th_shutdown"])
-                    print(json.dumps(self.battery_conf, indent=4))
+                    logging.info("Battery configuration loaded from JSON: %s", self.battery_conf_file)
                     break            
             return 0
         except Exception as _error:
             logging.error("battery_conf_load from JSON failed, use standard configuration, %s", str(_error))
-            #sys.stderr.write('battery_conf_load from JSON failed, use standard configuration, %s\n' % str(_error))
             if self._exit_on_error: sys.exit(1)
             return -1
         finally:
