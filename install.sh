@@ -171,6 +171,15 @@ systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
+# Überprüfe den Status des Services
+info "🔍 Überprüfe den Status des Services $SERVICE_NAME..."
+if systemctl is-active --quiet $SERVICE_NAME; then
+    info "✅ Der Service $SERVICE_NAME läuft erfolgreich."
+else
+    warn "⚠️ Der Service $SERVICE_NAME konnte nicht gestartet werden. Überprüfe die Logs mit:"
+    echo "    journalctl -u $SERVICE_NAME -xe"
+fi
+
 info "✅ Setup abgeschlossen!"
 
 echo ""
