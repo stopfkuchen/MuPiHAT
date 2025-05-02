@@ -4,6 +4,7 @@ set -e
 
 # Konfiguration
 REPO_URL="https://github.com/stopfkuchen/MuPiHAT.git"
+DEFAULT_GIT_BRANCH="main"
 DEFAULT_APP_DIR="/usr/local/bin/mupihat"
 SERVICE_NAME="mupi_hat"
 
@@ -18,6 +19,47 @@ function warn() {
 function error() {
     echo -e "\033[1;31m$1\033[0m"
     exit 1
+}
+
+function ensure_config_in_file() {
+    local entry="$1"
+    local file="$2"
+    local comment="$3"
+
+    if ! grep -qF "$entry" "$file"; then
+        echo "" | sudo tee -a "$file" >/dev/null
+        if [ -n "$comment" ]; then
+            echo "# $comment" | sudo tee -a "$file" >/dev/null
+        fi
+        echo "$entry" | sudo tee -a "$file" >/dev/null
+        info "✅ Eintrag hinzugefügt in $file: $entry"
+    else
+        info "ℹ️ Eintrag schon vorhanden in $file: $entry"
+    fi
+}
+
+function ensure_kernel_modules() {
+    local modules=("i2c-dev" "i2c-bcm2708")
+    local file="/etc/modules-load.d/mupihat.conf"
+
+    info "🔧 Konfiguriere Kernelmodule für Autostart..."
+
+    sudo bash -c "echo '# MuPiHAT benötigte Kernelmodule' > $file"
+    for module in "${modules[@]}"; do
+        echo "$module" | sudo tee -a "$file" >/dev/null
+    done
+
+    info "✅ Kernelmodule für Autostart eingetragen: ${modules[*]}"
+
+    # Jetzt sofort laden:
+    for module in "${modules[@]}"; do
+        if ! lsmod | grep -q "^${module}"; then
+            info "📦 Lade Kernelmodul $module..."
+            sudo modprobe "$module"
+        else
+            info "ℹ️ Kernelmodul $module ist bereits geladen."
+        fi
+    done
 }
 
 # Prüfungen
@@ -38,20 +80,26 @@ APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
 
 info "➡️  Installation erfolgt nach: $APP_DIR"
 
+echo "📁 Welche Git-Branch soll verwendet werden? [Standard: $DEFAULT_GIT_BRANCH] "
+read -r -e -i "$DEFAULT_GIT_BRANCH" GIT_BRANCH < /dev/tty
+GIT_BRANCH=${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}
+
 
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
 apt install -y git python3 python3-pip i2c-tools libgpiod-dev
 
+
 # Repository klonen
 if [ ! -d "$APP_DIR" ]; then
-    info "📁 Klone Repository nach $APP_DIR..."
+    echo "📥 Klone Repo Branch $GIT_BRANCH nach $APP_DIR ..."
     mkdir -p "$(dirname "$APP_DIR")"
-    git clone "$REPO_URL" "$APP_DIR"
+    git clone --branch "$GIT_BRANCH" --single-branch "$REPO_URL" "$APP_DIR"
 else
-    info "🔄 Repository already exists, pulling latest changes..."
-    cd "$APP_DIR"
-    git pull
+    echo "📁 Projektverzeichnis existiert bereits. Aktualisiere Branch $GIT_BRANCH ..."
+    git -C "$APP_DIR" fetch
+    git -C "$APP_DIR" checkout "$GIT_BRANCH"
+    git -C "$APP_DIR" pull
 fi
 
 cd "$APP_DIR"
@@ -64,18 +112,36 @@ else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
 
-# MuPiHAT aktivieren
-info "⚙️ Aktiviere MuPiHAT im System..."
-sudo sed -zi '/#--------MuPiHAT--------/!s/$/\n#--------MuPiHAT--------/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c_arm=on/!s/$/\ndtparam=i2c_arm=on/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c1=on/!s/$/\ndtparam=i2c1=on/' /boot/config.txt
-sudo sed -zi '/dtparam=i2c_arm_baudrate=50000/!s/$/\ndtparam=i2c_arm_baudrate=50000/' /boot/config.txt
-sudo sed -zi '/dtoverlay=max98357a,sdmode-pin=16/!s/$/\ndtoverlay=max98357a,sdmode-pin=16/' /boot/config.txt
-sudo sed -zi '/dtoverlay=i2s-mmap/!s/$/\ndtoverlay=i2s-mmap/' /boot/config.txt
-sudo sed -zi '/i2c-dev/!s/$/\ni2c-dev/' /etc/modules
-sudo sed -zi '/i2c-bcm2708/!s/$/\ni2c-bcm2708/' /etc/modules
-sudo modprobe i2c-dev
-sudo modprobe i2c-bcm2708
+# Copy configuration file to /etc/mupihat/
+CONFIG_DIR="/etc/mupihat"
+CONFIG_FILE="$APP_DIR/src/templates/mupihatconfig.json"
+info "📄 Kopiere Konfigurationsdatei nach $CONFIG_DIR"
+
+# Ensure the target directory exists
+if [ ! -d "$CONFIG_DIR" ]; then
+    mkdir -p "$CONFIG_DIR"
+    info "📁 Verzeichnis $CONFIG_DIR erstellt."
+fi
+
+# Copy the configuration file
+if [ -f "$CONFIG_FILE" ]; then
+    cp "$CONFIG_FILE" "$CONFIG_DIR/"
+    info "✅ Konfigurationsdatei kopiert nach $CONFIG_DIR."
+else
+    warn "⚠️ Konfigurationsdatei $CONFIG_FILE nicht gefunden. Überspringe Kopiervorgang."
+fi
+
+
+info "🔧 Aktualisiere /boot/config.txt..."
+ensure_config_in_file "#--------MuPiHAT--------" "/boot/config.txt" "Marker für MuPiHAT Einstellungen"
+ensure_config_in_file "dtparam=i2c_arm=on" "/boot/config.txt" "I2C ARM aktivieren"
+ensure_config_in_file "dtparam=i2c1=on" "/boot/config.txt" "I2C1 aktivieren"
+ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "/boot/config.txt" "I2C Bus Baudrate auf 50kHz setzen"
+ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "/boot/config.txt" "Audio Overlay MAX98357A setzen"
+ensure_config_in_file "dtoverlay=i2s-mmap" "/boot/config.txt" "I2S Memory Map Overlay setzen"
+
+info "🔧 Aktualisiere Kernelmodule..."
+ensure_kernel_modules
 
 
 # Systemd-Service erstellen
@@ -89,9 +155,9 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-WorkingDirectory=/usr/local/bin/mupihat/
+WorkingDirectory=$APP_DIR
 User=root
-ExecStart=/usr/bin/python3 -B /usr/local/bin/mupihat/mupihat.py -j /tmp/mupihat.json
+ExecStart=/usr/bin/python3 -B $APP_DIR/src/mupihat.py -j /tmp/mupihat.json -c $CONFIG_DIR/mupihatconfig.json
 Restart=on-failure
 
 [Install]
@@ -104,6 +170,15 @@ systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
+
+# Überprüfe den Status des Services
+info "🔍 Überprüfe den Status des Services $SERVICE_NAME..."
+if systemctl is-active --quiet $SERVICE_NAME; then
+    info "✅ Der Service $SERVICE_NAME läuft erfolgreich."
+else
+    warn "⚠️ Der Service $SERVICE_NAME konnte nicht gestartet werden. Überprüfe die Logs mit:"
+    echo "    journalctl -u $SERVICE_NAME -xe"
+fi
 
 info "✅ Setup abgeschlossen!"
 

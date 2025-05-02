@@ -1,0 +1,70 @@
+{ 
+"mupihat": {
+		"battery_types": [
+			{
+				"name": "Ansmann 2S1P",
+				"config": {
+					"v_100": "8100",
+					"v_75": "7800",
+					"v_50": "7400",
+					"v_25": "7000",
+					"v_0": "6700",
+					"th_warning": "7000",
+					"th_shutdown": "6800"
+				}
+			},
+			{
+				"name": "ENERpower 2S2P 10.000mAh",
+				"config": {
+						"v_100": "8000",
+						"v_75": "7700",
+						"v_50": "7300",
+						"v_25": "6900",
+						"v_0": "6000",
+						"th_warning": "6500",
+						"th_shutdown": "6150"
+				}
+			},
+			{
+				"name": "USB-C mode (no battery)",
+				"config": {
+						"v_100": "1",
+						"v_75": "1",
+						"v_50": "1",
+						"v_25": "1",
+						"v_0": "1",
+						"th_warning": "0",
+						"th_shutdown": "0"
+				}
+			},
+			{
+				"name": "Custom",
+				"config": {
+					"v_100": "8100",
+					"v_75": "7800",
+					"v_50": "7400",
+					"v_25": "7000",
+					"v_0": "6700",
+					"th_warning": "7000",
+					"th_shutdown": "6700"
+				}
+			}
+		],
+		"selected_battery": "Custom",
+		"current_limit": [
+            {
+                "name": "safe",
+                "IINDMP": "1790"
+            },
+            {
+                "name": "medium",
+                "IINDMP": "2200"
+            },
+            {
+                "name": "high",
+                "IINDMP": "2700"
+            }
+        ],
+		"hat_active": true
+	}
+}
