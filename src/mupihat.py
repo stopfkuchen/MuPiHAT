@@ -45,6 +45,7 @@ hat = None
 log_flag = False
 json_flag = False
 json_file = "/tmp/mupihat.json"
+config_file = "/src/templates/mupihatconfig.json"
 
 
 def timestamp():
@@ -154,8 +155,9 @@ def main():
 
     # Initialize BQ25792
     try:
-        hat = bq25792()
+        hat = bq25792(battery_conf_file=config_file)
         hat.MuPiHAT_Default()
+
     except Exception as e:
         logging.error("MuPiHAT initialization failed: %s", str(e))
         sys.exit(1)

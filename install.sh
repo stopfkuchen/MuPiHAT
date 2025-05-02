@@ -112,6 +112,26 @@ else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
 
+# Copy configuration file to /etc/mupihat/
+info "📄 Kopiere Konfigurationsdatei nach /etc/mupihat/..."
+CONFIG_DIR="/etc/mupihat"
+CONFIG_FILE="$APP_DIR/templates/mupihatconfig.json"
+
+# Ensure the target directory exists
+if [ ! -d "$CONFIG_DIR" ]; then
+    mkdir -p "$CONFIG_DIR"
+    info "📁 Verzeichnis $CONFIG_DIR erstellt."
+fi
+
+# Copy the configuration file
+if [ -f "$CONFIG_FILE" ]; then
+    cp "$CONFIG_FILE" "$CONFIG_DIR/"
+    info "✅ Konfigurationsdatei kopiert nach $CONFIG_DIR."
+else
+    warn "⚠️ Konfigurationsdatei $CONFIG_FILE nicht gefunden. Überspringe Kopiervorgang."
+fi
+
+
 info "🔧 Aktualisiere /boot/config.txt..."
 ensure_config_in_file "#--------MuPiHAT--------" "/boot/config.txt" "Marker für MuPiHAT Einstellungen"
 ensure_config_in_file "dtparam=i2c_arm=on" "/boot/config.txt" "I2C ARM aktivieren"
