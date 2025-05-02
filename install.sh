@@ -113,9 +113,9 @@ else
 fi
 
 # Copy configuration file to /etc/mupihat/
-info "📄 Kopiere Konfigurationsdatei nach /etc/mupihat/..."
 CONFIG_DIR="/etc/mupihat"
 CONFIG_FILE="$APP_DIR/src/templates/mupihatconfig.json"
+info "📄 Kopiere Konfigurationsdatei nach $CONFIG_DIR"
 
 # Ensure the target directory exists
 if [ ! -d "$CONFIG_DIR" ]; then
