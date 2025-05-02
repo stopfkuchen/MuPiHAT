@@ -45,7 +45,7 @@ hat = None
 log_flag = False
 json_flag = False
 json_file = "/tmp/mupihat.json"
-config_file = "/src/templates/mupihatconfig.json"
+config_file = "/etc/mupihat/mupihatconfig.json"
 
 
 def timestamp():
@@ -110,7 +110,6 @@ def periodic_json_dump():
             try:
                 with open(json_file, "w") as outfile:
                     json.dump(hat.to_json(), outfile, indent=4)
-                logging.info("JSON dump written to %s", json_file)
             except Exception as e:
                 logging.error("Failed to write JSON dump: %s", str(e))
         if log_flag:
@@ -136,6 +135,12 @@ def parse_arguments():
         help="Enable JSON file generation and specify the JSON file path",
         default="/tmp/mupihat.json"
     )
+    parser.add_argument(
+        "-c", "--config",
+        type=str,
+        help="Config (Json) File for MuPiHAT",
+        default="/etc/mupihat/mupihatconfig.json"
+    )
     return parser.parse_args()
 
 
@@ -146,6 +151,7 @@ def main():
     args = parse_arguments()
     logfile = args.logfile
     json_file = args.json
+    config_file = args.config
     log_flag = bool(logfile)
     json_flag = bool(json_file)
 

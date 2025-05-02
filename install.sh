@@ -155,9 +155,9 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-WorkingDirectory=/usr/local/bin/mupihat/
+WorkingDirectory=$APP_DIR
 User=root
-ExecStart=/usr/bin/python3 -B /usr/local/bin/mupihat/src/mupihat.py -j /tmp/mupihat.json
+ExecStart=/usr/bin/python3 -B $APP_DIR/src/mupihat.py -j /tmp/mupihat.json -c $CONFIG_DIR/mupihatconfig.json
 Restart=on-failure
 
 [Install]
