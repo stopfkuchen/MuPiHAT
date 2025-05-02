@@ -1438,7 +1438,7 @@ class bq25792:
             '''
             return self.IBUS_ADC*1.0
         
-        
+
         
     class REG33_IBAT_ADC(BQ25795_REGISTER):
         """
@@ -2047,15 +2047,10 @@ class bq25792:
             'Input_Current_Limit' : self.read_InputCurrentLimit()
         }
     
-    def dump_register(self):
-        return {
-            'dump': str(self.registers)
-        }
-    
     def to_json_registers(self):
         """
-        Returns a JSON object containing all variables with their names and values
-        from instances of BQ25795_REGISTER.
+        returns a JSON object containing all variables with their names and values
+        from instances of BQ25795_REGISTER, as well as the content of battery_conf.
         """
         registers_data = {}
 
@@ -2070,5 +2065,9 @@ class bq25792:
                     if not var_name.startswith("_"):  # Skip private/internal variables
                         register_values[var_name] = var_value
                 registers_data[attr_name] = register_values
+
+        # Add battery_conf to the JSON output
+        registers_data["battery_conf"] = self.battery_conf
+
         return registers_data
 ####
