@@ -1,11 +1,11 @@
 readme_content = """
 <p align="center">
-  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/logo.svg" width="200" alt="MuPiHAT Logo">
+  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/MuPiHAT_Logo.png" width="200" alt="MuPiHAT Logo">
 </p>
 
 <h1 align="center">MuPiHAT</h1>
 <p align="center">
-  A Raspberry Pi HAT for the <a href="https://github.com/stopfkuchen/MuPiBox">MuPiBox</a> – a fun, child-friendly music player system.
+  A Raspberry Pi HAT for the <a href="https://mupibox.de">MuPiBox</a> – a fun, child-friendly music player system.
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@ readme_content = """
 
 ## 📦 Overview
 
-**MuPiHAT** is a custom-designed expansion board (HAT) for the Raspberry Pi. It adds buttons, LEDs, and optional components to create a robust and playful audio experience using the [MuPiBox](https://github.com/stopfkuchen/MuPiBox) platform.
+**MuPiHAT** is a custom-designed expansion board (HAT) for the Raspberry Pi. It adds buttons, LEDs, and optional components to create a robust and playful audio experience using the [MuPiBox](https://mupibox.de) platform.
 
 ---
 
