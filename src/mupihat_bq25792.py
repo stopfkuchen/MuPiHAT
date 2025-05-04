@@ -144,7 +144,7 @@ class bq25792:
             self.busWS_ms = busWS_ms
             self.registers = [0xFF]*73
             #BQ25792 Register
-            self.REG00_Minimal_System_Voltage = self.REG00_Minimal_System_Voltage(0x0)
+            self.REG00_Minimal_System_Voltage = self.REG00_Minimal_System_Voltage()
             self.REG01_Charge_Voltage_Limit = self.REG01_Charge_Voltage_Limit()
             self.REG03_Charge_Current_Limit = self.REG03_Charge_Current_Limit()
             self.REG05_Input_Voltage_Limit = self.REG05_Input_Voltage_Limit()
@@ -158,19 +158,19 @@ class bq25792:
             self.REG0F_Charger_Control_0 = self.REG0F_Charger_Control_0()
             self.REG10_Charger_Control_1 = self.REG10_Charger_Control_1()
             self.REG11_Charger_Control_2 = self.REG11_Charger_Control_2()
-            self.REG12_Charger_Control_3 = 0x12
+            self.REG12_Charger_Control_3 = self.REG12_Charger_Control_3()
             self.REG13_Charger_Control_4 = self.REG13_Charger_Control_4()
             self.REG14_Charger_Control_5 = self.REG14_Charger_Control_5()
-            self.REG15_Reserved = 0x15
+            self.REG15_Reserved = self.REG15_Reserved()
             self.REG16_Temperature_Control = self.REG16_Temperature_Control()
-            self.REG17_NTC_Control_0 = 0x17
-            self.REG18_NTC_Control_1 = 0x18
+            self.REG17_NTC_Control_0 = self.REG17_NTC_Control_0()
+            self.REG18_NTC_Control_1 = self.REG18_NTC_Control_1()
             self.REG19_ICO_Current_Limit = self.REG19_ICO_Current_Limit()
-            self.REG1B_Charger_Status_0 = 0x1b
+            self.REG1B_Charger_Status_0 = self.REG1B_Charger_Status_0()
             self.REG1C_Charger_Status_1 = self.REG1C_Charger_Status_1()
             self.REG1D_Charger_Status_2 = self.REG1D_Charger_Status_2()
-            self.REG1E_Charger_Status_3 = 0x1e
-            self.REG1F_Charger_Status_4 = 0x1f
+            self.REG1E_Charger_Status_3 = self.REG1E_Charger_Status_3()
+            self.REG1F_Charger_Status_4 = self.REG1F_Charger_Status_4()
             self.REG20_FAULT_Status_0  = 0x20
             self.REG21_FAULT_Status_1  = 0x21
             self.REG22_Charger_Flag_0  = 0x22
@@ -301,7 +301,7 @@ class bq25792:
             RW Range : 2500mV-16000mV 
             Fixed Offset : 2500mV Bit Step Size : 250mV Clamped High
         """
-        def __init__(self, addr, value=0):
+        def __init__(self, addr=0x0, value=0):
             super().__init__(addr, value)
             self.VSYSMIN = self._value * 250 + 2500
         def set (self, value):
@@ -875,7 +875,151 @@ class bq25792:
         def get (self):
             self._value = (self.FORCE_INDET << 7) | (self.AUTO_INDET_EN << 6) | (self.EN_12V << 5) | (self.EN_9V << 4) | (self.HVDCP_EN << 3) | (self.SDRV_CTRL << 1) | (self.SDRV_DLY)
             return self._value, self.SDRV_DLY, self.SDRV_CTRL, self.HVDCP_EN, self.EN_9V, self.EN_12V, self.AUTO_INDET_EN, self.FORCE_INDET
-        
+
+    class REG12_Charger_Control_3(BQ25795_REGISTER):
+        """
+        BQ25795 - REG12_Charger_Control_3
+        ----------
+        DIS_ACDRV
+            When this bit is set, the charger will force both EN_ACDRV1=0 and EN_ACDRV2=0 
+            Type : RW 
+            POR: 0b
+        EN_OTG
+            OTG mode control 
+            Type : RW 
+            POR: 0b 
+            0h = OTG Disable (default) 
+            1h = OTG Enable
+        PFM_OTG_DIS
+            Disable PFM in OTG mode 
+            Type : RW 
+            POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        PFM_FWD_DIS
+            Disable PFM in forward mode 
+            Type : RW 
+            POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        WKUP_DLY
+            When wake up the device from ship mode, how much time (tSM_EXIT) is required to pull low the QON pin. 
+            Type : RW 
+            POR: 0b 
+            0h = 1s (Default) 
+            1h = 15ms
+        DIS_LDO
+            Disable BATFET LDO mode in pre-charge stage. 
+            Type : RW POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        DIS_OTG_OOA
+            Disable OOA in OTG mode 
+            Type : RW POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        DIS_FWD_OOA
+            Disable OOA in forward mode 
+            Type : RW POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        """
+        def __init__(self, addr=0x12, value = 0):
+            super().__init__(addr, value)
+            self.DIS_ACDRV     = ((self._value & 0b10000000) >> 7)
+            self.EN_OTG        = ((self._value & 0b01000000) >> 6)         
+            self.PFM_OTG_DIS   = ((self._value & 0b00100000) >> 5)
+            self.PFM_FWD_DIS   = ((self._value & 0b00010000) >> 4)
+            self.WKUP_DLY      = ((self._value & 0b00001000) >> 3)
+            self.DIS_LDO       = ((self._value & 0b00000100) >> 2)
+            self.DIS_OTG_OOA   = ((self._value & 0b00000010) >> 1)
+            self.DIS_FWD_OOA   = ((self._value & 0b00000001) >> 0)
+        def set (self, value):  
+            super().set(value)
+            self.DIS_ACDRV     = ((self._value & 0b10000000) >> 7)
+            self.EN_OTG        = ((self._value & 0b01000000) >> 6)         
+            self.PFM_OTG_DIS   = ((self._value & 0b00100000) >> 5)
+            self.PFM_FWD_DIS   = ((self._value & 0b00010000) >> 4)
+            self.WKUP_DLY      = ((self._value & 0b00001000) >> 3)
+            self.DIS_LDO       = ((self._value & 0b00000100) >> 2)
+            self.DIS_OTG_OOA   = ((self._value & 0b00000010) >> 1)
+            self.DIS_FWD_OOA   = ((self._value & 0b00000001) >> 0)
+        def get (self):
+            self._value = (self.DIS_ACDRV << 7) | (self.EN_OTG << 6) | (self.PFM_OTG_DIS << 5) | (self.PFM_FWD_DIS << 4) | (self.WKUP_DLY << 3) | (self.DIS_LDO << 2) | (self.DIS_OTG_OOA << 1) | (self.DIS_FWD_OOA)
+            return self._value, self.DIS_ACDRV, self.EN_OTG, self.PFM_OTG_DIS, self.PFM_FWD_DIS, self.WKUP_DLY, self.DIS_LDO, self.DIS_OTG_OOA, self.DIS_FWD_OOA
+        def get_DIS_ACDRV(self):
+            '''return DIS_ACDRV'''
+            return self.DIS_ACDRV
+        def set_DIS_ACDRV(self, DIS_ACDRV):
+            '''
+            Set DIS_ACDRV (0h = Enable (Default), 1h = Disable)
+            '''
+            self.DIS_ACDRV = DIS_ACDRV
+            self.get()
+        def get_EN_OTG(self):
+            '''return EN_OTG'''
+            return self.EN_OTG
+        def set_EN_OTG(self, EN_OTG):
+            '''     
+            Set EN_OTG (0h = OTG Disable (default), 1h = OTG Enable)
+            '''
+            self.EN_OTG = EN_OTG
+            self.get()  
+        def get_PFM_OTG_DIS(self):
+            '''return PFM_OTG_DIS'''
+            return self.PFM_OTG_DIS
+        def set_PFM_OTG_DIS(self, PFM_OTG_DIS):
+            '''
+            Set PFM_OTG_DIS (0h = Enable (Default), 1h = Disable)
+            '''
+            self.PFM_OTG_DIS = PFM_OTG_DIS  
+            self.get()
+        def get_PFM_FWD_DIS(self):
+            '''return PFM_FWD_DIS'''
+            return self.PFM_FWD_DIS
+        def set_PFM_FWD_DIS(self, PFM_FWD_DIS):
+            '''
+            Set PFM_FWD_DIS (0h = Enable (Default), 1h = Disable)
+            '''
+            self.PFM_FWD_DIS = PFM_FWD_DIS  
+            self.get()
+        def get_WKUP_DLY(self):
+            '''return WKUP_DLY'''
+            return self.WKUP_DLY
+        def set_WKUP_DLY(self, WKUP_DLY):
+            '''
+            Set WKUP_DLY (0h = 1s (Default), 1h = 15ms)
+            '''
+            self.WKUP_DLY = WKUP_DLY  
+            self.get()
+        def get_DIS_LDO(self):
+            '''return DIS_LDO'''
+            return self.DIS_LDO
+        def set_DIS_LDO(self, DIS_LDO):
+            '''
+            Set DIS_LDO (0h = Enable (Default), 1h = Disable)
+            '''
+            self.DIS_LDO = DIS_LDO  
+            self.get()  
+        def get_DIS_OTG_OOA(self):
+            '''return DIS_OTG_OOA'''
+            return self.DIS_OTG_OOA 
+        def set_DIS_OTG_OOA(self, DIS_OTG_OOA):
+            '''
+            Set DIS_OTG_OOA (0h = Enable (Default), 1h = Disable)
+            '''
+            self.DIS_OTG_OOA = DIS_OTG_OOA  
+            self.get()
+        def get_DIS_FWD_OOA(self):
+            '''return DIS_FWD_OOA'''
+            return self.DIS_FWD_OOA 
+        def set_DIS_FWD_OOA(self, DIS_FWD_OOA):
+            '''
+            Set DIS_FWD_OOA (0h = Enable (Default), 1h = Disable)
+            '''
+            self.DIS_FWD_OOA = DIS_FWD_OOA  
+            self.get()
+
     class REG13_Charger_Control_4(BQ25795_REGISTER):
         """
         BQ25795 - REG13_Charger_Control_4
@@ -1058,6 +1202,20 @@ class bq25792:
             '''
             self.EN_BATOC = EN_BATOC  
             self.get()
+    class REG15_Reserved(BQ25795_REGISTER):
+        """
+        BQ25795 - REG15_Reserved
+        ----------
+        Reserved register, do not use.
+        """
+        def __init__(self, addr=0x15, value = 0):
+            super().__init__(addr, value)
+            self._value = value
+        def set (self, value):
+            super().set(value)
+            self._value = value
+        def get (self):
+            return self._value
     
     class REG16_Temperature_Control(BQ25795_REGISTER):
         """
@@ -1169,7 +1327,217 @@ class bq25792:
             self.TSHUT = TSHUT
             self.get()
 
-    
+    class REG17_NTC_Control_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG17_NTC_Control_0
+        ----------
+        JEITA_VSET
+            JEITA high temperature range (TWARN – THOT) charge voltage setting 
+            Type : RW 
+            POR: 011b 
+            0h = Charge Suspend 
+            1h = Set VREG to VREG-800mV 
+            2h = Set VREG to VREG-600mV 
+            3h = Set VREG to VREG-400mV (default) 
+            4h = Set VREG to VREG-300mV 
+            5h = Set VREG to VREG-200mV 
+            6h = Set VREG to VREG-100mV 
+            7h = VREG unchanged
+        JEITA_ISETH
+            JEITA high temperature range (TWARN – THOT) charge current setting 
+            Type : RW 
+            POR: 11b 
+            0h = Charge Suspend 
+            1h = Set ICHG to 20%* ICHG 
+            2h = Set ICHG to 40%* ICHG 
+            3h = ICHG unchanged (default)
+        JEITA_ISETC
+            JEITA low temperature range (TCOLD – TCOOL) charge current setting 
+            Type : RW 
+            POR: 01b 
+            0h = Charge Suspend 
+            1h = Set ICHG to 20%* ICHG (default) 
+            2h = Set ICHG to 40%* ICHG 
+            3h = ICHG unchanged
+        """
+        def __init__(self, addr=0x17, value = 0x7a):
+            super().__init__(addr, value)
+            self.JEITA_VSET           = ((self._value & 0b11100000) >> 5)
+            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3)  
+            self.JEITA_ISETC          = ((self._value & 0b00000110) >> 1)
+        def set (self, value):
+            super().set(value)
+            self.JEITA_VSET           = ((self._value & 0b11100000) >> 5)
+            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3)   
+            self.JEITA_ISETC          = ((self._value & 0b00000110) >> 1)
+        def get (self):
+            self._value = (self.JEITA_VSET << 5) | (self.JEITA_ISETH << 3) | (self.JEITA_ISETC << 1) | 0
+            return self._value, self.JEITA_VSET, self.JEITA_ISETH, self.JEITA_ISETC
+        def get_JEITA_VSET(self):
+            '''return JEITA_VSET'''
+            return self.JEITA_VSET      
+        def set_JEITA_VSET(self, JEITA_VSET):
+            '''
+            Set JEITA_VSET (0h = Charge Suspend, 1h = Set VREG to VREG-800mV, 2h = Set VREG to VREG-600mV, 3h = Set VREG to VREG-400mV (default), 4h = Set VREG to VREG-300mV, 5h = Set VREG to VREG-200mV, 6h = Set VREG to VREG-100mV, 7h = VREG unchanged)   
+            '''
+            self.JEITA_VSET = JEITA_VSET
+            self.get()
+        def get_JEITA_ISETH(self):
+            '''return JEITA_ISETH'''
+            return self.JEITA_ISETH
+
+        def set_JEITA_ISETH(self, JEITA_ISETH):
+            '''
+            Set JEITA_ISETH (0h = Charge Suspend, 1h = Set ICHG to 20%* ICHG, 2h = Set ICHG to 40%* ICHG, 3h = ICHG unchanged (default)) 
+            '''
+            self.JEITA_ISETH = JEITA_ISETH
+            self.get()
+        def get_JEITA_ISETC(self):
+            '''return JEITA_ISETC'''
+            return self.JEITA_ISETC 
+        def set_JEITA_ISETC(self, JEITA_ISETC):
+            '''
+            Set JEITA_ISETC (0h = Charge Suspend, 1h = Set ICHG to 20%* ICHG (default), 2h = Set ICHG to 40%* ICHG, 3h = ICHG unchanged)
+            '''
+            self.JEITA_ISETC = JEITA_ISETC
+            self.get()
+
+    class REG18_NTC_Control_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG18_NTC_Control_1
+        ----------
+        TS_COOL
+            JEITA VT2 comparator voltage rising thresholds as a percentage of REGN. 
+            The corresponding temperature in the brackets is achieved when a 103AT NTC thermistor is used, RT1=5.24kΩ and RT2=30.31kΩ. 
+            Type : RW 
+            POR: 01b 
+            0h = 71.1% (5°C) 
+            1h = 68.4% (default) (10°C) 
+            2h = 65.5% (15°C) 
+            3h = 62.4% (20°C)
+        TS_WARM
+            JEITA VT3 comparator voltage falling thresholds as a percentage of REGN. 
+            The corresponding temperature in the brackets is achieved when a 103AT NTC thermistor is used, RT1=5.24kΩ and RT2=30.31kΩ. 
+            Type : RW 
+            POR: 01b 
+            0h = 48.4% (40°C) 
+            1h = 44.8% (default) (45°C) 
+            2h = 41.2% (50°C) 
+            3h = 37.7% (55°C)
+        BHOT
+            OTG mode TS HOT temperature threshold 
+            Type : RW 
+            POR: 01b 
+            0h = 55°C 
+            1h = 60°C (default) 
+            2h = 65°C 
+            3h = Disable
+        BCOLD
+            OTG mode TS COLD temperature threshold 
+            Type : RW 
+            POR: 0b 
+            0h = -10°C (default) 
+            1h = -20°C    
+        TS_IGNORE
+            Ignore the TS feedback, the charger considers the TS is always good to allow the charging and OTG modes, all the four TS status bits always stay at 0000 to report the normal condition. 
+            Type : RW 
+            POR: 0b 
+            0h = NOT ignore (Default) 
+            1h = Ignore
+        """
+        def __init__(self, addr=0x18, value = 0):
+            super().__init__(addr, value)
+            self.TS_COOL           = ((self._value & 0b11000000) >> 6)
+            self.TS_WARM           = ((self._value & 0b00110000) >> 4)  
+            self.BHOT              = ((self._value & 0b00001100) >> 2)
+            self.BCOLD             = ((self._value & 0b00000010) >> 1)  
+            self.TS_IGNORE         = ((self._value & 0b00000001) >> 0)
+        def set (self, value):
+            super().set(value)
+            self.TS_COOL           = ((self._value & 0b11000000) >> 6)
+            self.TS_WARM           = ((self._value & 0b00110000) >> 4)  
+            self.BHOT              = ((self._value & 0b00001100) >> 2)
+            self.BCOLD             = ((self._value & 0b00000010) >> 1)
+            self.TS_IGNORE         = ((self._value & 0b00000001) >> 0)
+        def get (self):
+            self._value = (self.TS_COOL << 6) | (self.TS_WARM << 4) | (self.BHOT << 2) | (self.BCOLD << 1) | self.TS_IGNORE
+            return self._value, self.TS_COOL, self.TS_WARM, self.BHOT, self.BCOLD, self.TS_IGNORE
+        def get_TS_COOL(self):
+            '''return TS_COOL'''
+            return self.TS_COOL
+        def set_TS_COOL(self, TS_COOL):
+            '''
+            Set TS_COOL (0h = 71.1% (5°C), 1h = 68.4% (default) (10°C), 2h = 65.5% (15°C), 3h = 62.4% (20°C))   
+            '''
+            self.TS_COOL = TS_COOL
+            self.get()
+        def get_TS_WARM(self):
+            '''return TS_WARM'''
+            return self.TS_WARM
+        def set_TS_WARM(self, TS_WARM):     
+            '''
+            Set TS_WARM (0h = 48.4% (40°C), 1h = 44.8% (default) (45°C), 2h = 41.2% (50°C), 3h = 37.7% (55°C)) 
+            '''
+            self.TS_WARM = TS_WARM
+            self.get()
+        def get_BHOT(self):
+            '''return BHOT'''
+            return self.BHOT
+        def set_BHOT(self, BHOT):
+            '''
+            Set BHOT (0h = 55°C, 1h = 60°C (default), 2h = 65°C, 3h = Disable) 
+            '''
+            self.BHOT = BHOT
+            self.get()
+        def get_BCOLD(self):
+            '''return BCOLD'''
+            return self.BCOLD
+        def set_BCOLD(self, BCOLD): 
+            '''
+            Set BCOLD (0h = -10°C (default), 1h = -20°C) 
+            '''
+            self.BCOLD = BCOLD
+            self.get()
+        def get_TS_IGNORE(self):
+            '''return TS_IGNORE'''
+            return self.TS_IGNORE
+        def set_TS_IGNORE(self, TS_IGNORE):
+            '''
+            Set TS_IGNORE (0h = NOT ignore (Default), 1h = Ignore)
+            '''
+            '''
+            Set TS_IGNORE (0h = NOT ignore (Default), 1h = Ignore)  
+            '''
+            self.TS_IGNORE = TS_IGNORE  
+            self.get()
+        def get_TS_COOL_threshold(self):
+            if self.TS_COOL == 0x0: return "5°C"
+            elif self.TS_COOL == 0x1: return"10°C"
+            elif self.TS_COOL == 0x2: return "15°C"
+            elif self.TS_COOL == 0x3: return "20°C"
+            else: return "unknown"
+        def get_TS_WARM_threshold(self):    
+            if self.TS_WARM == 0x0: return "40°C"
+            elif self.TS_WARM == 0x1: return"45°C"
+            elif self.TS_WARM == 0x2: return "50°C"
+            elif self.TS_WARM == 0x3: return "55°C"
+            else: return "unknown"
+        def get_BHOT_threshold(self):
+            if self.BHOT == 0x0: return "55°C"
+            elif self.BHOT == 0x1: return"60°C"
+            elif self.BHOT == 0x2: return "65°C"
+            elif self.BHOT == 0x3: return "Disable"
+            else: return "unknown"
+        def get_BCOLD_threshold(self):
+            if self.BCOLD == 0x0: return "-10°C"
+            elif self.BCOLD == 0x1: return"-20°C"
+            else: return "unknown"
+        def get_TS_IGNORE_status(self):
+            if self.TS_IGNORE == 0x0: return "NOT ignore (Default)"
+            elif self.TS_IGNORE == 0x1: return"Ignore"
+            else: return "unknown"
+
+
     class REG19_ICO_Current_Limit(BQ25795_REGISTER):
         """
         BQ25795 - REG19_ICO_Current_Limit
@@ -1193,6 +1561,106 @@ class bq25792:
             '''return Input Current Limit obtained from ICO or ILIM_HIZ pin setting in [mA]'''
             return self.ICO_ILIM*10
         
+    class REG1B_Charger_Status_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG1B_Charger_Status_0
+        ----------
+        IINDPM_STAT
+            IINDPM status (forward mode) or IOTG status (OTG mode) 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = In IINDPM regulation or IOTG regulation
+        VINDPM_STAT
+            VINDPM status (forward mode) or VOTG status (OTG mode) 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = In VINDPM regulation or VOTG regulation
+        WD_STAT
+            Watchdog status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Watchdog timeout
+        POORSRC_STAT
+            Poor source status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Poor source detected
+        PG_STAT
+            Power good status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Power good detected
+        AC2_PRESENT_STAT
+            VAC2 insert status 
+            Type : R 
+            POR: 0b 
+            0h = VAC2 NOT present 
+            1h = VAC2 present (above present threshold)  
+        AC1_PRESENT_STAT
+            VAC1 insert status 
+            Type : R 
+            POR: 0b 
+            0h = VAC1 NOT present 
+            1h = VAC1 present (above present threshold)
+        VBUS_PRESENT_STAT
+            VBUS present status 
+            Type : R 
+            POR: 0b 
+            0h = VBUS NOT present 
+            1h = VBUS present (above present threshold)              
+        """
+        def __init__(self, addr=0x1B, value = 0):
+            super().__init__(addr, value)
+            self.IINDPM_STAT         = ((self._value & 0b100000000) >> 7)
+            self.VINDPM_STAT         = ((self._value & 0b010000000) >> 6)   
+            self.WD_STAT             = ((self._value & 0b001000000) >> 5)
+            self.POORSRC_STAT        = ((self._value & 0b000100000) >> 4)
+            self.PG_STAT             = ((self._value & 0b000010000) >> 3)
+            self.AC2_PRESENT_STAT    = ((self._value & 0b000001000) >> 2)
+            self.AC1_PRESENT_STAT    = ((self._value & 0b000000100) >> 1)
+            self.VBUS_PRESENT_STAT   = ((self._value & 0b000000010) >> 0)
+        def set (self, value):
+            super().set(value)
+            self.IINDPM_STAT         = ((self._value & 0b100000000) >> 7)
+            self.VINDPM_STAT         = ((self._value & 0b010000000) >> 6)   
+            self.WD_STAT             = ((self._value & 0b001000000) >> 5)
+            self.POORSRC_STAT        = ((self._value & 0b000100000) >> 4)
+            self.PG_STAT             = ((self._value & 0b000010000) >> 3)
+            self.AC2_PRESENT_STAT    = ((self._value & 0b000001000) >> 2)
+            self.AC1_PRESENT_STAT    = ((self._value & 0b000000100) >> 1)
+            self.VBUS_PRESENT_STAT   = ((self._value & 0b000000010) >> 0)
+        def get (self):
+            return self._value, self.IINDPM_STAT, self.VINDPM_STAT, self.WD_STAT, self.POORSRC_STAT, self.PG_STAT, self.AC2_PRESENT_STAT, self.AC1_PRESENT_STAT, self.VBUS_PRESENT_STAT
+        def get_IINDPM_STAT(self):
+            '''return IINDPM_STAT'''
+            return self.IINDPM_STAT
+        def get_VINDPM_STAT(self):
+            '''return VINDPM_STAT'''
+            return self.VINDPM_STAT
+        def get_WD_STAT(self):
+            '''return WD_STAT'''
+            return self.WD_STAT
+        def get_POORSRC_STAT(self):
+            '''return POORSRC_STAT'''
+            return self.POORSRC_STAT
+        def get_PG_STAT(self):
+            '''return PG_STAT'''
+            return self.PG_STAT
+        def get_AC2_PRESENT_STAT(self):
+            '''return AC2_PRESENT_STAT'''
+            return self.AC2_PRESENT_STAT
+        def get_AC1_PRESENT_STAT(self):
+            '''return AC1_PRESENT_STAT'''
+            return self.AC1_PRESENT_STAT
+        def get_VBUS_PRESENT_STAT(self):
+            '''return VBUS_PRESENT_STAT'''
+            return self.VBUS_PRESENT_STAT
+
     class REG1C_Charger_Status_1(BQ25795_REGISTER):
         """
         BQ25795 - REG1C_Charger_Status_1
@@ -1261,6 +1729,64 @@ class bq25792:
             elif CHG_STAT == 0x6: return "Top-off Timer Active Charging"
             elif CHG_STAT == 0x7: return "Charge Termination Done"
             else: return "Reserved"
+        def get_CHG_STAT(self):
+            '''return CHG_STAT'''
+            return self.CHG_STAT
+        def get_VBUS_STAT(self):
+            '''return VBUS_STAT'''
+            return self.VBUS_STAT
+        def get_CHG_STAT_STRG(self):
+            '''return CHG_STAT_STRG'''
+            return self.CHG_STAT_STRG
+        def get_CHG_STAT_string(self):
+            '''
+            Returns CHG_STAT string 
+            0h = Not Charging 
+            1h = Trickle Charge 
+            2h = Pre-charge 
+            3h = Fast charge (CC mode) 
+            4h = Taper Charge (CV mode) 
+            5h = Reserved 
+            6h = Top-off Timer Active Charging 
+            7h = Charge Termination Done
+            '''
+            return self.CHG_STAT_STRG   
+        def get_VBUS_STAT_string(self):
+            '''
+            VBUS_STAT
+            VBUS status bits 
+            0h: No Input or BHOT or BCOLD in OTG mode 
+            1h: USB SDP (500mA) 
+            2h: USB CDP (1.5A) 
+            3h: USB DCP (3.25A) 
+            4h: Adjustable High Voltage DCP (HVDCP) (1.5A) 
+            5h: Unknown adaptor (3A) 
+            6h: Non-Standard Adapter (1A/2A/2.1A/2.4A) 
+            7h: In OTG mode 
+            8h: Not qualified adaptor 
+            9h: Reserved 
+            Ah: Reserved 
+            Bh: Device directly powered from VBUS 
+            Ch: Reserved Dh: Reserved Eh: Reserved Fh: Reserved
+            '''
+            if self.VBUS_STAT == 0x0: return "No Input or BHOT or BCOLD in OTG mode"
+            elif self.VBUS_STAT == 0x1: return"USB SDP (500mA)"
+            elif self.VBUS_STAT == 0x2: return "USB CDP (1.5A)"
+            elif self.VBUS_STAT == 0x3: return "USB DCP (3.25A)"
+            elif self.VBUS_STAT == 0x4: return "Adjustable High Voltage DCP (HVDCP) (1.5A)"
+            elif self.VBUS_STAT == 0x5: return "Unknown adaptor (3A)"
+            elif self.VBUS_STAT == 0x6: return "Non-Standard Adapter (1A/2A/2.1A/2.4A)"
+            elif self.VBUS_STAT == 0x7: return "In OTG mode"
+            elif self.VBUS_STAT == 0x8: return "Not qualified adaptor"
+            elif self.VBUS_STAT == 0x9: return "Reserved"
+            elif self.VBUS_STAT == 0xa: return "Reserved"
+            elif self.VBUS_STAT == 0xb: return "Device directly powered from VBUS"
+            elif self.VBUS_STAT == 0xc: return "Reserved"
+            elif self.VBUS_STAT == 0xd: return "Reserved"
+            elif self.VBUS_STAT == 0xe: return "Reserved"   
+            elif self.VBUS_STAT == 0xf: return "Reserved"
+            else: return "Reserved" 
+   
 
     class REG1D_Charger_Status_2(BQ25795_REGISTER):
         """
@@ -1314,6 +1840,162 @@ class bq25792:
             else: return "unknown"
 
 
+    class REG1E_Charger_Status_3(BQ25795_REGISTER):
+        """
+        BQ25795 - REG1E_Charger_Status_3
+        ----------
+        ACRB2_STAT
+            The ACFET2-RBFET2 status 
+            Type : R 
+            POR: 0b 
+            0h = ACFET2-RBFET2 is NOT placed 
+            1h = ACFET2-RBFET2 is placed
+        ACRB1_STAT
+            The ACFET1-RBFET1 status 
+            Type : R 
+            POR: 0b 
+            0h = ACFET1-RBFET1 is NOT placed 
+            1h = ACFET1-RBFET1 is placed
+        ADC_DONE_STAT
+            The ADC conversion done status (in one-shot mode only) 
+            Type : R 
+            POR: 0b 
+            0h = ADC conversion NOT done 
+            1h = ADC conversion done
+        VSYS_STAT
+            VSYS Regulation Status (forward mode) 
+            Type : R 
+            POR: 0b 
+            0h = Not in VSYSMIN regulation (VBAT > VSYSMIN) 
+            1h = In VSYSMIN regulation (VBAT < VSYSMIN)
+        CHG_TMR_STAT
+            Fast charge timer status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Safety timer expired
+        TRICHG_TMR_STAT
+            Trickle charge timer status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Safety timer expired 
+        PRECHG_TMR_STAT
+            Pre-charge timer status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Safety timer expired  
+        """
+        def __init__(self, addr=0x1E, value = 0):
+            super().__init__(addr, value)
+            self.ACRB2_STAT         = ((self._value & 0b10000000) >> 7)
+            self.ACRB1_STAT         = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_STAT      = ((self._value & 0b00100000) >> 5)
+            self.VSYS_STAT          = ((self._value & 0b00010000) >> 4)
+            self.CHG_TMR_STAT       = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_STAT    = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_STAT    = ((self._value & 0b00000010) >> 1)
+        def set (self, value):
+            super().set(value)
+            self.ACRB2_STAT         = ((self._value & 0b10000000) >> 7)
+            self.ACRB1_STAT         = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_STAT      = ((self._value & 0b00100000) >> 5)
+            self.VSYS_STAT          = ((self._value & 0b00010000) >> 4)
+            self.CHG_TMR_STAT       = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_STAT    = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_STAT    = ((self._value & 0b00000010) >> 1)
+        def get (self):
+            return self._value, self.ACRB2_STAT, self.ACRB1_STAT, self.ADC_DONE_STAT, self.VSYS_STAT, self.CHG_TMR_STAT, self.TRICHG_TMR_STAT, self.PRECHG_TMR_STAT
+        def get_ACRB2_STAT(self):
+            '''return ACRB2_STAT'''
+            return self.ACRB2_STAT      
+        def get_ACRB1_STAT(self):
+            '''return ACRB1_STAT'''
+            return self.ACRB1_STAT
+        def get_ADC_DONE_STAT(self):
+            '''return ADC_DONE_STAT'''
+            return self.ADC_DONE_STAT
+        def get_VSYS_STAT(self):
+            '''return VSYS_STAT'''
+            return self.VSYS_STAT
+        def get_CHG_TMR_STAT(self):
+            '''return CHG_TMR_STAT'''
+            return self.CHG_TMR_STAT
+        def get_TRICHG_TMR_STAT(self):
+            '''return TRICHG_TMR_STAT'''
+            return self.TRICHG_TMR_STAT
+        def get_PRECHG_TMR_STAT(self):
+            '''return PRECHG_TMR_STAT'''
+            return self.PRECHG_TMR_STAT
+        
+    class REG1F_Charger_Status_4(BQ25795_REGISTER):
+        """
+        BQ25795 - REG1F_Charger_Status_4
+        ----------
+        VBATOTG_LOW_STAT
+            The battery voltage is too low to enable OTG mode. 
+            Type : R 
+            POR: 0b 
+            0h = The battery voltage is high enough to enable the OTG operation 
+            1h = The battery volage is too low to enable the OTG operation
+        TS_COLD_STAT
+           The TS temperature is in the cold range, lower than T1. 
+           Type : R 
+           POR: 0b 
+           0h = TS status is NOT in cold range 
+           1h = TS status is in cold range
+        TS_COOL_STAT
+            The TS temperature is in the cool range, between T1 and T2. 
+            Type : R 
+            POR: 0b 
+            0h = TS status is NOT in cool range 
+            1h = TS status is in cool range
+        TS_WARM_STAT
+            The TS temperature is in the warm range, between T3 and T5. 
+            Type : R 
+            POR: 0b 
+            0h = TS status is NOT in warm range 
+            1h = TS status is in warm range
+        TS_HOT_STAT
+            The TS temperature is in the hot range, higher than T5. 
+            Type : R 
+            POR: 0b 
+            0h = TS status is NOT in hot range 
+            1h = TS status is in hot range
+        """
+        def __init__(self, addr=0x1F, value = 0):
+            super().__init__(addr, value)
+            self.VBATOTG_LOW_STAT   = ((self._value & 0b00010000) >> 4)
+            self.TS_COLD_STAT       = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_STAT       = ((self._value & 0b00000100) >> 2) 
+            self.TS_WARM_STAT       = ((self._value & 0b00000010) >> 1)
+            self.TS_HOT_STAT        = ((self._value & 0b00000001) >> 0)
+        def set (self, value):
+            super().set(value)
+            self.VBATOTG_LOW_STAT   = ((self._value & 0b00010000) >> 4)
+            self.TS_COLD_STAT       = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_STAT       = ((self._value & 0b00000100) >> 2) 
+            self.TS_WARM_STAT       = ((self._value & 0b00000010) >> 1)
+            self.TS_HOT_STAT        = ((self._value & 0b00000001) >> 0)
+        def get (self):
+            return self._value, self.VBATOTG_LOW_STAT, self.TS_COLD_STAT, self.TS_COOL_STAT, self.TS_WARM_STAT, self.TS_HOT_STAT    
+        def get_VBATOTG_LOW_STAT(self):
+            '''return VBATOTG_LOW_STAT'''
+            return self.VBATOTG_LOW_STAT
+        def get_TS_COLD_STAT(self):
+            '''return TS_COLD_STAT'''
+            return self.TS_COLD_STAT
+        def get_TS_COOL_STAT(self):
+            '''return TS_COOL_STAT'''
+            return self.TS_COOL_STAT
+        def get_TS_WARM_STAT(self):
+            '''return TS_WARM_STAT'''
+            return self.TS_WARM_STAT
+        def get_TS_HOT_STAT(self):
+            '''return TS_HOT_STAT'''
+            return self.TS_HOT_STAT
+        
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -1746,11 +2428,18 @@ class bq25792:
             self.REG0F_Charger_Control_0.set(self.registers[self.REG0F_Charger_Control_0._addr])
             self.REG10_Charger_Control_1.set(self.registers[self.REG10_Charger_Control_1._addr])
             self.REG11_Charger_Control_2.set(self.registers[self.REG11_Charger_Control_2._addr])
+            self.REG12_Charger_Control_3.set(self.registers[self.REG12_Charger_Control_3._addr])
             self.REG13_Charger_Control_4.set(self.registers[self.REG13_Charger_Control_4._addr])
             self.REG14_Charger_Control_5.set(self.registers[self.REG14_Charger_Control_5._addr])
+            self.REG15_Reserved.set(self.registers[self.REG15_Reserved._addr])
             self.REG16_Temperature_Control.set(self.registers[self.REG16_Temperature_Control._addr])
+            self.REG17_NTC_Control_0.set(self.registers[self.REG17_NTC_Control_0._addr])
+            self.REG18_NTC_Control_1.set(self.registers[self.REG18_NTC_Control_1._addr])
+            self.REG19_ICO_Current_Limit.set((self.registers[self.REG19_ICO_Current_Limit._addr] << 8) | (self.registers[self.REG19_ICO_Current_Limit._addr+1]))
+            self.REG1B_Charger_Status_0.set(self.registers[self.REG1B_Charger_Status_0._addr])
             self.REG1C_Charger_Status_1.set(self.registers[self.REG1C_Charger_Status_1._addr])
             self.REG1D_Charger_Status_2.set(self.registers[self.REG1D_Charger_Status_2._addr])
+            self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
