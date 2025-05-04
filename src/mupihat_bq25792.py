@@ -1734,13 +1734,13 @@ class bq25792:
             self.CHG_STAT           = ((self._value & 0b11100000) >> 5)
             self.VBUS_STAT          = ((self._value & 0b00011110) >> 1)
             self.CHG_STAT_STRG      = self.chg_stat_get_string(self.CHG_STAT)
-            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string(self.VBUS_STAT)
+            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string()
         def set (self, value):
             super().set(value)
             self.CHG_STAT           = ((self._value & 0b11100000) >> 5)
             self.VBUS_STAT          = ((self._value & 0b00011110) >> 1)
             self.CHG_STAT_STRG      = self.chg_stat_get_string(self.CHG_STAT)
-            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string(self.VBUS_STAT)
+            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string()
         def get (self):
             return self._value, self.CHG_STAT, self.VBUS_STAT, self.CHG_STAT_STRG
         def chg_stat_get_string (self, CHG_STAT):
