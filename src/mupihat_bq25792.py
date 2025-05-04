@@ -2010,6 +2010,11 @@ class bq25792:
             self.TS_COOL_STAT       = ((self._value & 0b00000100) >> 2) 
             self.TS_WARM_STAT       = ((self._value & 0b00000010) >> 1)
             self.TS_HOT_STAT        = ((self._value & 0b00000001) >> 0)
+            self.VBATOTG_LOW_STAT_STRG = self.get_VBATOTG_LOW_STAT_string()
+            self.TS_COLD_STAT_STRG   = self.get_TS_COLD_STAT_string()   
+            self.TS_COOL_STAT_STRG   = self.get_TS_COOL_STAT_string()
+            self.TS_WARM_STAT_STRG   = self.get_TS_WARM_STAT_string()
+            self.TS_HOT_STAT_STRG    = self.get_TS_HOT_STAT_string()
         def set (self, value):
             super().set(value)
             self.VBATOTG_LOW_STAT   = ((self._value & 0b00010000) >> 4)
@@ -2034,7 +2039,53 @@ class bq25792:
         def get_TS_HOT_STAT(self):
             '''return TS_HOT_STAT'''
             return self.TS_HOT_STAT
-        
+        def get_VBATOTG_LOW_STAT_string(self):
+            '''
+            Returns VBATOTG_LOW_STAT string 
+            0h = The battery voltage is high enough to enable the OTG operation 
+            1h = The battery volage is too low to enable the OTG operation
+            '''
+            if self.VBATOTG_LOW_STAT == 0: return "The battery voltage is high enough to enable the OTG operation"
+            elif self.VBATOTG_LOW_STAT == 1: return "The battery volage is too low to enable the OTG operation"
+            else: return "unknown"
+        def get_TS_COLD_STAT_string(self):  
+            '''
+            Returns TS_COLD_STAT string 
+            0h = TS status is NOT in cold range 
+            1h = TS status is in cold range
+            '''
+            if self.TS_COLD_STAT == 0: return "TS status is NOT in cold range"
+            elif self.TS_COLD_STAT == 1: return "TS status is in cold range"
+            else: return "unknown"
+        def get_TS_COOL_STAT_string(self):
+            '''
+            Returns TS_COOL_STAT string 
+            0h = TS status is NOT in cool range 
+            1h = TS status is in cool range
+            '''
+            if self.TS_COOL_STAT == 0: return "TS status is NOT in cool range"
+            elif self.TS_COOL_STAT == 1: return "TS status is in cool range"
+            else: return "unknown"
+        def get_TS_WARM_STAT_string(self):
+
+            '''
+            Returns TS_WARM_STAT string 
+            0h = TS status is NOT in warm range 
+            1h = TS status is in warm range
+            '''
+            if self.TS_WARM_STAT == 0: return "TS status is NOT in warm range"
+            elif self.TS_WARM_STAT == 1: return "TS status is in warm range"
+            else: return "unknown"
+        def get_TS_HOT_STAT_string(self):
+            '''
+            Returns TS_HOT_STAT string 
+            0h = TS status is NOT in hot range 
+            1h = TS status is in hot range
+            '''
+            if self.TS_HOT_STAT == 0: return "TS status is NOT in hot range"
+            elif self.TS_HOT_STAT == 1: return "TS status is in hot range"
+            else: return "unknown"
+            
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -2479,6 +2530,7 @@ class bq25792:
             self.REG1C_Charger_Status_1.set(self.registers[self.REG1C_Charger_Status_1._addr])
             self.REG1D_Charger_Status_2.set(self.registers[self.REG1D_Charger_Status_2._addr])
             self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
+            self.REG1F_Charger_Status_4.set(self.registers[self.REG1F_Charger_Status_4._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
