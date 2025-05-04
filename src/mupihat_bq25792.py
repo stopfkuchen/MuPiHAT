@@ -1258,6 +1258,8 @@ class bq25792:
             self.VBUS_PD_EN             = ((self._value & 0b00001000) >> 3)
             self.VAC1_PD_EN             = ((self._value & 0b00000100) >> 2)
             self.VAC2_PD_EN             = ((self._value & 0b00000010) >> 1)
+            self.TREG_str               = self.get_thermal_reg_threshold()
+            self.TSHUT_str              = self.get_thermal_shutdown_threshold()
         def set (self, value):
             super().set(value)
             self.TREG                   = ((self._value & 0b11000000) >> 6)
@@ -1265,6 +1267,8 @@ class bq25792:
             self.VBUS_PD_EN             = ((self._value & 0b00001000) >> 3)
             self.VAC1_PD_EN             = ((self._value & 0b00000100) >> 2)
             self.VAC2_PD_EN             = ((self._value & 0b00000010) >> 1)
+            self.TREG_str               = self.get_thermal_reg_threshold()
+            self.TSHUT_str              = self.get_thermal_shutdown_threshold()
         def get (self):
             self._value =  (self.TREG << 6) | (self.TSHUT << 4) | (self.VBUS_PD_EN << 3) | (self.VAC1_PD_EN << 2) | (self.VAC2_PD_EN << 1) | 0
             return self._value,   self.TREG,  self.TSHUT, self.VBUS_PD_EN, self.VAC1_PD_EN, self.VAC2_PD_EN
@@ -1363,19 +1367,36 @@ class bq25792:
         def __init__(self, addr=0x17, value = 0x7a):
             super().__init__(addr, value)
             self.JEITA_VSET           = ((self._value & 0b11100000) >> 5)
-            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3)  
+            self.JEITA_VSET_str       = self.get_JEITA_VSET_str()
+            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3) 
+            self.JEITA_ISETH_str      = self.get_JEITA_ISETH_str() 
             self.JEITA_ISETC          = ((self._value & 0b00000110) >> 1)
+            self.JEITA_ISETC_str      = self.get_JEITA_ISETC_str()
+            
         def set (self, value):
             super().set(value)
             self.JEITA_VSET           = ((self._value & 0b11100000) >> 5)
-            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3)   
+            self.JEITA_VSET_str       = self.get_JEITA_VSET_str()
+            self.JEITA_ISETH          = ((self._value & 0b00011000) >> 3) 
+            self.JEITA_ISETH_str      = self.get_JEITA_ISETH_str() 
             self.JEITA_ISETC          = ((self._value & 0b00000110) >> 1)
+            self.JEITA_ISETC_str      = self.get_JEITA_ISETC_str()
         def get (self):
             self._value = (self.JEITA_VSET << 5) | (self.JEITA_ISETH << 3) | (self.JEITA_ISETC << 1) | 0
             return self._value, self.JEITA_VSET, self.JEITA_ISETH, self.JEITA_ISETC
         def get_JEITA_VSET(self):
             '''return JEITA_VSET'''
-            return self.JEITA_VSET      
+            return self.JEITA_VSET    
+        def get_JEITA_VSET_str(self):
+            if self.JEITA_VSET == 0x0: return "Charge Suspend"
+            elif self.JEITA_VSET == 0x1: return "Set VREG to VREG-800mV"
+            elif self.JEITA_VSET == 0x2: return "Set VREG to VREG-600mV"
+            elif self.JEITA_VSET == 0x3: return "Set VREG to VREG-400mV (default)"
+            elif self.JEITA_VSET == 0x4: return "Set VREG to VREG-300mV"
+            elif self.JEITA_VSET == 0x5: return "Set VREG to VREG-200mV"
+            elif self.JEITA_VSET == 0x6: return "Set VREG to VREG-100mV"
+            elif self.JEITA_VSET == 0x7: return "VREG unchanged"
+            else: return "unknown"  
         def set_JEITA_VSET(self, JEITA_VSET):
             '''
             Set JEITA_VSET (0h = Charge Suspend, 1h = Set VREG to VREG-800mV, 2h = Set VREG to VREG-600mV, 3h = Set VREG to VREG-400mV (default), 4h = Set VREG to VREG-300mV, 5h = Set VREG to VREG-200mV, 6h = Set VREG to VREG-100mV, 7h = VREG unchanged)   
@@ -1386,6 +1407,13 @@ class bq25792:
             '''return JEITA_ISETH'''
             return self.JEITA_ISETH
 
+        def get_JEITA_ISETH_str(self):
+            if self.JEITA_ISETH == 0x0: return "Charge Suspend"
+            elif self.JEITA_ISETH == 0x1: return "Set ICHG to 20%* ICHG"
+            elif self.JEITA_ISETH == 0x2: return "Set ICHG to 40%* ICHG"
+            elif self.JEITA_ISETH == 0x3: return "ICHG unchanged (default)"
+            else: return "unknown"
+
         def set_JEITA_ISETH(self, JEITA_ISETH):
             '''
             Set JEITA_ISETH (0h = Charge Suspend, 1h = Set ICHG to 20%* ICHG, 2h = Set ICHG to 40%* ICHG, 3h = ICHG unchanged (default)) 
@@ -1395,6 +1423,13 @@ class bq25792:
         def get_JEITA_ISETC(self):
             '''return JEITA_ISETC'''
             return self.JEITA_ISETC 
+        def get_JEITA_ISETC_str(self):
+            if self.JEITA_ISETC == 0x0: return "Charge Suspend"
+            elif self.JEITA_ISETC == 0x1: return "Set ICHG to 20%* ICHG (default)"
+            elif self.JEITA_ISETC == 0x2: return "Set ICHG to 40%* ICHG"
+            elif self.JEITA_ISETC == 0x3: return "ICHG unchanged"
+            else: return "unknown"
+
         def set_JEITA_ISETC(self, JEITA_ISETC):
             '''
             Set JEITA_ISETC (0h = Charge Suspend, 1h = Set ICHG to 20%* ICHG (default), 2h = Set ICHG to 40%* ICHG, 3h = ICHG unchanged)
@@ -1699,11 +1734,13 @@ class bq25792:
             self.CHG_STAT           = ((self._value & 0b11100000) >> 5)
             self.VBUS_STAT          = ((self._value & 0b00011110) >> 1)
             self.CHG_STAT_STRG      = self.chg_stat_get_string(self.CHG_STAT)
+            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string(self.VBUS_STAT)
         def set (self, value):
             super().set(value)
             self.CHG_STAT           = ((self._value & 0b11100000) >> 5)
             self.VBUS_STAT          = ((self._value & 0b00011110) >> 1)
             self.CHG_STAT_STRG      = self.chg_stat_get_string(self.CHG_STAT)
+            self.VBUS_STAT_STRG     = self.get_VBUS_STAT_string(self.VBUS_STAT)
         def get (self):
             return self._value, self.CHG_STAT, self.VBUS_STAT, self.CHG_STAT_STRG
         def chg_stat_get_string (self, CHG_STAT):
@@ -1821,12 +1858,14 @@ class bq25792:
             self.TREG_STAT          = ((self._value & 0b00000100) >> 2)
             self.DPDM_STAT          = ((self._value & 0b00000010) >> 1)
             self.VBAT_PRESENT_STAT  = ((self._value & 0b00000001) >> 0)
+            self.TREG_STAT_STRG      = self.get_thermal_regulation_status()
         def set (self, value):
             super().set(value)
             self.ICO_STAT           = ((self._value & 0b11000000) >> 6)
             self.TREG_STAT          = ((self._value & 0b00000100) >> 2)
             self.DPDM_STAT          = ((self._value & 0b00000010) >> 1)
             self.VBAT_PRESENT_STAT  = ((self._value & 0b00000001) >> 0)
+            self.TREG_STAT_STRG      = self.get_thermal_regulation_status()
         def get (self):
             return self._value, self.ICO_STAT, self.TREG_STAT, self.DPDM_STAT, self.VBAT_PRESENT_STAT
         def get_thermal_regulation_status(self):
