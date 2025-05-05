@@ -20,7 +20,8 @@
                         const registerCell = document.createElement('td');
                         const valueCell = document.createElement('td');
 
-                        registerCell.textContent = register;
+                        // Make the register name bold
+                        registerCell.innerHTML = `<strong>${register}</strong>`;
                         valueCell.textContent = ''; // Leave empty for now
 
                         registerRow.appendChild(registerCell);
