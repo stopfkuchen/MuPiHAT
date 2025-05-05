@@ -171,7 +171,7 @@ class bq25792:
             self.REG1D_Charger_Status_2 = self.REG1D_Charger_Status_2()
             self.REG1E_Charger_Status_3 = self.REG1E_Charger_Status_3()
             self.REG1F_Charger_Status_4 = self.REG1F_Charger_Status_4()
-            self.REG20_FAULT_Status_0  = 0x20
+            self.REG20_FAULT_Status_0  = self.REG20_FAULT_Status_0()
             self.REG21_FAULT_Status_1  = 0x21
             self.REG22_Charger_Flag_0  = 0x22
             self.REG23_Charger_Flag_1  = 0x23
@@ -2085,7 +2085,197 @@ class bq25792:
             if self.TS_HOT_STAT == 0: return "TS status is NOT in hot range"
             elif self.TS_HOT_STAT == 1: return "TS status is in hot range"
             else: return "unknown"
-            
+
+    class REG20_FAULT_Status_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG20_FAULT_Status_0
+        ----------
+        IBAT_REG_STAT
+            IBAT regulation status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in battery discharging current regulation
+        VBUS_OVP_STAT
+            VBUS over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over voltage protection
+        VBAT_OVP_STAT
+            VBAT over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over voltage protection 
+        IBUS_OCP_STAT
+            IBUS over-current status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over current protection
+        IBAT_OCP_STAT
+            IBAT over-current status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over current protection   
+        CONV_OCP_STAT
+            Converter over-current status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Converter in over current protection 
+        VAC2_OVP_STAT
+            VAC2 over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over voltage protection  
+        VAC1_OVP_STAT
+            VAC1 over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over voltage protection    
+        """
+        def __init__(self, addr=0x20, value = 0):
+            super().__init__(addr, value)
+            self.IBAT_REG_STAT       = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_STAT       = ((self._value & 0b01000000) >> 6)    
+            self.VBAT_OVP_STAT       = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_STAT       = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_STAT       = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_STAT       = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_STAT       = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_STAT       = ((self._value & 0b00000001) >> 0)
+            self.VBUS_OVP_STAT_STRG   = self.get_VBUS_OVP_STAT_string()
+            self.VBAT_OVP_STAT_STRG   = self.get_VBAT_OVP_STAT_string() 
+            self.IBAT_REG_STAT_STRG   = self.get_IBAT_REG_STAT_string()
+            self.IBUS_OCP_STAT_STRG   = self.get_IBUS_OCP_STAT_string()
+            self.IBAT_OCP_STAT_STRG   = self.get_IBAT_OCP_STAT_string()
+            self.CONV_OCP_STAT_STRG   = self.get_CONV_OCP_STAT_string() 
+            self.VAC2_OVP_STAT_STRG   = self.get_VAC2_OVP_STAT_string()
+            self.VAC1_OVP_STAT_STRG   = self.get_VAC1_OVP_STAT_string()
+        def set (self, value):
+            super().set(value)
+            self.IBAT_REG_STAT       = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_STAT       = ((self._value & 0b01000000) >> 6)    
+            self.VBAT_OVP_STAT       = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_STAT       = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_STAT       = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_STAT       = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_STAT       = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_STAT       = ((self._value & 0b00000001) >> 0)
+            self.VBUS_OVP_STAT_STRG   = self.get_VBUS_OVP_STAT_string()
+            self.VBAT_OVP_STAT_STRG   = self.get_VBAT_OVP_STAT_string() 
+            self.IBAT_REG_STAT_STRG   = self.get_IBAT_REG_STAT_string()
+            self.IBUS_OCP_STAT_STRG   = self.get_IBUS_OCP_STAT_string()
+            self.IBAT_OCP_STAT_STRG   = self.get_IBAT_OCP_STAT_string()
+            self.CONV_OCP_STAT_STRG   = self.get_CONV_OCP_STAT_string() 
+            self.VAC2_OVP_STAT_STRG   = self.get_VAC2_OVP_STAT_string()
+            self.VAC1_OVP_STAT_STRG   = self.get_VAC1_OVP_STAT_string()
+        def get (self):
+            return self._value, self.IBAT_REG_STAT, self.VBUS_OVP_STAT, self.VBAT_OVP_STAT, self.IBUS_OCP_STAT, self.IBAT_OCP_STAT, self.CONV_OCP_STAT, self.VAC2_OVP_STAT, self.VAC1_OVP_STAT
+        def get_IBAT_REG_STAT(self):
+            '''return IBAT_REG_STAT'''
+            return self.IBAT_REG_STAT
+        def get_VBUS_OVP_STAT(self):
+            '''return VBUS_OVP_STAT'''
+            return self.VBUS_OVP_STAT
+        def get_VBAT_OVP_STAT(self):
+            '''return VBAT_OVP_STAT'''
+            return self.VBAT_OVP_STAT
+        def get_IBUS_OCP_STAT(self):
+            '''return IBUS_OCP_STAT'''
+            return self.IBUS_OCP_STAT
+        def get_IBAT_OCP_STAT(self):
+            '''return IBAT_OCP_STAT'''
+            return self.IBAT_OCP_STAT
+        def get_CONV_OCP_STAT(self):
+            '''return CONV_OCP_STAT'''
+            return self.CONV_OCP_STAT
+        def get_VAC2_OVP_STAT(self):
+            '''return VAC2_OVP_STAT'''
+            return self.VAC2_OVP_STAT
+        def get_VAC1_OVP_STAT(self):
+            '''return VAC1_OVP_STAT'''
+            return self.VAC1_OVP_STAT
+        def get_VBUS_OVP_STAT_string(self):
+            '''
+            Returns VBUS_OVP_STAT string
+            0h = Normal
+            1h = Device in over voltage protection
+            '''
+            if self.VBUS_OVP_STAT == 0: return "Normal"
+            elif self.VBUS_OVP_STAT == 1: return "Device in over voltage protection"
+            else: return "unknown"
+        def get_VBAT_OVP_STAT_string(self):
+            '''
+            Returns VBAT_OVP_STAT string
+            0h = Normal
+            1h = Device in over voltage protection
+            '''
+            if self.VBAT_OVP_STAT == 0: return "Normal"
+            elif self.VBAT_OVP_STAT == 1: return "Device in over voltage protection"
+            else: return "unknown"
+        def get_IBAT_REG_STAT_string(self):
+            '''
+            Returns IBAT_REG_STAT string
+            0h = Normal
+            1h = Device in battery discharging current regulation
+            '''
+            if self.IBAT_REG_STAT == 0: return "Normal"
+            elif self.IBAT_REG_STAT == 1: return "Device in battery discharging current regulation"
+            else: return "unknown"
+        def get_IBUS_OCP_STAT_string(self): 
+            '''
+            Returns IBUS_OCP_STAT string
+            0h = Normal
+            1h = Device in over current protection
+            '''
+            if self.IBUS_OCP_STAT == 0: return "Normal"
+            elif self.IBUS_OCP_STAT == 1: return "Device in over current protection"
+            else: return "unknown"
+        def get_IBAT_OCP_STAT_string(self):
+            '''
+            Returns IBAT_OCP_STAT string
+            0h = Normal
+            1h = Device in over current protection
+            '''
+            if self.IBAT_OCP_STAT == 0: return "Normal"
+            elif self.IBAT_OCP_STAT == 1: return "Device in over current protection"
+            else: return "unknown"
+        def get_CONV_OCP_STAT_string(self):
+            '''
+            Returns CONV_OCP_STAT string
+            0h = Normal
+            1h = Converter in over current protection
+            '''
+            if self.CONV_OCP_STAT == 0: return "Normal"
+            elif self.CONV_OCP_STAT == 1: return "Converter in over current protection"
+            else: return "unknown"
+        def get_VAC2_OVP_STAT_string(self): 
+            '''
+            Returns VAC2_OVP_STAT string
+            0h = Normal
+            1h = Device in over voltage protection
+            '''
+            if self.VAC2_OVP_STAT == 0: return "Normal"
+            elif self.VAC2_OVP_STAT == 1: return "Device in over voltage protection"
+            else: return "unknown"
+        def get_VAC1_OVP_STAT_string(self):
+            '''
+            Returns VAC1_OVP_STAT string
+            0h = Normal
+            1h = Device in over voltage protection
+            '''
+            if self.VAC1_OVP_STAT == 0: return "Normal"
+            elif self.VAC1_OVP_STAT == 1: return "Device in over voltage protection"
+            else: return "unknown"
+
+
+    
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -2531,6 +2721,7 @@ class bq25792:
             self.REG1D_Charger_Status_2.set(self.registers[self.REG1D_Charger_Status_2._addr])
             self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
             self.REG1F_Charger_Status_4.set(self.registers[self.REG1F_Charger_Status_4._addr])
+            self.REG20_FAULT_Status_0.set(self.registers[self.REG20_FAULT_Status_0._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
