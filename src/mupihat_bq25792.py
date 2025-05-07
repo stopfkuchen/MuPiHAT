@@ -172,8 +172,8 @@ class bq25792:
             self.REG1E_Charger_Status_3 = self.REG1E_Charger_Status_3()
             self.REG1F_Charger_Status_4 = self.REG1F_Charger_Status_4()
             self.REG20_FAULT_Status_0  = self.REG20_FAULT_Status_0()
-            self.REG21_FAULT_Status_1  = 0x21
-            self.REG22_Charger_Flag_0  = 0x22
+            self.REG21_FAULT_Status_1  = self.REG21_FAULT_Status_1()
+            self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
             self.REG23_Charger_Flag_1  = 0x23
             self.REG24_Charger_Flag_2  = 0x24
             self.REG25_Charger_Flag_3  = 0x25
@@ -2276,6 +2276,321 @@ class bq25792:
 
 
     
+    class REG21_FAULT_Status_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG21_FAULT_Status_1
+        ----------
+        VSYS_SHORT_STAT
+            VSYS short circuit status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in SYS short circuit protection
+        VSYS_OVP_STAT
+            VSYS over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in over voltage protection
+        OTG_OVP_STAT
+            OTG over-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in OTG over voltage 
+        OTG_UVP_STAT
+            OTG under-voltage status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in OTG under voltage protection
+        TSHUT_STAT
+            Thermal shutdown status 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Device in thermal shutdown protection
+        """
+        def __init__(self, addr=0x21, value = 0):
+            super().__init__(addr, value)
+            self.VSYS_SHORT_STAT     = ((self._value & 0b10000000) >> 7)
+            self.VSYS_OVP_STAT       = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_STAT        = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_STAT        = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_STAT          = ((self._value & 0b00000100) >> 2)
+            self.VSYS_SHORT_STAT_STRG = self.get_VSYS_SHORT_STAT_string()
+            self.VSYS_OVP_STAT_STRG   = self.get_VSYS_OVP_STAT_string()
+            self.OTG_OVP_STAT_STRG    = self.get_OTG_OVP_STAT_string()
+            self.OTG_UVP_STAT_STRG    = self.get_OTG_UVP_STAT_string()  
+            self.TSHUT_STAT_STRG      = self.get_TSHUT_STAT_string()
+
+        def set (self, value):
+            super().set(value)
+            self.VSYS_SHORT_STAT     = ((self._value & 0b10000000) >> 7)
+            self.VSYS_OVP_STAT       = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_STAT        = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_STAT        = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_STAT          = ((self._value & 0b00000100) >> 2)
+            self.VSYS_SHORT_STAT_STRG = self.get_VSYS_SHORT_STAT_string()
+            self.VSYS_OVP_STAT_STRG   = self.get_VSYS_OVP_STAT_string()
+            self.OTG_OVP_STAT_STRG    = self.get_OTG_OVP_STAT_string()
+            self.OTG_UVP_STAT_STRG    = self.get_OTG_UVP_STAT_string()  
+            self.TSHUT_STAT_STRG      = self.get_TSHUT_STAT_string()
+
+        def get (self):
+            return self._value, self.VSYS_SHORT_STAT, self.VSYS_OVP_STAT, self.OTG_OVP_STAT, self.OTG_UVP_STAT, self.TSHUT_STAT 
+        def get_VSYS_SHORT_STAT(self):
+            '''return VSYS_SHORT_STAT'''
+            return self.VSYS_SHORT_STAT
+        def get_VSYS_OVP_STAT(self):
+            '''return VSYS_OVP_STAT'''
+            return self.VSYS_OVP_STAT
+        def get_OTG_OVP_STAT(self):
+            '''return OTG_OVP_STAT'''
+            return self.OTG_OVP_STAT
+        def get_OTG_UVP_STAT(self):
+            '''return OTG_UVP_STAT'''
+            return self.OTG_UVP_STAT
+        def get_TSHUT_STAT(self):
+            '''return TSHUT_STAT'''
+            return self.TSHUT_STAT
+        def get_VSYS_SHORT_STAT_string(self):
+            '''
+            Returns VSYS_SHORT_STAT string
+            0h = Normal
+            1h = Device in SYS short circuit protection
+            '''
+            if self.VSYS_SHORT_STAT == 0: return "Normal"
+            elif self.VSYS_SHORT_STAT == 1: return "Device in SYS short circuit protection"
+            else: return "unknown"
+        def get_VSYS_OVP_STAT_string(self):
+            '''
+            Returns VSYS_OVP_STAT string
+            0h = Normal
+            1h = Device in over voltage protection
+            '''
+            if self.VSYS_OVP_STAT == 0: return "Normal"
+            elif self.VSYS_OVP_STAT == 1: return "Device in over voltage protection"
+            else: return "unknown"
+        def get_OTG_OVP_STAT_string(self):  
+            '''
+            Returns OTG_OVP_STAT string
+            0h = Normal
+            1h = Device in OTG over voltage 
+            '''
+            if self.OTG_OVP_STAT == 0: return "Normal"
+            elif self.OTG_OVP_STAT == 1: return "Device in OTG over voltage"
+            else: return "unknown"
+        def get_OTG_UVP_STAT_string(self):  
+            '''
+            Returns OTG_UVP_STAT string
+            0h = Normal
+            1h = Device in OTG under voltage protection
+            '''
+            if self.OTG_UVP_STAT == 0: return "Normal"
+            elif self.OTG_UVP_STAT == 1: return "Device in OTG under voltage protection"
+            else: return "unknown"
+        def get_TSHUT_STAT_string(self):    
+            '''
+            Returns TSHUT_STAT string
+            0h = Normal
+            1h = Device in thermal shutdown protection
+            '''
+            if self.TSHUT_STAT == 0: return "Normal"
+            elif self.TSHUT_STAT == 1: return "Device in thermal shutdown protection"
+            else: return "unknown"
+
+
+
+    class REG22_Charger_Flag_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG22_Charger_Flag_0
+        ----------
+        IINDPM_FLAG
+            IINDPM / IOTG flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = IINDPM / IOTG signal rising edge detected
+        VINDPM_FLAG
+            VINDPM flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = VINDPM signal rising edge detected
+        WD_FLAG
+            I2C watchdog timer flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = WD timer signal rising edge detected
+        POORSRC_FLAG
+            Poor source detection flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Poor source status rising edge detected
+        PG_FLAG
+            Power good flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Any change in PG_STAT even (adapter good qualification or adapter good going away)
+        VAC2_PRESENT_FLAG
+            VAC2 present flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VAC2 present status changed
+        VAC1_PRESENT_FLAG   
+            VAC1 present flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VAC1 present status changed
+        VBUS_PRESENT_FLAG
+            VBUS present flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VBUS present status changed
+        """
+        def __init__(self, addr=0x22, value = 0):
+            super().__init__(addr, value)
+            self.IINDPM_FLAG         = ((self._value & 0b10000000) >> 7)
+            self.VINDPM_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.WD_FLAG             = ((self._value & 0b00100000) >> 5)
+            self.POORSRC_FLAG        = ((self._value & 0b00010000) >> 4)
+            self.PG_FLAG             = ((self._value & 0b00001000) >> 3)
+            self.VAC2_PRESENT_FLAG   = ((self._value & 0b00000100) >> 2)
+            self.VAC1_PRESENT_FLAG   = ((self._value & 0b00000010) >> 1)
+            self.VBUS_PRESENT_FLAG    = ((self._value & 0b00000001) >> 0)
+            self.IINDPM_FLAG_STRG     = self.get_IINDPM_FLAG_string()
+            self.VINDPM_FLAG_STRG     = self.get_VINDPM_FLAG_string()
+            self.WD_FLAG_STRG         = self.get_WD_FLAG_string()
+            self.POORSRC_FLAG_STRG    = self.get_POORSRC_FLAG_string()
+            self.PG_FLAG_STRG         = self.get_PG_FLAG_string()
+            self.VAC2_PRESENT_FLAG_STRG = self.get_VAC2_PRESENT_FLAG_string()
+            self.VAC1_PRESENT_FLAG_STRG = self.get_VAC1_PRESENT_FLAG_string()
+            self.VBUS_PRESENT_FLAG_STRG = self.get_VBUS_PRESENT_FLAG_string()
+        def set (self, value):
+            super().set(value)
+            self.IINDPM_FLAG         = ((self._value & 0b10000000) >> 7)
+            self.VINDPM_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.WD_FLAG             = ((self._value & 0b00100000) >> 5)
+            self.POORSRC_FLAG        = ((self._value & 0b00010000) >> 4)
+            self.PG_FLAG             = ((self._value & 0b00001000) >> 3)
+            self.VAC2_PRESENT_FLAG   = ((self._value & 0b00000100) >> 2)
+            self.VAC1_PRESENT_FLAG   = ((self._value & 0b00000010) >> 1)
+            self.VBUS_PRESENT_FLAG    = ((self._value & 0b00000001) >> 0)
+            self.IINDPM_FLAG_STRG     = self.get_IINDPM_FLAG_string()
+            self.VINDPM_FLAG_STRG     = self.get_VINDPM_FLAG_string()
+            self.WD_FLAG_STRG         = self.get_WD_FLAG_string()
+            self.POORSRC_FLAG_STRG    = self.get_POORSRC_FLAG_string()
+            self.PG_FLAG_STRG         = self.get_PG_FLAG_string()
+            self.VAC2_PRESENT_FLAG_STRG = self.get_VAC2_PRESENT_FLAG_string()
+            self.VAC1_PRESENT_FLAG_STRG = self.get_VAC1_PRESENT_FLAG_string()
+            self.VBUS_PRESENT_FLAG_STRG = self.get_VBUS_PRESENT_FLAG_string()
+        def get (self):
+            return self._value, self.IINDPM_FLAG, self.VINDPM_FLAG, self.WD_FLAG, self.POORSRC_FLAG, self.PG_FLAG, self.VAC2_PRESENT_FLAG, self.VAC1_PRESENT_FLAG, self.VBUS_PRESENT_FLAG
+        def get_IINDPM_FLAG(self):
+            '''return IINDPM_FLAG'''
+            return self.IINDPM_FLAG
+        def get_VINDPM_FLAG(self):
+            '''return VINDPM_FLAG'''
+            return self.VINDPM_FLAG
+        def get_WD_FLAG(self):
+            '''return WD_FLAG'''
+            return self.WD_FLAG
+        def get_POORSRC_FLAG(self):
+            '''return POORSRC_FLAG'''
+            return self.POORSRC_FLAG
+        def get_PG_FLAG(self):
+            '''return PG_FLAG'''
+            return self.PG_FLAG
+        def get_VAC2_PRESENT_FLAG(self):
+            '''return VAC2_PRESENT_FLAG'''
+            return self.VAC2_PRESENT_FLAG
+        def get_VAC1_PRESENT_FLAG(self):
+            '''return VAC1_PRESENT_FLAG'''
+            return self.VAC1_PRESENT_FLAG
+        def get_VBUS_PRESENT_FLAG(self):
+            '''return VBUS_PRESENT_FLAG'''
+            return self.VBUS_PRESENT_FLAG
+        def get_IINDPM_FLAG_string(self):
+            '''
+            Returns IINDPM_FLAG string
+            0h = Normal
+            1h = IINDPM / IOTG signal rising edge detected
+            '''
+            if self.IINDPM_FLAG == 0: return "Normal"
+            elif self.IINDPM_FLAG == 1: return "IINDPM / IOTG signal rising edge detected"
+            else: return "unknown"
+        def get_VINDPM_FLAG_string(self):
+            '''
+            Returns VINDPM_FLAG string
+            0h = Normal
+            1h = VINDPM signal rising edge detected
+            '''
+            if self.VINDPM_FLAG == 0: return "Normal"
+            elif self.VINDPM_FLAG == 1: return "VINDPM signal rising edge detected"
+            else: return "unknown"
+        def get_WD_FLAG_string(self):   
+            '''
+            Returns WD_FLAG string
+            0h = Normal
+            1h = WD timer signal rising edge detected
+            '''
+            if self.WD_FLAG == 0: return "Normal"
+            elif self.WD_FLAG == 1: return "WD timer signal rising edge detected"
+            else: return "unknown"
+        def get_POORSRC_FLAG_string(self):
+            '''
+            Returns POORSRC_FLAG string
+            0h = Normal
+            1h = Poor source status rising edge detected
+            '''
+            if self.POORSRC_FLAG == 0: return "Normal"
+            elif self.POORSRC_FLAG == 1: return "Poor source status rising edge detected"
+            else: return "unknown"
+        def get_PG_FLAG_string(self):
+            '''
+            Returns PG_FLAG string
+            0h = Normal
+            1h = Any change in PG_STAT even (adapter good qualification or adapter good going away)
+            '''
+            if self.PG_FLAG == 0: return "Normal"
+            elif self.PG_FLAG == 1: return "Any change in PG_STAT even (adapter good qualification or adapter good going away)"
+            else: return "unknown"
+        def get_VAC2_PRESENT_FLAG_string(self):
+            '''
+            Returns VAC2_PRESENT_FLAG string
+            0h = Normal
+            1h = VAC2 present status changed
+            '''
+            if self.VAC2_PRESENT_FLAG == 0: return "Normal"
+            elif self.VAC2_PRESENT_FLAG == 1: return "VAC2 present status changed"
+            else: return "unknown"
+        def get_VAC1_PRESENT_FLAG_string(self):
+            '''
+            Returns VAC1_PRESENT_FLAG string
+            0h = Normal
+            1h = VAC1 present status changed
+            '''
+            if self.VAC1_PRESENT_FLAG == 0: return "Normal"
+            elif self.VAC1_PRESENT_FLAG == 1: return "VAC1 present status changed"
+            else: return "unknown"
+        def get_VBUS_PRESENT_FLAG_string(self): 
+            '''
+            Returns VBUS_PRESENT_FLAG string
+            0h = Normal
+            1h = VBUS present status changed
+            '''
+            if self.VBUS_PRESENT_FLAG == 0: return "Normal"
+            elif self.VBUS_PRESENT_FLAG == 1: return "VBUS present status changed"
+            else: return "unknown"
+        
+
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -2722,6 +3037,8 @@ class bq25792:
             self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
             self.REG1F_Charger_Status_4.set(self.registers[self.REG1F_Charger_Status_4._addr])
             self.REG20_FAULT_Status_0.set(self.registers[self.REG20_FAULT_Status_0._addr])
+            self.REG21_FAULT_Status_1.set(self.registers[self.REG21_FAULT_Status_1._addr])
+            self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
