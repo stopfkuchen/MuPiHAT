@@ -174,7 +174,7 @@ class bq25792:
             self.REG20_FAULT_Status_0  = self.REG20_FAULT_Status_0()
             self.REG21_FAULT_Status_1  = self.REG21_FAULT_Status_1()
             self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
-            self.REG23_Charger_Flag_1  = 0x23
+            self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
             self.REG24_Charger_Flag_2  = 0x24
             self.REG25_Charger_Flag_3  = 0x25
             self.REG26_FAULT_Flag_0  = 0x26
@@ -2591,6 +2591,150 @@ class bq25792:
             else: return "unknown"
         
 
+    class REG23_Charger_Flag_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG23_Charger_Flag_1
+        ----------
+        CHG_FLAG 
+            Charger flag
+            Type : R    
+            POR: 0b
+            0h = Normal
+            1h = Charger status changed
+        ICO_FLAG
+            ICO flag
+            Type : R    
+            POR: 0b
+            0h = Normal
+            1h = ICO status changed
+        VBUS_FLAG
+            VBUS flag
+            Type : R    
+            POR: 0b
+            0h = Normal
+            1h = VBUS status changed
+        TREG_FLAG
+            TREG flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = TREG signal rising threshold detected
+        VBAT_PRESENT_FLAG
+            VBAT present flag
+            Type : R    
+            POR: 0b
+            0h = Normal
+            1h = VBAT present status changed
+        BC1.2_DONE_FLAG
+            BC1.2 status flag
+            Type : R    
+            POR: 0b
+            0h = Normal
+            1h = BC1.2 detection status changed
+        """
+        def __init__(self, addr=0x23, value = 0):
+            super().__init__(addr, value)
+            self.CHG_FLAG             = ((self._value & 0b10000000) >> 7)
+            self.ICO_FLAG             = ((self._value & 0b01000000) >> 6)   
+            self.VBUS_FLAG            = ((self._value & 0b00010000) >> 4)
+            self.TREG_FLAG            = ((self._value & 0b00000100) >> 2)
+            self.VBAT_PRESENT_FLAG    = ((self._value & 0b00000010) >> 1)
+            self.BC1_2_DONE_FLAG      = ((self._value & 0b00000001) >> 0)
+            self.CHG_FLAG_STRG         = self.get_CHG_FLAG_string()
+            self.ICO_FLAG_STRG         = self.get_ICO_FLAG_string()
+            self.VBUS_FLAG_STRG        = self.get_VBUS_FLAG_string()
+            self.TREG_FLAG_STRG        = self.get_TREG_FLAG_string()
+            self.VBAT_PRESENT_FLAG_STRG = self.get_VBAT_PRESENT_FLAG_string()
+            self.BC1_2_DONE_FLAG_STRG   = self.get_BC1_2_DONE_FLAG_string()
+        def set (self, value):
+            super().set(value)
+            self.CHG_FLAG             = ((self._value & 0b10000000) >> 7)
+            self.ICO_FLAG             = ((self._value & 0b01000000) >> 6)   
+            self.VBUS_FLAG            = ((self._value & 0b00010000) >> 4)
+            self.TREG_FLAG            = ((self._value & 0b00000100) >> 2)
+            self.VBAT_PRESENT_FLAG    = ((self._value & 0b00000010) >> 1)
+            self.BC1_2_DONE_FLAG      = ((self._value & 0b00000001) >> 0)
+            self.CHG_FLAG_STRG         = self.get_CHG_FLAG_string()
+            self.ICO_FLAG_STRG         = self.get_ICO_FLAG_string()
+            self.VBUS_FLAG_STRG        = self.get_VBUS_FLAG_string()
+            self.TREG_FLAG_STRG        = self.get_TREG_FLAG_string()
+            self.VBAT_PRESENT_FLAG_STRG = self.get_VBAT_PRESENT_FLAG_string()
+            self.BC1_2_DONE_FLAG_STRG   = self.get_BC1_2_DONE_FLAG_string()
+        def get (self):
+            return self._value, self.CHG_FLAG, self.ICO_FLAG, self.VBUS_FLAG, self.TREG_FLAG, self.VBAT_PRESENT_FLAG, self.BC1_2_DONE_FLAG
+        def get_CHG_FLAG(self):
+            '''return CHG_FLAG'''
+            return self.CHG_FLAG
+        def get_ICO_FLAG(self):
+            '''return ICO_FLAG'''
+            return self.ICO_FLAG
+        def get_VBUS_FLAG(self):
+            '''return VBUS_FLAG'''
+            return self.VBUS_FLAG
+        def get_TREG_FLAG(self):
+            '''return TREG_FLAG'''
+            return self.TREG_FLAG
+        def get_VBAT_PRESENT_FLAG(self):
+            '''return VBAT_PRESENT_FLAG'''
+            return self.VBAT_PRESENT_FLAG
+        def get_BC1_2_DONE_FLAG(self):
+            '''return BC1_2_DONE_FLAG'''
+            return self.BC1_2_DONE_FLAG
+        def get_CHG_FLAG_string(self):
+            '''
+            Returns CHG_FLAG string
+            0h = Normal
+            1h = Charger status changed
+            '''
+            if self.CHG_FLAG == 0: return "Normal"
+            elif self.CHG_FLAG == 1: return "Charger status changed"
+            else: return "unknown"
+        def get_ICO_FLAG_string(self):
+            '''
+            Returns ICO_FLAG string
+            0h = Normal
+            1h = ICO status changed
+            '''
+            if self.ICO_FLAG == 0: return "Normal"
+            elif self.ICO_FLAG == 1: return "ICO status changed"
+            else: return "unknown"
+        def get_VBUS_FLAG_string(self):
+            '''
+            Returns VBUS_FLAG string
+            0h = Normal
+            1h = VBUS status changed
+            '''
+            if self.VBUS_FLAG == 0: return "Normal"
+            elif self.VBUS_FLAG == 1: return "VBUS status changed"
+            else: return "unknown"
+        def get_TREG_FLAG_string(self): 
+            '''
+            Returns TREG_FLAG string
+            0h = Normal
+            1h = TREG signal rising threshold detected
+            '''
+            if self.TREG_FLAG == 0: return "Normal"
+            elif self.TREG_FLAG == 1: return "TREG signal rising threshold detected"
+            else: return "unknown"
+        def get_VBAT_PRESENT_FLAG_string(self):
+            '''
+            Returns VBAT_PRESENT_FLAG string
+            0h = Normal
+            1h = VBAT present status changed
+            '''
+            if self.VBAT_PRESENT_FLAG == 0: return "Normal"
+            elif self.VBAT_PRESENT_FLAG == 1: return "VBAT present status changed"
+            else: return "unknown"
+        def get_BC1_2_DONE_FLAG_string(self):
+            '''
+            Returns BC1_2_DONE_FLAG string
+            0h = Normal
+            1h = BC1.2 detection status changed
+            '''
+            if self.BC1_2_DONE_FLAG == 0: return "Normal"
+            elif self.BC1_2_DONE_FLAG == 1: return "BC1.2 detection status changed"
+            else: return "unknown"
+    
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -3039,6 +3183,7 @@ class bq25792:
             self.REG20_FAULT_Status_0.set(self.registers[self.REG20_FAULT_Status_0._addr])
             self.REG21_FAULT_Status_1.set(self.registers[self.REG21_FAULT_Status_1._addr])
             self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
+            self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
