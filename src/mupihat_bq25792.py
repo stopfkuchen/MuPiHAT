@@ -176,7 +176,7 @@ class bq25792:
             self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
             self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
             self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
-            self.REG25_Charger_Flag_3  = 0x25
+            self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
             self.REG26_FAULT_Flag_0  = 0x26
             self.REG27_FAULT_Flag_1  = 0x27
             self.REG28_Charger_Mask_0  = 0x28
@@ -2905,6 +2905,82 @@ class bq25792:
 
 
 
+    class REG25_Charger_Flag_3(BQ25795_REGISTER):
+        """
+        BQ25795 - REG25_Charger_Flag_3
+        ----------
+        VBATOTG_LOW_FLAG
+            VBAT too low to enable OTG flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VBAT falls below the threshold to enable the OTG mode
+        TS_COLD_FLAG
+            TS cold temperature flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = TS across cold temperature (T1) is detected
+        TS_COOL_FLAG
+            TS cool temperature flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = TS across cool temperature (T2) is detected
+        TS_WARM_FLAG
+            TS warm temperature flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 1h = TS across warm temperature (T3) is detected
+        TS_HOT_FLAG
+            TS hot temperature flag 
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = TS across hot temperature (T5) is detected
+        """
+        def __init__(self, addr=0x25, value = 0):
+            super().__init__(addr, value)
+            self.VBATOTG_LOW_FLAG     = ((self._value & 0b00010000) >> 4)
+            self.TS_COLD_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_FLAG         = ((self._value & 0b00000100) >> 2)
+            self.TS_WARM_FLAG         = ((self._value & 0b00000010) >> 1)   
+            self.TS_HOT_FLAG          = ((self._value & 0b00000001) >> 0)
+            self.VBATOTG_LOW_FLAG_STRG = self.get_VBATOTG_LOW_FLAG_string()
+            self.TS_COLD_FLAG_STRG     = self.get_TS_COLD_FLAG_string()
+            self.TS_COOL_FLAG_STRG     = self.get_TS_COOL_FLAG_string()
+            self.TS_WARM_FLAG_STRG     = self.get_TS_WARM_FLAG_string()
+            self.TS_HOT_FLAG_STRG      = self.get_TS_HOT_FLAG_string()
+        def set (self, value):
+            super().set(value)
+            self.VBATOTG_LOW_FLAG     = ((self._value & 0b00010000) >> 4)
+            self.TS_COLD_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_FLAG         = ((self._value & 0b00000100) >> 2)
+            self.TS_WARM_FLAG         = ((self._value & 0b00000010) >> 1)   
+            self.TS_HOT_FLAG          = ((self._value & 0b00000001) >> 0)
+            self.VBATOTG_LOW_FLAG_STRG = self.get_VBATOTG_LOW_FLAG_string()
+            self.TS_COLD_FLAG_STRG     = self.get_TS_COLD_FLAG_string()
+            self.TS_COOL_FLAG_STRG     = self.get_TS_COOL_FLAG_string()
+            self.TS_WARM_FLAG_STRG     = self.get_TS_WARM_FLAG_string()
+            self.TS_HOT_FLAG_STRG      = self.get_TS_HOT_FLAG_string()
+        def get (self):
+            return self._value, self.VBATOTG_LOW_FLAG, self.TS_COLD_FLAG, self.TS_COOL_FLAG, self.TS_WARM_FLAG, self.TS_HOT_FLAG
+        def get_VBATOTG_LOW_FLAG(self):
+            '''return VBATOTG_LOW_FLAG'''
+            return self.VBATOTG_LOW_FLAG
+        def get_TS_COLD_FLAG(self):
+            '''return TS_COLD_FLAG'''
+            return self.TS_COLD_FLAG
+        def get_TS_COOL_FLAG(self):
+            '''return TS_COOL_FLAG'''
+            return self.TS_COOL_FLAG
+        def get_TS_WARM_FLAG(self):
+            '''return TS_WARM_FLAG'''
+            return self.TS_WARM_FLAG
+        def get_TS_HOT_FLAG(self):
+            '''return TS_HOT_FLAG'''
+            return self.TS_HOT_FLAG
+
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -3355,6 +3431,7 @@ class bq25792:
             self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
             self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
             self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
+            self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
