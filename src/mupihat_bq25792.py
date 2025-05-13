@@ -175,7 +175,7 @@ class bq25792:
             self.REG21_FAULT_Status_1  = self.REG21_FAULT_Status_1()
             self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
             self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
-            self.REG24_Charger_Flag_2  = 0x24
+            self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
             self.REG25_Charger_Flag_3  = 0x25
             self.REG26_FAULT_Flag_0  = 0x26
             self.REG27_FAULT_Flag_1  = 0x27
@@ -2735,6 +2735,176 @@ class bq25792:
             elif self.BC1_2_DONE_FLAG == 1: return "BC1.2 detection status changed"
             else: return "unknown"
     
+    class REG24_Charger_Flag_2(BQ25795_REGISTER):
+        """
+        BQ25795 - REG24_Charger_Flag_2
+        ----------
+        DPDM_DONE_FLAG
+            DPDM detection is done flag 
+            Type : R 
+            POR: 0b 
+            0h = D+/D- detection is NOT started or still ongoing 
+            1h =  D+/D- detection is completed
+        ADC_DONE_FLAG
+            ADC conversion flag (only in one-shot mode) 
+            Type : R 
+            POR: 0b 
+            0h = Conversion NOT completed 
+            1h = Conversion completed
+        VSYS_FLAG
+            VSYSMIN regulation flag 
+            ype : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Entered or existed VSYSMIN regulation
+        CHG_TMR_FLAG
+            Fast charge timer flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Fast charge timer expired rising edge detected
+        TRICHG_TMR_FLAG
+            Trickle charge timer flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Trickle charger timer expired rising edge detected
+        PRECHG_TMR_FLAG
+            Pre-charge timer flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Pre-charge timer expired rising edge detected
+        TOPOFF_TMR_FLAG
+            Top off timer flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Top off timer expired rising edge detected
+        """
+        def __init__(self, addr=0x24, value = 0):
+            super().__init__(addr, value)
+            self.DPDM_DONE_FLAG       = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_FLAG        = ((self._value & 0b00100000) >> 5)
+            self.VSYS_FLAG            = ((self._value & 0b00010000) >> 4)   
+            self.CHG_TMR_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_FLAG      = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_FLAG      = ((self._value & 0b00000010) >> 1)
+            self.TOPOFF_TMR_FLAG      = ((self._value & 0b00000001) >> 0)
+            self.DPDM_DONE_FLAG_STRG   = self.get_DPDM_DONE_FLAG_string()
+            self.ADC_DONE_FLAG_STRG    = self.get_ADC_DONE_FLAG_string()
+            self.VSYS_FLAG_STRG        = self.get_VSYS_FLAG_string()
+            self.CHG_TMR_FLAG_STRG     = self.get_CHG_TMR_FLAG_string()
+            self.TRICHG_TMR_FLAG_STRG  = self.get_TRICHG_TMR_FLAG_string()
+            self.PRECHG_TMR_FLAG_STRG  = self.get_PRECHG_TMR_FLAG_string()
+            self.TOPOFF_TMR_FLAG_STRG  = self.get_TOPOFF_TMR_FLAG_string()
+        def set (self, value):  
+            super().set(value)
+            self.DPDM_DONE_FLAG       = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_FLAG        = ((self._value & 0b00100000) >> 5)
+            self.VSYS_FLAG            = ((self._value & 0b00010000) >> 4)   
+            self.CHG_TMR_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_FLAG      = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_FLAG      = ((self._value & 0b00000010) >> 1)
+            self.TOPOFF_TMR_FLAG      = ((self._value & 0b00000001) >> 0)
+            self.DPDM_DONE_FLAG_STRG   = self.get_DPDM_DONE_FLAG_string()
+            self.ADC_DONE_FLAG_STRG    = self.get_ADC_DONE_FLAG_string()
+            self.VSYS_FLAG_STRG        = self.get_VSYS_FLAG_string()
+            self.CHG_TMR_FLAG_STRG     = self.get_CHG_TMR_FLAG_string()
+            self.TRICHG_TMR_FLAG_STRG  = self.get_TRICHG_TMR_FLAG_string()
+            self.PRECHG_TMR_FLAG_STRG  = self.get_PRECHG_TMR_FLAG_string()
+            self.TOPOFF_TMR_FLAG_STRG  = self.get_TOPOFF_TMR_FLAG_string()
+        def get (self):
+            return self._value, self.DPDM_DONE_FLAG, self.ADC_DONE_FLAG, self.VSYS_FLAG, self.CHG_TMR_FLAG, self.TRICHG_TMR_FLAG, self.PRECHG_TMR_FLAG, self.TOPOFF_TMR_FLAG
+        def get_DPDM_DONE_FLAG(self):
+            '''return DPDM_DONE_FLAG'''
+            return self.DPDM_DONE_FLAG
+        def get_ADC_DONE_FLAG(self):
+            '''return ADC_DONE_FLAG'''
+            return self.ADC_DONE_FLAG
+        def get_VSYS_FLAG(self):
+            '''return VSYS_FLAG'''
+            return self.VSYS_FLAG
+        def get_CHG_TMR_FLAG(self):
+            '''return CHG_TMR_FLAG'''
+            return self.CHG_TMR_FLAG
+        def get_TRICHG_TMR_FLAG(self):
+            '''return TRICHG_TMR_FLAG'''
+            return self.TRICHG_TMR_FLAG
+        def get_PRECHG_TMR_FLAG(self):
+            '''return PRECHG_TMR_FLAG'''
+            return self.PRECHG_TMR_FLAG
+        def get_TOPOFF_TMR_FLAG(self):
+            '''return TOPOFF_TMR_FLAG'''
+            return self.TOPOFF_TMR_FLAG
+        def get_DPDM_DONE_FLAG_string(self):
+            '''
+            Returns DPDM_DONE_FLAG string
+            0h = D+/D- detection is NOT started or still ongoing
+            1h =  D+/D- detection is completed
+            '''
+            if self.DPDM_DONE_FLAG == 0: return "D+/D- detection is NOT started or still ongoing"
+            elif self.DPDM_DONE_FLAG == 1: return "D+/D- detection is completed"
+            else: return "unknown"  
+
+        def get_ADC_DONE_FLAG_string(self):
+            '''
+            Returns ADC_DONE_FLAG string
+            0h = Conversion NOT completed
+            1h = Conversion completed
+            '''
+            if self.ADC_DONE_FLAG == 0: return "Conversion NOT completed"
+            elif self.ADC_DONE_FLAG == 1: return "Conversion completed"
+            else: return "unknown"
+
+        def get_VSYS_FLAG_string(self):
+            '''
+            Returns VSYS_FLAG string
+            0h = Normal
+            1h = Entered or existed VSYSMIN regulation
+            '''
+            if self.VSYS_FLAG == 0: return "Normal"
+            elif self.VSYS_FLAG == 1: return "Entered or existed VSYSMIN regulation"
+            else: return "unknown"
+        def get_CHG_TMR_FLAG_string(self):  
+            '''
+            Returns CHG_TMR_FLAG string
+            0h = Normal
+            1h = Fast charge timer expired rising edge detected
+            '''
+            if self.CHG_TMR_FLAG == 0: return "Normal"
+            elif self.CHG_TMR_FLAG == 1: return "Fast charge timer expired rising edge detected"
+            else: return "unknown"
+        def get_TRICHG_TMR_FLAG_string(self):
+            '''
+            Returns TRICHG_TMR_FLAG string
+            0h = Normal
+            1h = Trickle charger timer expired rising edge detected
+            '''
+            if self.TRICHG_TMR_FLAG == 0: return "Normal"
+            elif self.TRICHG_TMR_FLAG == 1: return "Trickle charger timer expired rising edge detected"
+            else: return "unknown"
+        def get_PRECHG_TMR_FLAG_string(self):
+            '''
+            Returns PRECHG_TMR_FLAG string
+            0h = Normal
+            1h = Pre-charge timer expired rising edge detected
+            '''
+            if self.PRECHG_TMR_FLAG == 0: return "Normal"
+            elif self.PRECHG_TMR_FLAG == 1: return "Pre-charge timer expired rising edge detected"
+            else: return "unknown"
+        def get_TOPOFF_TMR_FLAG_string(self):
+            '''
+            Returns TOPOFF_TMR_FLAG string
+            0h = Normal
+            1h = Top off timer expired rising edge detected
+            '''
+            if self.TOPOFF_TMR_FLAG == 0: return "Normal"
+            elif self.TOPOFF_TMR_FLAG == 1: return "Top off timer expired rising edge detected"
+            else: return "unknown"
+
+
+
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -3184,6 +3354,7 @@ class bq25792:
             self.REG21_FAULT_Status_1.set(self.registers[self.REG21_FAULT_Status_1._addr])
             self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
             self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
+            self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
