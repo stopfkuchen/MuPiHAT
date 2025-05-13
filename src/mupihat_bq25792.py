@@ -2980,6 +2980,52 @@ class bq25792:
         def get_TS_HOT_FLAG(self):
             '''return TS_HOT_FLAG'''
             return self.TS_HOT_FLAG
+        def get_VBATOTG_LOW_FLAG_string(self):
+            '''
+            Returns VBATOTG_LOW_FLAG string
+            0h = Normal
+            1h = VBAT falls below the threshold to enable the OTG mode  
+            '''
+            if self.VBATOTG_LOW_FLAG == 0: return "Normal"
+            elif self.VBATOTG_LOW_FLAG == 1: return "VBAT falls below the threshold to enable the OTG mode"
+            else: return "unknown"  
+        def get_TS_COLD_FLAG_string(self):
+            '''
+            Returns TS_COLD_FLAG string
+            0h = Normal
+            1h = TS across cold temperature (T1) is detected
+            '''
+            if self.TS_COLD_FLAG == 0: return "Normal"
+            elif self.TS_COLD_FLAG == 1: return "TS across cold temperature (T1) is detected"
+            else: return "unknown"  
+        def get_TS_COOL_FLAG_string(self):
+            '''
+            Returns TS_COOL_FLAG string
+            0h = Normal
+            1h = TS across cool temperature (T2) is detected
+            '''
+            if self.TS_COOL_FLAG == 0: return "Normal"
+            elif self.TS_COOL_FLAG == 1: return "TS across cool temperature (T2) is detected"
+            else: return "unknown"
+        def get_TS_WARM_FLAG_string(self):
+            '''
+            Returns TS_WARM_FLAG string
+            0h = Normal
+            1h = TS across warm temperature (T3) is detected
+            '''
+            if self.TS_WARM_FLAG == 0: return "Normal"
+            elif self.TS_WARM_FLAG == 1: return "TS across warm temperature (T3) is detected"
+            else: return "unknown"
+        def get_TS_HOT_FLAG_string(self):   
+            '''
+            Returns TS_HOT_FLAG string
+            0h = Normal
+            1h = TS across hot temperature (T5) is detected
+            '''
+            if self.TS_HOT_FLAG == 0: return "Normal"
+            elif self.TS_HOT_FLAG == 1: return "TS across hot temperature (T5) is detected"
+            else: return "unknown"
+        
 
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
