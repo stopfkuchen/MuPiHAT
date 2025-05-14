@@ -179,7 +179,7 @@ class bq25792:
             self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
             self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
             self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
-            self.REG28_Charger_Mask_0  = 0x28
+            self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
             self.REG29_Charger_Mask_1  = 0x29
             self.REG2A_Charger_Mask_2  = 0x2a
             self.REG2B_Charger_Mask_3  = 0x2b
@@ -3341,6 +3341,246 @@ class bq25792:
 
                    
         
+    class REG28_Charger_Mask_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG28_Charger_Mask_0
+        ----------
+        IINDPM_MASK
+            IINDPM / IOTG mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = Enter IINDPM / IOTG does produce INT pulse 
+            1h = Enter IINDPM / IOTG does NOT produce INT pulse
+
+        VINDPM_MASK
+            VINDPM / VOTG mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = Enter VINDPM / VOTG does produce INT pulse 
+            1h = Enter VINDPM / VOTG does NOT produce INT pulse
+        WD_MASK
+            I2C watch dog timer mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = I2C watch dog timer expired does produce INT pulse 
+            1h = I2C watch dog timer expired does NOT produce INT pulse
+        POORSRC_MASK
+            Poor source detection mask flag 
+            Type : RW 
+            POR: 0b 0h = Poor source detected does produce INT 
+            1h = Poor source detected does NOT produce INT
+        PG_MASK
+            Power Good mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = PG toggle does produce INT 
+            1h = PG toggle does NOT produce INT
+        VAC2_PRESENT_MASK
+            VAC2 present mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = VAC2 present status change does produce INT 
+            1h = VAC2 present status change does NOT produce INT
+        VAC1_PRESENT_MASK
+            VAC1 present mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = VAC1 present status change does produce INT 
+            1h = VAC1 present status change does NOT produce INT
+        VBUS_PRESENT_MASK
+            VBUS present mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = VBUS present status change does produce INT 
+            1h = VBUS present status change does NOT produce INT
+        """
+        def __init__(self, addr=0x28, value = 0):
+            super().__init__(addr, value)
+            self.IINDPM_MASK          = ((self._value & 0b10000000) >> 7)
+            self.VINDPM_MASK          = ((self._value & 0b01000000) >> 6)
+            self.WD_MASK              = ((self._value & 0b00100000) >> 5)
+            self.POORSRC_MASK         = ((self._value & 0b00010000) >> 4)
+            self.PG_MASK              = ((self._value & 0b00001000) >> 3)
+            self.VAC2_PRESENT_MASK     = ((self._value & 0b00000100) >> 2)
+            self.VAC1_PRESENT_MASK     = ((self._value & 0b00000010) >> 1)
+            self.VBUS_PRESENT_MASK     = ((self._value & 0b00000001) >> 0)
+            self.IINDPM_MASK_STRG      = self.get_IINDPM_MASK_string()
+            self.VINDPM_MASK_STRG      = self.get_VINDPM_MASK_string()
+            self.WD_MASK_STRG          = self.get_WD_MASK_string()
+            self.POORSRC_MASK_STRG     = self.get_POORSRC_MASK_string()
+            self.PG_MASK_STRG          = self.get_PG_MASK_string()
+
+            self.VAC2_PRESENT_MASK_STRG = self.get_VAC2_PRESENT_MASK_string()
+            self.VAC1_PRESENT_MASK_STRG = self.get_VAC1_PRESENT_MASK_string()
+            self.VBUS_PRESENT_MASK_STRG = self.get_VBUS_PRESENT_MASK_string()
+        def set (self, value):  
+            super().set(value)
+            self.IINDPM_MASK          = ((self._value & 0b10000000) >> 7)
+            self.VINDPM_MASK          = ((self._value & 0b01000000) >> 6)
+            self.WD_MASK              = ((self._value & 0b00100000) >> 5)
+            self.POORSRC_MASK         = ((self._value & 0b00010000) >> 4)
+            self.PG_MASK              = ((self._value & 0b00001000) >> 3)
+            self.VAC2_PRESENT_MASK     = ((self._value & 0b00000100) >> 2)
+            self.VAC1_PRESENT_MASK     = ((self._value & 0b00000010) >> 1)
+            self.VBUS_PRESENT_MASK     = ((self._value & 0b00000001) >> 0)
+            self.IINDPM_MASK_STRG      = self.get_IINDPM_MASK_string()
+            self.VINDPM_MASK_STRG      = self.get_VINDPM_MASK_string()
+            self.WD_MASK_STRG          = self.get_WD_MASK_string()
+            self.POORSRC_MASK_STRG     = self.get_POORSRC_MASK_string()
+            self.PG_MASK_STRG          = self.get_PG_MASK_string()
+
+            self.VAC2_PRESENT_MASK_STRG = self.get_VAC2_PRESENT_MASK_string()
+            self.VAC1_PRESENT_MASK_STRG = self.get_VAC1_PRESENT_MASK_string()
+            self.VBUS_PRESENT_MASK_STRG = self.get_VBUS_PRESENT_MASK_string()
+        def get (self):
+            return self._value, self.IINDPM_MASK, self.VINDPM_MASK, self.WD_MASK, self.POORSRC_MASK, self.PG_MASK, self.VAC2_PRESENT_MASK, self.VAC1_PRESENT_MASK, self.VBUS_PRESENT_MASK
+        def get_IINDPM_MASK(self):
+            '''return IINDPM_MASK'''
+            return self.IINDPM_MASK
+        def get_VINDPM_MASK(self):
+            '''return VINDPM_MASK'''
+            return self.VINDPM_MASK
+        def get_WD_MASK(self):
+            '''return WD_MASK'''
+            return self.WD_MASK
+        def get_POORSRC_MASK(self):
+            '''return POORSRC_MASK'''
+            return self.POORSRC_MASK
+        def get_PG_MASK(self):
+            '''return PG_MASK'''
+            return self.PG_MASK
+        def get_VAC2_PRESENT_MASK(self):
+            '''return VAC2_PRESENT_MASK'''
+            return self.VAC2_PRESENT_MASK
+        def get_VAC1_PRESENT_MASK(self):
+            '''return VAC1_PRESENT_MASK'''
+            return self.VAC1_PRESENT_MASK
+        def get_VBUS_PRESENT_MASK(self):
+            '''return VBUS_PRESENT_MASK'''
+            return self.VBUS_PRESENT_MASK
+        def get_IINDPM_MASK_string(self):   
+            '''
+            Returns IINDPM_MASK string
+            0h = Enter IINDPM / IOTG does produce INT pulse
+            1h = Enter IINDPM / IOTG does NOT produce INT pulse
+            '''
+            if self.IINDPM_MASK == 0: return "Enter IINDPM / IOTG does produce INT pulse"
+            elif self.IINDPM_MASK == 1: return "Enter IINDPM / IOTG does NOT produce INT pulse"
+            else: return "unknown"
+        def get_VINDPM_MASK_string(self):   
+            '''
+            Returns VINDPM_MASK string
+            0h = Enter VINDPM / VOTG does produce INT pulse
+            1h = Enter VINDPM / VOTG does NOT produce INT pulse
+            '''
+            if self.VINDPM_MASK == 0: return "Enter VINDPM / VOTG does produce INT pulse"
+            elif self.VINDPM_MASK == 1: return "Enter VINDPM / VOTG does NOT produce INT pulse"
+            else: return "unknown"
+        def get_WD_MASK_string(self):
+            '''
+            Returns WD_MASK string
+            0h = I2C watch dog timer expired does produce INT pulse
+            1h = I2C watch dog timer expired does NOT produce INT pulse
+            '''
+            if self.WD_MASK == 0: return "I2C watch dog timer expired does produce INT pulse"
+            elif self.WD_MASK == 1: return "I2C watch dog timer expired does NOT produce INT pulse"
+            else: return "unknown"
+        def get_POORSRC_MASK_string(self):
+            '''
+            Returns POORSRC_MASK string
+            0h = Poor source detected does produce INT
+            1h = Poor source detected does NOT produce INT
+            '''
+            if self.POORSRC_MASK == 0: return "Poor source detected does produce INT"
+            elif self.POORSRC_MASK == 1: return "Poor source detected does NOT produce INT"
+            else: return "unknown"
+        def get_PG_MASK_string(self):
+            '''
+            Returns PG_MASK string
+            0h = PG toggle does produce INT
+            1h = PG toggle does NOT produce INT
+            '''
+            if self.PG_MASK == 0: return "PG toggle does produce INT"
+            elif self.PG_MASK == 1: return "PG toggle does NOT produce INT"
+            else: return "unknown"
+        def get_VAC2_PRESENT_MASK_string(self):
+            '''
+            Returns VAC2_PRESENT_MASK string
+            0h = VAC2 present status change does produce INT
+            1h = VAC2 present status change does NOT produce INT
+            '''
+            if self.VAC2_PRESENT_MASK == 0: return "VAC2 present status change does produce INT"
+            elif self.VAC2_PRESENT_MASK == 1: return "VAC2 present status change does NOT produce INT"
+            else: return "unknown"
+        def get_VAC1_PRESENT_MASK_string(self): 
+            '''
+            Returns VAC1_PRESENT_MASK string
+            0h = VAC1 present status change does produce INT
+            1h = VAC1 present status change does NOT produce INT
+            '''
+            if self.VAC1_PRESENT_MASK == 0: return "VAC1 present status change does produce INT"
+            elif self.VAC1_PRESENT_MASK == 1: return "VAC1 present status change does NOT produce INT"
+            else: return "unknown"
+        def get_VBUS_PRESENT_MASK_string(self):
+            '''
+            Returns VBUS_PRESENT_MASK string
+            0h = VBUS present status change does produce INT
+            1h = VBUS present status change does NOT produce INT
+            '''
+            if self.VBUS_PRESENT_MASK == 0: return "VBUS present status change does produce INT"
+            elif self.VBUS_PRESENT_MASK == 1: return "VBUS present status change does NOT produce INT"
+            else: return "unknown"
+        def set_VBUS_PRESENT_MASK(self, VBUS_PRESENT_MASK):
+            '''
+            Set VBUS_PRESENT_MASK (0h = VBUS present status change does produce INT, 1h = VBUS present status change does NOT produce INT) 
+            '''
+            self.VBUS_PRESENT_MASK = VBUS_PRESENT_MASK  
+            self.get()
+        def set_VAC1_PRESENT_MASK(self, VAC1_PRESENT_MASK):
+            ''' 
+            Set VAC1_PRESENT_MASK (0h = VAC1 present status change does produce INT, 1h = VAC1 present status change does NOT produce INT)
+            '''
+            self.VAC1_PRESENT_MASK = VAC1_PRESENT_MASK
+            self.get()  
+        def set_VAC2_PRESENT_MASK(self, VAC2_PRESENT_MASK):
+            '''
+            Set VAC2_PRESENT_MASK (0h = VAC2 present status change does produce INT, 1h = VAC2 present status change does NOT produce INT)
+            '''
+            self.VAC2_PRESENT_MASK = VAC2_PRESENT_MASK
+            self.get()
+        def set_PG_MASK(self, PG_MASK):
+            '''
+            Set PG_MASK (0h = PG toggle does produce INT, 1h = PG toggle does NOT produce INT) 
+            '''
+            self.PG_MASK = PG_MASK  
+            self.get()
+        def set_POORSRC_MASK(self, POORSRC_MASK):
+            '''
+            Set POORSRC_MASK (0h = Poor source detected does produce INT, 1h = Poor source detected does NOT produce INT) 
+            '''
+            self.POORSRC_MASK = POORSRC_MASK  
+            self.get()
+        def set_WD_MASK(self, WD_MASK):
+            '''
+            Set WD_MASK (0h = I2C watch dog timer expired does produce INT pulse, 1h = I2C watch dog timer expired does NOT produce INT pulse) 
+            '''
+            self.WD_MASK = WD_MASK  
+            self.get()      
+        def set_VINDPM_MASK(self, VINDPM_MASK):
+            ''' 
+            Set VINDPM_MASK (0h = Enter VINDPM / VOTG does produce INT pulse, 1h = Enter VINDPM / VOTG does NOT produce INT pulse)
+            '''
+            self.VINDPM_MASK = VINDPM_MASK
+            self.get()
+        def set_IINDPM_MASK(self, IINDPM_MASK):
+            '''
+            Set IINDPM_MASK (0h = Enter IINDPM / IOTG does produce INT pulse, 1h = Enter IINDPM / IOTG does NOT produce INT pulse) 
+            '''
+            self.IINDPM_MASK = IINDPM_MASK  
+            self.get()
+            
+
+
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -3794,6 +4034,8 @@ class bq25792:
             self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
             self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
             self.REG27_FAULT_Flag_1.set(self.registers[self.REG27_FAULT_Flag_1._addr])
+            self.REG28_Charger_Mask_0.set(self.registers[self.REG28_Charger_Mask_0._addr])
+            
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
