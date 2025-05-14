@@ -178,7 +178,7 @@ class bq25792:
             self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
             self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
             self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
-            self.REG27_FAULT_Flag_1  = 0x27
+            self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
             self.REG28_Charger_Mask_0  = 0x28
             self.REG29_Charger_Mask_1  = 0x29
             self.REG2A_Charger_Mask_2  = 0x2a
@@ -3216,7 +3216,130 @@ class bq25792:
             elif self.VAC1_OVP_FLAG == 1: return "VAC1 over voltage protection triggered"
             else: return "unknown"
 
+    class REG27_FAULT_Flag_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG27_FAULT_Flag_1
+        ----------
+        VSYS_SHORT_FLAG
+            VSYS short circuit flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Stop switching due to system short
+        VSYS_OVP_FLAG
+            VSYS over voltage protection flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = Stop switching due to system over-voltage
+        OTG_OVP_FLAG
+            OTG over-voltage flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Stop OTG due to VBUS over voltage
+        OTG_UVP_FLAG
+            OTG under-voltage flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Stop OTG due to VBUS under-voltage
+        TSHUT_FLAG
+            IC thermal shutdown flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = TS shutdown signal rising threshold detected
+        """
+        def __init__(self, addr=0x27, value = 0):
+            super().__init__(addr, value)
+            self.VSYS_SHORT_FLAG       = ((self._value & 0b10000000) >> 7)
+            self.VSYS_OVP_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_FLAG          = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_FLAG          = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_FLAG            = ((self._value & 0b00000100) >> 2)
+            self.VSYS_SHORT_FLAG_STRG   = self.get_VSYS_SHORT_FLAG_string()
+            self.VSYS_OVP_FLAG_STRG     = self.get_VSYS_OVP_FLAG_string()
+            self.OTG_OVP_FLAG_STRG      = self.get_OTG_OVP_FLAG_string()
+            self.OTG_UVP_FLAG_STRG      = self.get_OTG_UVP_FLAG_string()
+            self.TSHUT_FLAG_STRG        = self.get_TSHUT_FLAG_string()
+
             
+        def set (self, value):
+            super().set(value)
+            self.VSYS_OVP_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_FLAG          = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_FLAG          = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_FLAG            = ((self._value & 0b00000100) >> 2)
+            self.VSYS_SHORT_FLAG_STRG   = self.get_VSYS_SHORT_FLAG_string()
+            self.VSYS_OVP_FLAG_STRG     = self.get_VSYS_OVP_FLAG_string()
+            self.OTG_OVP_FLAG_STRG      = self.get_OTG_OVP_FLAG_string()
+            self.OTG_UVP_FLAG_STRG      = self.get_OTG_UVP_FLAG_string()
+            self.TSHUT_FLAG_STRG        = self.get_TSHUT_FLAG_string()
+        def get (self):
+            return self._value, self.VSYS_SHORT_FLAG, self.VSYS_OVP_FLAG, self.OTG_OVP_FLAG, self.OTG_UVP_FLAG, self.TSHUT_FLAG
+        def get_VSYS_SHORT_FLAG(self):
+            '''return VSYS_SHORT_FLAG'''
+            return self.VSYS_SHORT_FLAG 
+        def get_VSYS_OVP_FLAG(self):
+            '''return VSYS_OVP_FLAG'''
+            return self.VSYS_OVP_FLAG
+        def get_OTG_OVP_FLAG(self):
+            '''return OTG_OVP_FLAG'''
+            return self.OTG_OVP_FLAG
+        def get_OTG_UVP_FLAG(self):
+            '''return OTG_UVP_FLAG'''
+            return self.OTG_UVP_FLAG
+        def get_TSHUT_FLAG(self):
+            '''return TSHUT_FLAG'''
+            return self.TSHUT_FLAG
+        def get_VSYS_SHORT_FLAG_string(self):   
+            '''
+            Returns VSYS_SHORT_FLAG string
+            0h = Normal
+            1h = Stop switching due to system short
+            '''
+            if self.VSYS_SHORT_FLAG == 0: return "Normal"
+            elif self.VSYS_SHORT_FLAG == 1: return "Stop switching due to system short"
+            else: return "unknown"
+        def get_VSYS_OVP_FLAG_string(self):
+            '''
+            Returns VSYS_OVP_FLAG string
+            0h = Normal
+            1h = Stop switching due to system over-voltage
+            '''
+            if self.VSYS_OVP_FLAG == 0: return "Normal"
+            elif self.VSYS_OVP_FLAG == 1: return "Stop switching due to system over-voltage"
+            else: return "unknown"
+        def get_OTG_OVP_FLAG_string(self):
+            '''
+            Returns OTG_OVP_FLAG string
+            0h = Normal
+            1h = Stop OTG due to VBUS over voltage
+            '''
+            if self.OTG_OVP_FLAG == 0: return "Normal"
+            elif self.OTG_OVP_FLAG == 1: return "Stop OTG due to VBUS over voltage"
+            else: return "unknown"
+        def get_OTG_UVP_FLAG_string(self):
+            '''
+            Returns OTG_UVP_FLAG string
+            0h = Normal
+            1h = Stop OTG due to VBUS under voltage
+            '''
+            if self.OTG_UVP_FLAG == 0: return "Normal"
+            elif self.OTG_UVP_FLAG == 1: return "Stop OTG due to VBUS under voltage"
+            else: return "unknown"
+        def get_TSHUT_FLAG_string(self):    
+            '''
+            Returns TSHUT_FLAG string
+            0h = Normal
+            1h = TS shutdown signal rising threshold detected
+            '''
+            if self.TSHUT_FLAG == 0: return "Normal"
+            elif self.TSHUT_FLAG == 1: return "TS shutdown signal rising threshold detected"
+            else: return "unknown"
+
+                   
         
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
@@ -3670,6 +3793,7 @@ class bq25792:
             self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
             self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
             self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
+            self.REG27_FAULT_Flag_1.set(self.registers[self.REG27_FAULT_Flag_1._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
