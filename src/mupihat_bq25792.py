@@ -180,7 +180,7 @@ class bq25792:
             self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
             self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
             self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
-            self.REG29_Charger_Mask_1  = 0x29
+            self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
             self.REG2A_Charger_Mask_2  = 0x2a
             self.REG2B_Charger_Mask_3  = 0x2b
             self.REG2C_FAULT_Mask_0   = 0x2c
@@ -1538,9 +1538,6 @@ class bq25792:
             return self.TS_IGNORE
         def set_TS_IGNORE(self, TS_IGNORE):
             '''
-            Set TS_IGNORE (0h = NOT ignore (Default), 1h = Ignore)
-            '''
-            '''
             Set TS_IGNORE (0h = NOT ignore (Default), 1h = Ignore)  
             '''
             self.TS_IGNORE = TS_IGNORE  
@@ -1591,6 +1588,7 @@ class bq25792:
             super().set(value)
             self.ICO_ILIM           = ((self._value & 0b0000000111111111))
         def get (self):
+            self._value =  (self.ICO_ILIM)
             return self._value, self.ICO_ILIM
         def get_ICO_ILIM (self):
             '''return Input Current Limit obtained from ICO or ILIM_HIZ pin setting in [mA]'''
@@ -1670,6 +1668,7 @@ class bq25792:
             self.AC1_PRESENT_STAT    = ((self._value & 0b000000100) >> 1)
             self.VBUS_PRESENT_STAT   = ((self._value & 0b000000010) >> 0)
         def get (self):
+            self._value =  (self.IINDPM_STAT << 7) | (self.VINDPM_STAT << 6) | (self.WD_STAT << 5) | (self.POORSRC_STAT << 4) | (self.PG_STAT << 3) | (self.AC2_PRESENT_STAT << 2) | (self.AC1_PRESENT_STAT << 1) | self.VBUS_PRESENT_STAT
             return self._value, self.IINDPM_STAT, self.VINDPM_STAT, self.WD_STAT, self.POORSRC_STAT, self.PG_STAT, self.AC2_PRESENT_STAT, self.AC1_PRESENT_STAT, self.VBUS_PRESENT_STAT
         def get_IINDPM_STAT(self):
             '''return IINDPM_STAT'''
@@ -3267,6 +3266,7 @@ class bq25792:
             
         def set (self, value):
             super().set(value)
+            self.VSYS_SHORT_FLAG       = ((self._value & 0b10000000) >> 7)
             self.VSYS_OVP_FLAG         = ((self._value & 0b01000000) >> 6)
             self.OTG_OVP_FLAG          = ((self._value & 0b00100000) >> 5)
             self.OTG_UVP_FLAG          = ((self._value & 0b00010000) >> 4)
@@ -3278,6 +3278,7 @@ class bq25792:
             self.TSHUT_FLAG_STRG        = self.get_TSHUT_FLAG_string()
         def get (self):
             return self._value, self.VSYS_SHORT_FLAG, self.VSYS_OVP_FLAG, self.OTG_OVP_FLAG, self.OTG_UVP_FLAG, self.TSHUT_FLAG
+        
         def get_VSYS_SHORT_FLAG(self):
             '''return VSYS_SHORT_FLAG'''
             return self.VSYS_SHORT_FLAG 
@@ -3433,7 +3434,12 @@ class bq25792:
             self.VAC1_PRESENT_MASK_STRG = self.get_VAC1_PRESENT_MASK_string()
             self.VBUS_PRESENT_MASK_STRG = self.get_VBUS_PRESENT_MASK_string()
         def get (self):
+            '''
+            return IINDPM_MASK, VINDPM_MASK, WD_MASK, POORSRC_MASK, PG_MASK, VAC2_PRESENT_MASK, VAC1_PRESENT_MASK, VBUS_PRESENT_MASK
+            '''
+            self._value = (self.IINDPM_MASK << 7) | (self.VINDPM_MASK << 6) | (self.WD_MASK << 5) | (self.POORSRC_MASK << 4) | (self.PG_MASK << 3) | (self.VAC2_PRESENT_MASK << 2) | (self.VAC1_PRESENT_MASK << 1) | (self.VBUS_PRESENT_MASK << 0)
             return self._value, self.IINDPM_MASK, self.VINDPM_MASK, self.WD_MASK, self.POORSRC_MASK, self.PG_MASK, self.VAC2_PRESENT_MASK, self.VAC1_PRESENT_MASK, self.VBUS_PRESENT_MASK
+        
         def get_IINDPM_MASK(self):
             '''return IINDPM_MASK'''
             return self.IINDPM_MASK
@@ -3579,8 +3585,189 @@ class bq25792:
             self.IINDPM_MASK = IINDPM_MASK  
             self.get()
             
-
-
+    class REG29_Charger_Mask_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG29_Charger_Mask_1
+        ----------
+        CHG_MASK
+            Charge status mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = Charging status change does produce INT 
+            1h = Charging status change does NOT produce INT
+        ICO_MASK
+            ICO status mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = ICO status change does produce INT 
+            1h = ICO status change does NOT produce INT
+        VBUS_MASK
+            VBUS status mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = VBUS status change does produce INT 
+            1h = VBUS status change does NOT produce INT
+        TREG_MASK
+            TREG status mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = TREG status change does produce INT 
+            1h = TREG status change does NOT produce INT
+        VBAT_PRESENT_MASK
+            VBAT present mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = VBAT present status change does produce INT 
+            1h = VBAT present status change does NOT produce INT    
+        BC1.2_DONE_MASK
+            BC1.2 done mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = BC1.2 done status change does produce INT 
+            1h = BC1.2 done status change does NOT produce INT
+                
+        """
+        def __init__(self, addr=0x29, value = 0):
+            super().__init__(addr, value)
+            self.CHG_MASK              = ((self._value & 0b10000000) >> 7)
+            self.ICO_MASK              = ((self._value & 0b01000000) >> 6)
+            self.VBUS_MASK             = ((self._value & 0b00010000) >> 4)
+            self.TREG_MASK             = ((self._value & 0b00000100) >> 2)
+            self.VBAT_PRESENT_MASK      = ((self._value & 0b00000010) >> 1)
+            self.BC1_2_DONE_MASK        = ((self._value & 0b00000001) >> 0)
+            self.CHG_MASK_STRG          = self.get_CHG_MASK_string()
+            self.ICO_MASK_STRG          = self.get_ICO_MASK_string()
+            self.VBUS_MASK_STRG         = self.get_VBUS_MASK_string()
+            self.TREG_MASK_STRG         = self.get_TREG_MASK_string()
+            self.VBAT_PRESENT_MASK_STRG  = self.get_VBAT_PRESENT_MASK_string()
+            self.BC1_2_DONE_MASK_STRG    = self.get_BC1_2_DONE_MASK_string()
+        def set (self, value):  
+            super().set(value)
+            self.CHG_MASK              = ((self._value & 0b10000000) >> 7)
+            self.ICO_MASK              = ((self._value & 0b01000000) >> 6)
+            self.VBUS_MASK             = ((self._value & 0b00010000) >> 4)
+            self.TREG_MASK             = ((self._value & 0b00000100) >> 2)
+            self.VBAT_PRESENT_MASK      = ((self._value & 0b00000010) >> 1)
+            self.BC1_2_DONE_MASK        = ((self._value & 0b00000001) >> 0)
+            self.CHG_MASK_STRG          = self.get_CHG_MASK_string()
+            self.ICO_MASK_STRG          = self.get_ICO_MASK_string()
+            self.VBUS_MASK_STRG         = self.get_VBUS_MASK_string()
+            self.TREG_MASK_STRG         = self.get_TREG_MASK_string()
+            self.VBAT_PRESENT_MASK_STRG  = self.get_VBAT_PRESENT_MASK_string()
+            self.BC1_2_DONE_MASK_STRG    = self.get_BC1_2_DONE_MASK_string()
+        def get (self): 
+            self._value = (self.CHG_MASK << 7) | (self.ICO_MASK << 6) | 0 | (self.VBUS_MASK << 4) | 0 | (self.TREG_MASK << 2) | (self.VBAT_PRESENT_MASK << 1) | (self.BC1_2_DONE_MASK << 0)
+            return self._value, self.CHG_MASK, self.ICO_MASK, self.VBUS_MASK, self.TREG_MASK, self.VBAT_PRESENT_MASK, self.BC1_2_DONE_MASK
+        def get_CHG_MASK(self):
+            '''return CHG_MASK'''
+            return self.CHG_MASK
+        def get_ICO_MASK(self):
+            '''return ICO_MASK'''
+            return self.ICO_MASK
+        def get_VBUS_MASK(self):
+            '''return VBUS_MASK'''
+            return self.VBUS_MASK
+        def get_TREG_MASK(self):
+            '''return TREG_MASK'''
+            return self.TREG_MASK
+        def get_VBAT_PRESENT_MASK(self):
+            '''return VBAT_PRESENT_MASK'''
+            return self.VBAT_PRESENT_MASK
+        def get_BC1_2_DONE_MASK(self):
+            '''return BC1_2_DONE_MASK'''
+            return self.BC1_2_DONE_MASK
+        def get_CHG_MASK_string(self):
+            '''
+            Returns CHG_MASK string
+            0h = Charging status change does produce INT
+            1h = Charging status change does NOT produce INT
+            '''
+            if self.CHG_MASK == 0: return "Charging status change does produce INT"
+            elif self.CHG_MASK == 1: return "Charging status change does NOT produce INT"
+            else: return "unknown"
+        def get_ICO_MASK_string(self):
+            '''
+            Returns ICO_MASK string
+            0h = ICO status change does produce INT
+            1h = ICO status change does NOT produce INT
+            '''
+            if self.ICO_MASK == 0: return "ICO status change does produce INT"
+            elif self.ICO_MASK == 1: return "ICO status change does NOT produce INT"
+            else: return "unknown"
+        def get_VBUS_MASK_string(self):
+            '''
+            Returns VBUS_MASK string
+            0h = VBUS status change does produce INT
+            1h = VBUS status change does NOT produce INT
+            '''
+            if self.VBUS_MASK == 0: return "VBUS status change does produce INT"
+            elif self.VBUS_MASK == 1: return "VBUS status change does NOT produce INT"
+            else: return "unknown"
+        def get_TREG_MASK_string(self):
+            '''
+            Returns TREG_MASK string
+            0h = TREG status change does produce INT
+            1h = TREG status change does NOT produce INT
+            '''
+            if self.TREG_MASK == 0: return "TREG status change does produce INT"
+            elif self.TREG_MASK == 1: return "TREG status change does NOT produce INT"
+            else: return "unknown"
+        def get_VBAT_PRESENT_MASK_string(self):
+            '''
+            Returns VBAT_PRESENT_MASK string
+            0h = VBAT present status change does produce INT
+            1h = VBAT present status change does NOT produce INT
+            '''
+            if self.VBAT_PRESENT_MASK == 0: return "VBAT present status change does produce INT"
+            elif self.VBAT_PRESENT_MASK == 1: return "VBAT present status change does NOT produce INT"
+            else: return "unknown"
+        def get_BC1_2_DONE_MASK_string(self):
+            '''
+            Returns BC1_2_DONE_MASK string
+            0h = BC1.2 done status change does produce INT
+            1h = BC1.2 done status change does NOT produce INT
+            '''
+            if self.BC1_2_DONE_MASK == 0: return "BC1.2 done status change does produce INT"
+            elif self.BC1_2_DONE_MASK == 1: return "BC1.2 done status change does NOT produce INT"
+            else: return "unknown"
+        def set_CHG_MASK(self, CHG_MASK):
+            '''
+            Set CHG_MASK (0h = Charging status change does produce INT, 1h = Charging status change does NOT produce INT) 
+            '''
+            self.CHG_MASK = CHG_MASK  
+            self.get()
+        def set_ICO_MASK(self, ICO_MASK):
+            '''
+            Set ICO_MASK (0h = ICO status change does produce INT, 1h = ICO status change does NOT produce INT) 
+            '''
+            self.ICO_MASK = ICO_MASK  
+            self.get()
+        def set_VBUS_MASK(self, VBUS_MASK):
+            '''
+            Set VBUS_MASK (0h = VBUS status change does produce INT, 1h = VBUS status change does NOT produce INT) 
+            '''
+            self.VBUS_MASK = VBUS_MASK  
+            self.get()
+        def set_TREG_MASK(self, TREG_MASK):
+            '''
+            Set TREG_MASK (0h = TREG status change does produce INT, 1h = TREG status change does NOT produce INT) 
+            '''
+            self.TREG_MASK = TREG_MASK  
+            self.get()
+        def set_VBAT_PRESENT_MASK(self, VBAT_PRESENT_MASK):
+            '''
+            Set VBAT_PRESENT_MASK (0h = VBAT present status change does produce INT, 1h = VBAT present status change does NOT produce INT) 
+            '''
+            self.VBAT_PRESENT_MASK = VBAT_PRESENT_MASK  
+            self.get()
+        def set_BC1_2_DONE_MASK(self, BC1_2_DONE_MASK):
+            '''
+            Set BC1_2_DONE_MASK (0h = BC1.2 done status change does produce INT, 1h = BC1.2 done status change does NOT produce INT) 
+            '''
+            self.BC1_2_DONE_MASK = BC1_2_DONE_MASK  
+            self.get()
+            
+    
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
