@@ -177,7 +177,7 @@ class bq25792:
             self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
             self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
             self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
-            self.REG26_FAULT_Flag_0  = 0x26
+            self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
             self.REG27_FAULT_Flag_1  = 0x27
             self.REG28_Charger_Mask_0  = 0x28
             self.REG29_Charger_Mask_1  = 0x29
@@ -3027,6 +3027,197 @@ class bq25792:
             else: return "unknown"
         
 
+    class REG26_FAULT_Flag_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG26_FAULT_Flag_0
+        ----------
+        IBAT_REG_FLAG
+            IBAT regulation flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = Enter or exit IBAT regulation
+
+        VBUS_OVP_FLAG
+            VBUS over voltage protection flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VBUS over voltage protection triggered
+        VBAT_OVP_FLAG
+            VBAT over voltage protection flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = VBAT over voltage protection triggered
+        IBUS_OCP_FLAG
+            IBUS over current protection flag 
+            Type : R 
+            POR: 0b 
+            0h = Normal 
+            1h = IBUS over current protection triggered
+        IBAT_OCP_FLAG
+            IBAT over current protection flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = IBAT over current protection triggered
+        CONV_OCP_FLAG
+            Converter over current protection flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = Converter over current protection triggered
+        VAC2_OVP_FLAG
+            VAC2 over voltage protection flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = VAC2 over voltage protection triggered
+        VAC1_OVP_FLAG
+            VAC1 over voltage protection flag
+            Type : R
+            POR: 0b
+            0h = Normal
+            1h = VAC1 over voltage protection triggered
+        """
+        def __init__(self, addr=0x26, value = 0):
+            super().__init__(addr, value)
+            self.IBAT_REG_FLAG         = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.VBAT_OVP_FLAG         = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_FLAG         = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_FLAG         = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_FLAG         = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_FLAG         = ((self._value & 0b00000001) >> 0)
+            self.IBAT_REG_FLAG_STRG     = self.get_IBAT_REG_FLAG_string()
+            self.VBUS_OVP_FLAG_STRG     = self.get_VBUS_OVP_FLAG_string()
+            self.VBAT_OVP_FLAG_STRG     = self.get_VBAT_OVP_FLAG_string()
+            self.IBUS_OCP_FLAG_STRG     = self.get_IBUS_OCP_FLAG_string()
+            self.IBAT_OCP_FLAG_STRG     = self.get_IBAT_OCP_FLAG_string()
+            self.CONV_OCP_FLAG_STRG     = self.get_CONV_OCP_FLAG_string()
+            self.VAC2_OVP_FLAG_STRG     = self.get_VAC2_OVP_FLAG_string()
+            self.VAC1_OVP_FLAG_STRG     = self.get_VAC1_OVP_FLAG_string()
+        def set (self, value):  
+            super().set(value)
+            self.IBAT_REG_FLAG         = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_FLAG         = ((self._value & 0b01000000) >> 6)
+            self.VBAT_OVP_FLAG         = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_FLAG         = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_FLAG         = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_FLAG         = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_FLAG         = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_FLAG         = ((self._value & 0b00000001) >> 0)
+            self.IBAT_REG_FLAG_STRG     = self.get_IBAT_REG_FLAG_string()
+            self.VBUS_OVP_FLAG_STRG     = self.get_VBUS_OVP_FLAG_string()
+            self.VBAT_OVP_FLAG_STRG     = self.get_VBAT_OVP_FLAG_string()
+            self.IBUS_OCP_FLAG_STRG     = self.get_IBUS_OCP_FLAG_string()
+            self.IBAT_OCP_FLAG_STRG     = self.get_IBAT_OCP_FLAG_string()
+            self.CONV_OCP_FLAG_STRG     = self.get_CONV_OCP_FLAG_string()
+            self.VAC2_OVP_FLAG_STRG     = self.get_VAC2_OVP_FLAG_string()
+            self.VAC1_OVP_FLAG_STRG     = self.get_VAC1_OVP_FLAG_string()
+        def get (self):
+            return self._value, self.IBAT_REG_FLAG, self.VBUS_OVP_FLAG, self.VBAT_OVP_FLAG, self.IBUS_OCP_FLAG, self.IBAT_OCP_FLAG, self.CONV_OCP_FLAG, self.VAC2_OVP_FLAG, self.VAC1_OVP_FLAG  
+        def get_IBAT_REG_FLAG(self):
+            '''return IBAT_REG_FLAG'''
+            return self.IBAT_REG_FLAG
+        def get_VBUS_OVP_FLAG(self):
+            '''return VBUS_OVP_FLAG'''
+            return self.VBUS_OVP_FLAG
+        def get_VBAT_OVP_FLAG(self):
+            '''return VBAT_OVP_FLAG'''
+            return self.VBAT_OVP_FLAG
+        def get_IBUS_OCP_FLAG(self):
+            '''return IBUS_OCP_FLAG'''
+            return self.IBUS_OCP_FLAG
+        def get_IBAT_OCP_FLAG(self):
+            '''return IBAT_OCP_FLAG'''
+            return self.IBAT_OCP_FLAG
+        def get_CONV_OCP_FLAG(self):
+            '''return CONV_OCP_FLAG'''
+            return self.CONV_OCP_FLAG
+        def get_VAC2_OVP_FLAG(self):
+            '''return VAC2_OVP_FLAG'''
+            return self.VAC2_OVP_FLAG
+        def get_VAC1_OVP_FLAG(self):
+            '''return VAC1_OVP_FLAG'''
+            return self.VAC1_OVP_FLAG
+        def get_IBAT_REG_FLAG_string(self):
+            '''
+            Returns IBAT_REG_FLAG string
+            0h = Normal
+            1h = Enter or exit IBAT regulation
+            '''
+            if self.IBAT_REG_FLAG == 0: return "Normal"
+            elif self.IBAT_REG_FLAG == 1: return "Enter or exit IBAT regulation"
+            else: return "unknown"  
+        def get_VBUS_OVP_FLAG_string(self): 
+            '''
+            Returns VBUS_OVP_FLAG string
+            0h = Normal
+            1h = VBUS over voltage protection triggered
+            '''
+            if self.VBUS_OVP_FLAG == 0: return "Normal"
+            elif self.VBUS_OVP_FLAG == 1: return "VBUS over voltage protection triggered"
+            else: return "unknown"
+        def get_VBAT_OVP_FLAG_string(self):
+            '''
+            Returns VBAT_OVP_FLAG string
+            0h = Normal
+            1h = VBAT over voltage protection triggered
+            '''
+            if self.VBAT_OVP_FLAG == 0: return "Normal"
+            elif self.VBAT_OVP_FLAG == 1: return "VBAT over voltage protection triggered"
+            else: return "unknown"
+        def get_IBUS_OCP_FLAG_string(self):
+            '''
+            Returns IBUS_OCP_FLAG string
+            0h = Normal
+            1h = IBUS over current protection triggered
+            '''
+            if self.IBUS_OCP_FLAG == 0: return "Normal"
+            elif self.IBUS_OCP_FLAG == 1: return "IBUS over current protection triggered"
+            else: return "unknown"
+        def get_IBAT_OCP_FLAG_string(self): 
+            '''
+            Returns IBAT_OCP_FLAG string
+            0h = Normal
+            1h = IBAT over current protection triggered
+            '''
+            if self.IBAT_OCP_FLAG == 0: return "Normal"
+            elif self.IBAT_OCP_FLAG == 1: return "IBAT over current protection triggered"
+            else: return "unknown"
+        def get_CONV_OCP_FLAG_string(self):
+            '''
+            Returns CONV_OCP_FLAG string
+            0h = Normal
+            1h = Converter over current protection triggered
+            '''
+            if self.CONV_OCP_FLAG == 0: return "Normal"
+            elif self.CONV_OCP_FLAG == 1: return "Converter over current protection triggered"
+            else: return "unknown"
+        def get_VAC2_OVP_FLAG_string(self): 
+            '''
+            Returns VAC2_OVP_FLAG string
+            0h = Normal
+            1h = VAC2 over voltage protection triggered
+            '''
+            if self.VAC2_OVP_FLAG == 0: return "Normal"
+            elif self.VAC2_OVP_FLAG == 1: return "VAC2 over voltage protection triggered"
+            else: return "unknown"
+        def get_VAC1_OVP_FLAG_string(self): 
+            '''
+            Returns VAC1_OVP_FLAG string
+            0h = Normal
+            1h = VAC1 over voltage protection triggered
+            '''
+            if self.VAC1_OVP_FLAG == 0: return "Normal"
+            elif self.VAC1_OVP_FLAG == 1: return "VAC1 over voltage protection triggered"
+            else: return "unknown"
+
+            
+        
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -3478,6 +3669,7 @@ class bq25792:
             self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
             self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
             self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
+            self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
