@@ -181,7 +181,7 @@ class bq25792:
             self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
             self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
             self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
-            self.REG2A_Charger_Mask_2  = 0x2a
+            self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
             self.REG2B_Charger_Mask_3  = 0x2b
             self.REG2C_FAULT_Mask_0   = 0x2c
             self.REG2D_FAULT_Mask_1  = 0x2d
@@ -3768,6 +3768,221 @@ class bq25792:
             self.get()
             
     
+    class REG2A_Charger_Mask_2(BQ25795_REGISTER):
+        """
+        BQ25795 - REG2A_Charger_Mask_2
+        ----------
+        DPDM_DONE_MASK
+            D+/D- detection is done mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = D+/D- detection done does produce INT pulse 
+            1h = D+/D- detection done does NOT produce INT pulse
+        ADC_DONE_MASK
+            ADC conversion mask flag (only in one-shot mode) 
+            Type : RW POR: 0b 
+            0h = ADC conversion done does produce INT pulse 
+            1h = ADC conversion done does NOT produce INT pulse 
+        VSYS_MASK
+            VSYS min regulation mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = enter or exit VSYSMIN regulation does produce INT pulse 
+            1h = enter or exit VSYSMIN regulation does NOT produce INT pulse  
+        CHG_TMR_MASK
+            Fast charge timer mask flag Type : RW 
+            POR: 0b 
+            0h = Fast charge timer expire does produce INT 
+            1h = Fast charge timer expire does NOT produce INT
+        TRICHG_TMR_MASK
+            Trickle charge timer mask flag
+            Type : RW
+            POR: 0b
+            0h = Trickle charge timer expire does produce INT
+            1h = Trickle charge timer expire does NOT produce INT
+        PRECHG_TMR_MASK
+            Precharge timer mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = Precharge timer expire does produce INT 
+            1h = Precharge timer expire does NOT produce INT
+        TOPOFF_TMR_MASK   
+            Top off timer mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = Top off timer expire does produce INT 
+            1h = Top off timer expire does NOT produce INT
+        """
+        def __init__(self, addr=0x2a, value = 0):
+            super().__init__(addr, value)
+            self.DPDM_DONE_MASK        = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_MASK         = ((self._value & 0b00100000) >> 5)
+            self.VSYS_MASK             = ((self._value & 0b00010000) >> 4)
+            self.CHG_TMR_MASK          = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_MASK       = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_MASK       = ((self._value & 0b00000010) >> 1)
+            self.TOPOFF_TMR_MASK        = ((self._value & 0b00000001) >> 0)
+            self.DPDM_DONE_MASK_STRG    = self.get_DPDM_DONE_MASK_string()
+            self.ADC_DONE_MASK_STRG     = self.get_ADC_DONE_MASK_string()
+            self.VSYS_MASK_STRG         = self.get_VSYS_MASK_string()
+            self.CHG_TMR_MASK_STRG      = self.get_CHG_TMR_MASK_string()
+            self.TRICHG_TMR_MASK_STRG   = self.get_TRICHG_TMR_MASK_string() 
+            self.PRECHG_TMR_MASK_STRG   = self.get_PRECHG_TMR_MASK_string()
+            self.TOPOFF_TMR_MASK_STRG    = self.get_TOPOFF_TMR_MASK_string()
+            
+            
+        def set (self, value):  
+            super().set(value)
+            self.DPDM_DONE_MASK        = ((self._value & 0b01000000) >> 6)
+            self.ADC_DONE_MASK         = ((self._value & 0b00100000) >> 5)
+            self.VSYS_MASK             = ((self._value & 0b00010000) >> 4)
+            self.CHG_TMR_MASK          = ((self._value & 0b00001000) >> 3)
+            self.TRICHG_TMR_MASK       = ((self._value & 0b00000100) >> 2)
+            self.PRECHG_TMR_MASK       = ((self._value & 0b00000010) >> 1)
+            self.TOPOFF_TMR_MASK        = ((self._value & 0b00000001) >> 0)
+            self.DPDM_DONE_MASK_STRG    = self.get_DPDM_DONE_MASK_string()
+            self.ADC_DONE_MASK_STRG     = self.get_ADC_DONE_MASK_string()
+            self.VSYS_MASK_STRG         = self.get_VSYS_MASK_string()
+            self.CHG_TMR_MASK_STRG      = self.get_CHG_TMR_MASK_string()
+            self.TRICHG_TMR_MASK_STRG   = self.get_TRICHG_TMR_MASK_string() 
+            self.PRECHG_TMR_MASK_STRG   = self.get_PRECHG_TMR_MASK_string()
+            self.TOPOFF_TMR_MASK_STRG    = self.get_TOPOFF_TMR_MASK_string()
+        def get (self):
+            '''
+            return DPDM_DONE_MASK, ADC_DONE_MASK, VSYS_MASK, CHG_TMR_MASK, TRICHG_TMR_MASK, PRECHG_TMR_MASK, TOPOFF_TMR_MASK
+            '''
+            self._value = 0 | (self.DPDM_DONE_MASK << 6) | (self.ADC_DONE_MASK << 5) | (self.VSYS_MASK << 4) | (self.CHG_TMR_MASK << 3) | (self.TRICHG_TMR_MASK << 2) | (self.PRECHG_TMR_MASK << 1) | (self.TOPOFF_TMR_MASK << 0)
+            return self._value, self.DPDM_DONE_MASK, self.ADC_DONE_MASK, self.VSYS_MASK, self.CHG_TMR_MASK, self.TRICHG_TMR_MASK, self.PRECHG_TMR_MASK, self.TOPOFF_TMR_MASK
+        def get_DPDM_DONE_MASK(self):
+            '''return DPDM_DONE_MASK'''
+            return self.DPDM_DONE_MASK
+        def get_ADC_DONE_MASK(self):
+            '''return ADC_DONE_MASK'''
+            return self.ADC_DONE_MASK
+        def get_VSYS_MASK(self):
+            '''return VSYS_MASK'''
+            return self.VSYS_MASK
+        def get_CHG_TMR_MASK(self):
+            '''return CHG_TMR_MASK'''
+            return self.CHG_TMR_MASK
+        def get_TRICHG_TMR_MASK(self):
+            '''return TRICHG_TMR_MASK'''
+            return self.TRICHG_TMR_MASK
+        def get_PRECHG_TMR_MASK(self):
+            '''return PRECHG_TMR_MASK'''
+            return self.PRECHG_TMR_MASK
+        def get_TOPOFF_TMR_MASK(self):
+            '''return TOPOFF_TMR_MASK'''
+            return self.TOPOFF_TMR_MASK
+        def get_DPDM_DONE_MASK_string(self):    
+            '''
+            Returns DPDM_DONE_MASK string
+            0h = D+/D- detection done does produce INT pulse
+            1h = D+/D- detection done does NOT produce INT pulse
+            '''
+            if self.DPDM_DONE_MASK == 0: return "D+/D- detection done does produce INT pulse"
+            elif self.DPDM_DONE_MASK == 1: return "D+/D- detection done does NOT produce INT pulse"
+            else: return "unknown"
+        def get_ADC_DONE_MASK_string(self):
+            '''
+            Returns ADC_DONE_MASK string
+            0h = ADC conversion done does produce INT pulse
+            1h = ADC conversion done does NOT produce INT pulse
+            '''
+            if self.ADC_DONE_MASK == 0: return "ADC conversion done does produce INT pulse"
+            elif self.ADC_DONE_MASK == 1: return "ADC conversion done does NOT produce INT pulse"
+            else: return "unknown"
+        def get_VSYS_MASK_string(self):
+            '''
+            Returns VSYS_MASK string
+            0h = enter or exit VSYSMIN regulation does produce INT pulse
+            1h = enter or exit VSYSMIN regulation does NOT produce INT pulse
+            '''
+            if self.VSYS_MASK == 0: return "enter or exit VSYSMIN regulation does produce INT pulse"
+            elif self.VSYS_MASK == 1: return "enter or exit VSYSMIN regulation does NOT produce INT pulse"
+            else: return "unknown"
+        def get_CHG_TMR_MASK_string(self):
+            '''
+            Returns CHG_TMR_MASK string
+            0h = Fast charge timer expire does produce INT
+            1h = Fast charge timer expire does NOT produce INT
+            '''
+            if self.CHG_TMR_MASK == 0: return "Fast charge timer expire does produce INT"
+            elif self.CHG_TMR_MASK == 1: return "Fast charge timer expire does NOT produce INT"
+            else: return "unknown"
+        def get_TRICHG_TMR_MASK_string(self):
+            '''
+            Returns TRICHG_TMR_MASK string
+            0h = Trickle charge timer expire does produce INT
+            1h = Trickle charge timer expire does NOT produce INT
+            '''
+            if self.TRICHG_TMR_MASK == 0: return "Trickle charge timer expire does produce INT"
+            elif self.TRICHG_TMR_MASK == 1: return "Trickle charge timer expire does NOT produce INT"
+            else: return "unknown"
+        def get_PRECHG_TMR_MASK_string(self):
+            '''
+            Returns PRECHG_TMR_MASK string
+            0h = Precharge timer expire does produce INT
+            1h = Precharge timer expire does NOT produce INT
+            '''
+            if self.PRECHG_TMR_MASK == 0: return "Precharge timer expire does produce INT"
+            elif self.PRECHG_TMR_MASK == 1: return "Precharge timer expire does NOT produce INT"
+            else: return "unknown"
+        def get_TOPOFF_TMR_MASK_string(self):
+            '''
+            Returns TOPOFF_TMR_MASK string
+            0h = Top off timer expire does produce INT
+            1h = Top off timer expire does NOT produce INT
+            '''
+            if self.TOPOFF_TMR_MASK == 0: return "Top off timer expire does produce INT"
+            elif self.TOPOFF_TMR_MASK == 1: return "Top off timer expire does NOT produce INT"
+            else: return "unknown"
+        def set_DPDM_DONE_MASK(self, DPDM_DONE_MASK):
+            '''
+            Set DPDM_DONE_MASK (0h = D+/D- detection done does produce INT pulse, 1h = D+/D- detection done does NOT produce INT pulse) 
+            '''
+            self.DPDM_DONE_MASK = DPDM_DONE_MASK  
+            self.get()
+        def set_ADC_DONE_MASK(self, ADC_DONE_MASK):
+            '''
+            Set ADC_DONE_MASK (0h = ADC conversion done does produce INT pulse, 1h = ADC conversion done does NOT produce INT pulse) 
+            '''
+            self.ADC_DONE_MASK = ADC_DONE_MASK  
+            self.get()
+        def set_VSYS_MASK(self, VSYS_MASK):
+            '''
+            Set VSYS_MASK (0h = enter or exit VSYSMIN regulation does produce INT pulse, 1h = enter or exit VSYSMIN regulation does NOT produce INT pulse) 
+            '''
+            self.VSYS_MASK = VSYS_MASK  
+            self.get()
+        def set_CHG_TMR_MASK(self, CHG_TMR_MASK):
+            '''
+            Set CHG_TMR_MASK (0h = Fast charge timer expire does produce INT, 1h = Fast charge timer expire does NOT produce INT) 
+            '''
+            self.CHG_TMR_MASK = CHG_TMR_MASK  
+            self.get()
+        def set_TRICHG_TMR_MASK(self, TRICHG_TMR_MASK):
+            '''
+            Set TRICHG_TMR_MASK (0h = Trickle charge timer expire does produce INT, 1h = Trickle charge timer expire does NOT produce INT) 
+            '''
+            self.TRICHG_TMR_MASK = TRICHG_TMR_MASK  
+            self.get()
+        def set_PRECHG_TMR_MASK(self, PRECHG_TMR_MASK):
+            '''
+            Set PRECHG_TMR_MASK (0h = Precharge timer expire does produce INT, 1h = Precharge timer expire does NOT produce INT) 
+            '''
+            self.PRECHG_TMR_MASK = PRECHG_TMR_MASK  
+            self.get()
+        def set_TOPOFF_TMR_MASK(self, TOPOFF_TMR_MASK):
+            '''
+            Set TOPOFF_TMR_MASK (0h = Top off timer expire does produce INT, 1h = Top off timer expire does NOT produce INT) 
+            '''
+            self.TOPOFF_TMR_MASK = TOPOFF_TMR_MASK  
+            self.get()
+        
+           
+        
+        
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -4222,7 +4437,8 @@ class bq25792:
             self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
             self.REG27_FAULT_Flag_1.set(self.registers[self.REG27_FAULT_Flag_1._addr])
             self.REG28_Charger_Mask_0.set(self.registers[self.REG28_Charger_Mask_0._addr])
-            
+            self.REG29_Charger_Mask_1.set(self.registers[self.REG29_Charger_Mask_1._addr])
+            self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
