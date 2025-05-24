@@ -184,7 +184,7 @@ class bq25792:
             self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
             self.REG2B_Charger_Mask_3  = self.REG2B_Charger_Mask_3()
             self.REG2C_FAULT_Mask_0   = self.REG2C_FAULT_Mask_0()
-            self.REG2D_FAULT_Mask_1  = 0x2d
+            self.REG2D_FAULT_Mask_1  = self.REG2D_FAULT_Mask_1()
             self.REG2E_ADC_Control = self.REG2E_ADC_Control()
             self.REG2F_ADC_Function_Disable_0 = 0x2f 
             self.REG30_ADC_Function_Disable_1 = 0x30
@@ -4330,7 +4330,130 @@ class bq25792:
             if self.VAC1_OVP_MASK == 0: return "entering VAC1 OVP does produce INT"
             elif self.VAC1_OVP_MASK == 1: return "entering VAC1 OVP does NOT produce INT"
             else: return "unknown"
+    
+    class REG2D_FAULT_Mask_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG2D_FAULT_Mask_1
+        ----------
+        VSYS_SHORT_MASK
+            VSYS short circuit mask flag
+            Type : RW
+            POR: 0b
+            0h = entering VSYS short circuit does produce INT
+            1h = entering VSYS short circuit does NOT produce INT 
+        VSYS_OVP_MASK
+            VSYS over-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = entering VSYS OVP does produce INT
+            1h = entering VSYS OVP does NOT produce INT
+        OTG_OVP_MASK
+            OTG over-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = OTG VBUS over-voltage fault does produce INT
+            1h = OTG VBUS over-voltage fault does NOT produce INT
+        OTG_UVP_MASK
+            OTG under-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = OTG VBUS under-voltage fault does produce INT
+            1h = OTG VBUS under-voltage fault does NOT produce INT
+        TSHUT_MASK
+            Thermal shutdown mask flag
+            Type : RW
+            POR: 0b
+            0h = entering thermal shutdown does produce INT
+            1h = entering thermal shutdown does NOT produce INT             
+        """
+        def __init__(self, addr=0x2d, value = 0):
+            super().__init__(addr, value)
+            self.VSYS_SHORT_MASK       = ((self._value & 0b10000000) >> 7)
+            self.VSYS_OVP_MASK         = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_MASK          = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_MASK          = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_MASK            = ((self._value & 0b00000100) >> 2)
+        def set (self, value):
+            super().set(value)
+            self.VSYS_SHORT_MASK       = ((self._value & 0b10000000) >> 7)
+            self.VSYS_OVP_MASK         = ((self._value & 0b01000000) >> 6)
+            self.OTG_OVP_MASK          = ((self._value & 0b00100000) >> 5)
+            self.OTG_UVP_MASK          = ((self._value & 0b00010000) >> 4)
+            self.TSHUT_MASK            = ((self._value & 0b00000100) >> 2)
+            self.VSYS_SHORT_MASK_STRG   = self.get_VSYS_SHORT_MASK_string()
+            self.VSYS_OVP_MASK_STRG     = self.get_VSYS_OVP_MASK_string()
+            self.OTG_OVP_MASK_STRG      = self.get_OTG_OVP_MASK_string()
+            self.OTG_UVP_MASK_STRG      = self.get_OTG_UVP_MASK_string()
+            self.TSHUT_MASK_STRG        = self.get_TSHUT_MASK_string()
+        def get (self):
+            '''
+            return VSYS_SHORT_MASK, VSYS_OVP_MASK, OTG_OVP_MASK, OTG_UVP_MASK, TSHUT_MASK
+            '''
+            self._value = 0 | (self.VSYS_SHORT_MASK << 7) | (self.VSYS_OVP_MASK << 6) | (self.OTG_OVP_MASK << 5) | (self.OTG_UVP_MASK << 4) | (self.TSHUT_MASK << 2)
+            return self._value, self.VSYS_SHORT_MASK, self.VSYS_OVP_MASK, self.OTG_OVP_MASK, self.OTG_UVP_MASK, self.TSHUT_MASK
+        def get_VSYS_SHORT_MASK(self):
+            '''return VSYS_SHORT_MASK'''
+            return self.VSYS_SHORT_MASK
+        def get_VSYS_OVP_MASK(self):
+            '''return VSYS_OVP_MASK'''
+            return self.VSYS_OVP_MASK
+        def get_OTG_OVP_MASK(self):
+            '''return OTG_OVP_MASK'''
+            return self.OTG_OVP_MASK
+        def get_OTG_UVP_MASK(self):
+            '''return OTG_UVP_MASK'''
+            return self.OTG_UVP_MASK
+        def get_TSHUT_MASK(self):
+            '''return TSHUT_MASK'''
+            return self.TSHUT_MASK  
+        def get_VSYS_SHORT_MASK_string(self):
+            '''
+            Returns VSYS_SHORT_MASK string
+            0h = entering VSYS short circuit does produce INT
+            1h = entering VSYS short circuit does NOT produce INT
+            '''
+            if self.VSYS_SHORT_MASK == 0: return "entering VSYS short circuit does produce INT"
+            elif self.VSYS_SHORT_MASK == 1: return "entering VSYS short circuit does NOT produce INT"
+            else: return "unknown"
+        def get_VSYS_OVP_MASK_string(self):
+            '''
+            Returns VSYS_OVP_MASK string
+            0h = entering VSYS OVP does produce INT
+            1h = entering VSYS OVP does NOT produce INT
+            '''
+            if self.VSYS_OVP_MASK == 0: return "entering VSYS OVP does produce INT"
+            elif self.VSYS_OVP_MASK == 1: return "entering VSYS OVP does NOT produce INT"
+            else: return "unknown"
+        def get_OTG_OVP_MASK_string(self):
+            '''
+            Returns OTG_OVP_MASK string
+            0h = OTG VBUS over-voltage fault does produce INT
+            1h = OTG VBUS over-voltage fault does NOT produce INT
+            '''
+            if self.OTG_OVP_MASK == 0: return "OTG VBUS over-voltage fault does produce INT"
+            elif self.OTG_OVP_MASK == 1: return "OTG VBUS over-voltage fault does NOT produce INT"
+            else: return "unknown"
+        def get_OTG_UVP_MASK_string(self):
+            '''
+            Returns OTG_UVP_MASK string
+            0h = OTG VBUS under-voltage fault does produce INT
+            1h = OTG VBUS under-voltage fault does NOT produce INT
+            '''
+            if self.OTG_UVP_MASK == 0: return "OTG VBUS under-voltage fault does produce INT"
+            elif self.OTG_UVP_MASK == 1: return "OTG VBUS under-voltage fault does NOT produce INT"
+            else: return "unknown"
+        def get_TSHUT_MASK_string(self):
+            '''
+            Returns TSHUT_MASK string
+            0h = entering thermal shutdown does produce INT
+            1h = entering thermal shutdown does NOT produce INT
+            '''
+            if self.TSHUT_MASK == 0: return "entering thermal shutdown does produce INT"
+            elif self.TSHUT_MASK == 1: return "entering thermal shutdown does NOT produce INT"
+            else: return "unknown"
             
+                 
+    
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -4789,6 +4912,7 @@ class bq25792:
             self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
             self.REG2B_Charger_Mask_3.set(self.registers[self.REG2B_Charger_Mask_3._addr])
             self.REG2C_FAULT_Mask_0.set(self.registers[self.REG2C_FAULT_Mask_0._addr])
+            self.REG2D_FAULT_Mask_1.set(self.registers[self.REG2D_FAULT_Mask_1._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
