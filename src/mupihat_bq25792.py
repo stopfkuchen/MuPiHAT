@@ -186,7 +186,7 @@ class bq25792:
             self.REG2C_FAULT_Mask_0   = self.REG2C_FAULT_Mask_0()
             self.REG2D_FAULT_Mask_1  = self.REG2D_FAULT_Mask_1()
             self.REG2E_ADC_Control = self.REG2E_ADC_Control()
-            self.REG2F_ADC_Function_Disable_0 = 0x2f 
+            self.REG2F_ADC_Function_Disable_0 = self.REG2F_ADC_Function_Disable_0() 
             self.REG30_ADC_Function_Disable_1 = 0x30
             self.REG31_IBUS_ADC = self.REG31_IBUS_ADC()
             self.REG33_IBAT_ADC = self.REG33_IBAT_ADC()
@@ -4549,6 +4549,214 @@ class bq25792:
             self.ADC_AVG_INIT = ADC_AVG_INIT
             self.get()
         
+    class REG2F_ADC_Function_Disable_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG2F_ADC_Function_Disable_0
+        ----------
+        IBUS_ADC_DIS
+            IBUS ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable IBUS ADC 
+            1h = Disable IBUS ADC
+        IBAT_ADC_DIS
+            IBAT ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable IBAT ADC 
+            1h = Disable IBAT ADC
+        VBUS_ADC_DIS
+            VBUS ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable VBUS ADC 
+            1h = Disable VBUS ADC
+        VBAT_ADC_DIS
+            VBAT ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable VBAT ADC 
+            1h = Disable VBAT ADC
+        VSYS_ADC_DIS
+            VSYS ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable VSYS ADC 
+            1h = Disable VSYS ADC
+        TS_ADC_DIS
+            TS ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable TS ADC 
+            1h = Disable TS ADC
+        TDIE_ADC_DIS
+            TDIE ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable TDIE ADC 
+            1h = Disable TDIE ADC            
+        """
+        def __init__(self, addr=0x2f, value = 0):
+            super().__init__(addr, value)
+            
+            self.IBUS_ADC_DIS         = ((self._value & 0b10000000) >> 7)
+            self.IBAT_ADC_DIS         = ((self._value & 0b01000000) >> 6)
+            self.VBUS_ADC_DIS         = ((self._value & 0b00100000) >> 5)
+            self.VBAT_ADC_DIS         = ((self._value & 0b00010000) >> 4)
+            self.VSYS_ADC_DIS         = ((self._value & 0b00001000) >> 3)
+            self.TS_ADC_DIS           = ((self._value & 0b00000100) >> 2)
+            self.TDIE_ADC_DIS         = ((self._value & 0b00000010) >> 1)
+            self.IBUS_ADC_DIS_STRG     = self.get_IBUS_ADC_DIS_string()
+            self.IBAT_ADC_DIS_STRG     = self.get_IBAT_ADC_DIS_string()
+            self.VBUS_ADC_DIS_STRG     = self.get_VBUS_ADC_DIS_string()
+            self.VBAT_ADC_DIS_STRG     = self.get_VBAT_ADC_DIS_string()
+            self.VSYS_ADC_DIS_STRG     = self.get_VSYS_ADC_DIS_string()
+            self.TS_ADC_DIS_STRG       = self.get_TS_ADC_DIS_string()
+            self.TDIE_ADC_DIS_STRG     = self.get_TDIE_ADC_DIS_string()
+        def set (self, value):
+            super().set(value)
+            self.IBUS_ADC_DIS         = ((self._value & 0b10000000) >> 7)
+            self.IBAT_ADC_DIS         = ((self._value & 0b01000000) >> 6)
+            self.VBUS_ADC_DIS         = ((self._value & 0b00100000) >> 5)
+            self.VBAT_ADC_DIS         = ((self._value & 0b00010000) >> 4)
+            self.VSYS_ADC_DIS         = ((self._value & 0b00001000) >> 3)
+            self.TS_ADC_DIS           = ((self._value & 0b00000100) >> 2)
+            self.TDIE_ADC_DIS         = ((self._value & 0b00000010) >> 1)
+            self.IBUS_ADC_DIS_STRG     = self.get_IBUS_ADC_DIS_string()
+            self.IBAT_ADC_DIS_STRG     = self.get_IBAT_ADC_DIS_string()
+            self.VBUS_ADC_DIS_STRG     = self.get_VBUS_ADC_DIS_string()
+            self.VBAT_ADC_DIS_STRG     = self.get_VBAT_ADC_DIS_string()
+            self.VSYS_ADC_DIS_STRG     = self.get_VSYS_ADC_DIS_string()
+            self.TS_ADC_DIS_STRG       = self.get_TS_ADC_DIS_string()
+            self.TDIE_ADC_DIS_STRG     = self.get_TDIE_ADC_DIS_string()
+        def get(self):
+            '''
+            return IBUS_ADC_DIS, IBAT_ADC_DIS, VBUS_ADC_DIS, VBAT_ADC_DIS, VSYS_ADC_DIS, TS_ADC_DIS, TDIE_ADC_DIS
+            '''
+            self._value = 0 | (self.IBUS_ADC_DIS << 7) | (self.IBAT_ADC_DIS << 6) | (self.VBUS_ADC_DIS << 5) | (self.VBAT_ADC_DIS << 4) | (self.VSYS_ADC_DIS << 3) | (self.TS_ADC_DIS << 2) | (self.TDIE_ADC_DIS << 1)
+            return self._value, self.IBUS_ADC_DIS, self.IBAT_ADC_DIS, self.VBUS_ADC_DIS, self.VBAT_ADC_DIS, self.VSYS_ADC_DIS, self.TS_ADC_DIS, self.TDIE_ADC_DIS
+        def get_IBUS_ADC_DIS(self):
+            '''return IBUS_ADC_DIS'''
+            return self.IBUS_ADC_DIS
+        def set_IBUS_ADC_DIS(self, IBUS_ADC_DIS):
+            '''
+            Set IBUS_ADC_DIS (0h = Enable IBUS ADC, 1h = Disable IBUS ADC)
+            '''
+            self.IBUS_ADC_DIS = IBUS_ADC_DIS
+            self.get()
+        def get_IBAT_ADC_DIS(self):
+            '''return IBAT_ADC_DIS'''
+            return self.IBAT_ADC_DIS
+        def set_IBAT_ADC_DIS(self, IBAT_ADC_DIS):
+            ''' 
+            Set IBAT_ADC_DIS (0h = Enable IBAT ADC, 1h = Disable IBAT ADC)
+            '''
+            self.IBAT_ADC_DIS = IBAT_ADC_DIS
+            self.get()
+        def get_VBUS_ADC_DIS(self):
+            '''return VBUS_ADC_DIS'''
+            return self.VBUS_ADC_DIS
+        def set_VBUS_ADC_DIS(self, VBUS_ADC_DIS):
+            '''
+            Set VBUS_ADC_DIS (0h = Enable VBUS ADC, 1h = Disable VBUS ADC)
+            '''
+            self.VBUS_ADC_DIS = VBUS_ADC_DIS
+            self.get()
+        def get_VBAT_ADC_DIS(self):
+            '''return VBAT_ADC_DIS'''
+            return self.VBAT_ADC_DIS
+        def set_VBAT_ADC_DIS(self, VBAT_ADC_DIS):
+            '''
+            Set VBAT_ADC_DIS (0h = Enable VBAT ADC, 1h = Disable VBAT ADC)
+            '''
+            self.VBAT_ADC_DIS = VBAT_ADC_DIS
+            self.get()
+        def get_VSYS_ADC_DIS(self):
+            '''return VSYS_ADC_DIS'''
+            return self.VSYS_ADC_DIS
+        def set_VSYS_ADC_DIS(self, VSYS_ADC_DIS):
+            '''
+            Set VSYS_ADC_DIS (0h = Enable VSYS ADC, 1h = Disable VSYS ADC)
+            '''
+            self.VSYS_ADC_DIS = VSYS_ADC_DIS
+            self.get()
+        def get_TS_ADC_DIS(self):
+            '''return TS_ADC_DIS'''
+            return self.TS_ADC_DIS
+        def set_TS_ADC_DIS(self, TS_ADC_DIS):
+            '''
+            Set TS_ADC_DIS (0h = Enable TS ADC, 1h = Disable TS ADC)
+            '''
+            self.TS_ADC_DIS = TS_ADC_DIS
+            self.get()
+        def get_TDIE_ADC_DIS(self):
+            '''return TDIE_ADC_DIS'''
+            return self.TDIE_ADC_DIS
+        def set_TDIE_ADC_DIS(self, TDIE_ADC_DIS):
+            '''
+            Set TDIE_ADC_DIS (0h = Enable TDIE ADC, 1h = Disable TDIE ADC)
+            '''
+            self.TDIE_ADC_DIS = TDIE_ADC_DIS
+            self.get()
+        def get_IBUS_ADC_DIS_string(self):
+            '''
+            Returns IBUS_ADC_DIS string
+            0h = Enable IBUS ADC
+            1h = Disable IBUS ADC
+            '''
+            if self.IBUS_ADC_DIS == 0: return "Enable IBUS ADC"
+            elif self.IBUS_ADC_DIS == 1: return "Disable IBUS ADC"
+            else: return "unknown"
+        def get_IBAT_ADC_DIS_string(self):
+            '''
+            Returns IBAT_ADC_DIS string
+            0h = Enable IBAT ADC
+            1h = Disable IBAT ADC
+            '''
+            if self.IBAT_ADC_DIS == 0: return "Enable IBAT ADC"
+            elif self.IBAT_ADC_DIS == 1: return "Disable IBAT ADC"
+            else: return "unknown"
+        def get_VBUS_ADC_DIS_string(self):
+            '''
+            Returns VBUS_ADC_DIS string
+            0h = Enable VBUS ADC
+            1h = Disable VBUS ADC
+            '''
+            if self.VBUS_ADC_DIS == 0: return "Enable VBUS ADC"
+            elif self.VBUS_ADC_DIS == 1: return "Disable VBUS ADC"
+            else: return "unknown"
+        def get_VBAT_ADC_DIS_string(self):
+            '''
+            Returns VBAT_ADC_DIS string
+            0h = Enable VBAT ADC
+            1h = Disable VBAT ADC
+            '''
+            if self.VBAT_ADC_DIS == 0: return "Enable VBAT ADC"
+            elif self.VBAT_ADC_DIS == 1: return "Disable VBAT ADC"
+            else: return "unknown"
+        def get_VSYS_ADC_DIS_string(self):
+            '''
+            Returns VSYS_ADC_DIS string 
+            0h = Enable VSYS ADC
+            1h = Disable VSYS ADC
+            ''' 
+            if self.VSYS_ADC_DIS == 0: return "Enable VSYS ADC"
+            elif self.VSYS_ADC_DIS == 1: return "Disable VSYS ADC"
+            else: return "unknown"
+        def get_TS_ADC_DIS_string(self):
+            '''
+            Returns TS_ADC_DIS string
+            0h = Enable TS ADC
+            1h = Disable TS ADC
+            '''
+            if self.TS_ADC_DIS == 0: return "Enable TS ADC"
+            elif self.TS_ADC_DIS == 1: return "Disable TS ADC"
+            else: return "unknown"
+        def get_TDIE_ADC_DIS_string(self):
+            '''
+            Returns TDIE_ADC_DIS string
+            0h = Enable TDIE ADC
+            1h = Disable TDIE ADC
+            '''
+            if self.TDIE_ADC_DIS == 0: return "Enable TDIE ADC"
+            elif self.TDIE_ADC_DIS == 1: return "Disable TDIE ADC"
+            else: return "unknown"
+
+            
+            
     class REG31_IBUS_ADC(BQ25795_REGISTER):
         """
         BQ25795 - REG31_IBUS_ADC
@@ -4914,6 +5122,7 @@ class bq25792:
             self.REG2C_FAULT_Mask_0.set(self.registers[self.REG2C_FAULT_Mask_0._addr])
             self.REG2D_FAULT_Mask_1.set(self.registers[self.REG2D_FAULT_Mask_1._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
+            self.REG2F_ADC_Function_Disable_0.set(self.registers[self.REG2F_ADC_Function_Disable_0._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
             self.REG35_VBUS_ADC.set((self.registers[self.REG35_VBUS_ADC._addr] << 8) | (self.registers[self.REG35_VBUS_ADC._addr+1]))
