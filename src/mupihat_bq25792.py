@@ -187,7 +187,7 @@ class bq25792:
             self.REG2D_FAULT_Mask_1  = self.REG2D_FAULT_Mask_1()
             self.REG2E_ADC_Control = self.REG2E_ADC_Control()
             self.REG2F_ADC_Function_Disable_0 = self.REG2F_ADC_Function_Disable_0() 
-            self.REG30_ADC_Function_Disable_1 = 0x30
+            self.REG30_ADC_Function_Disable_1 = self.REG30_ADC_Function_Disable_1()
             self.REG31_IBUS_ADC = self.REG31_IBUS_ADC()
             self.REG33_IBAT_ADC = self.REG33_IBAT_ADC()
             self.REG35_VBUS_ADC = self.REG35_VBUS_ADC()
@@ -195,7 +195,7 @@ class bq25792:
             self.REG39_VAC2_ADC = self.REG39_VAC2_ADC()
             self.REG3B_VBAT_ADC = self.REG3B_VBAT_ADC()
             self.REG3D_VSYS_ADC = self.REG3D_VSYS_ADC()
-            self.REG3F_TS_ADC = 0x3f
+            self.REG3F_TS_ADC = self.REG3F_TS_ADC()
             self.REG41_TDIE_ADC  = self.REG41_TDIE_ADC()
             self.REG43_Dp_ADC = 0x43
             self.REG45_Dm_ADC = 0x45
@@ -4757,6 +4757,133 @@ class bq25792:
 
             
             
+    class REG30_ADC_Function_Disable_1(BQ25795_REGISTER):
+        """
+        BQ25795 - REG30_ADC_Function_Disable_1
+        ----------
+        DP_ADC_DIS
+            D+ ADC Control 
+            Type : RW 
+            POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        DM_ADC_DIS
+            D- ADC Control 
+            Type : RW 
+            POR: 0b 
+            0h = Enable (Default) 
+            1h = Disable
+        VAC2_ADC_DIS
+            VAC2 ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable VAC2 ADC 
+            1h = Disable VAC2 ADC
+        VAC1_ADC_DIS
+            VAC1 ADC disable 
+            Type : RW POR: 0b 
+            0h = Enable VAC1 ADC 
+            1h = Disable VAC1 ADC    
+        """
+        def __init__(self, addr=0x30, value = 0):
+            super().__init__(addr, value)
+            self.DP_ADC_DIS           = ((self._value & 0b10000000) >> 7)
+            self.DM_ADC_DIS           = ((self._value & 0b01000000) >> 6)
+            self.VAC2_ADC_DIS         = ((self._value & 0b00100000) >> 5)
+            self.VAC1_ADC_DIS         = ((self._value & 0b00010000) >> 4)
+            self.DP_ADC_DIS_STRG       = self.get_DP_ADC_DIS_string()
+            self.DM_ADC_DIS_STRG       = self.get_DM_ADC_DIS_string()
+            self.VAC2_ADC_DIS_STRG     = self.get_VAC2_ADC_DIS_string()
+            self.VAC1_ADC_DIS_STRG     = self.get_VAC1_ADC_DIS_string()
+        def get(self):
+            '''
+            return DP_ADC_DIS, DM_ADC_DIS, VAC2_ADC_DIS, VAC1_ADC_DIS
+            '''
+            self._value = 0 | (self.DP_ADC_DIS << 7) | (self.DM_ADC_DIS << 6) | (self.VAC2_ADC_DIS << 5) | (self.VAC1_ADC_DIS << 4)
+            return self._value, self.DP_ADC_DIS, self.DM_ADC_DIS, self.VAC2_ADC_DIS, self.VAC1_ADC_DIS
+        def set (self, value):
+            super().set(value)
+            self.DP_ADC_DIS           = ((self._value & 0b10000000) >> 7)
+            self.DM_ADC_DIS           = ((self._value & 0b01000000) >> 6)
+            self.VAC2_ADC_DIS         = ((self._value & 0b00100000) >> 5)
+            self.VAC1_ADC_DIS         = ((self._value & 0b00010000) >> 4)
+            self.DP_ADC_DIS_STRG       = self.get_DP_ADC_DIS_string()
+            self.DM_ADC_DIS_STRG       = self.get_DM_ADC_DIS_string()
+            self.VAC2_ADC_DIS_STRG     = self.get_VAC2_ADC_DIS_string()
+            self.VAC1_ADC_DIS_STRG     = self.get_VAC1_ADC_DIS_string()
+        def get_DP_ADC_DIS_string(self):
+            '''
+            Returns DP_ADC_DIS string
+            0h = Enable (Default)
+            1h = Disable
+            '''
+            if self.DP_ADC_DIS == 0: return "Enable (Default)"
+            elif self.DP_ADC_DIS == 1: return "Disable"
+            else: return "unknown"
+        def get_DM_ADC_DIS_string(self):
+            '''
+            Returns DM_ADC_DIS string
+            0h = Enable (Default)
+            1h = Disable
+            '''
+            if self.DM_ADC_DIS == 0: return "Enable (Default)"
+            elif self.DM_ADC_DIS == 1: return "Disable"
+            else: return "unknown"
+        def get_VAC2_ADC_DIS_string(self):
+            '''
+            Returns VAC2_ADC_DIS string
+            0h = Enable VAC2 ADC
+            1h = Disable VAC2 ADC
+            '''
+            if self.VAC2_ADC_DIS == 0: return "Enable VAC2 ADC"
+            elif self.VAC2_ADC_DIS == 1: return "Disable VAC2 ADC"
+            else: return "unknown"
+        def get_VAC1_ADC_DIS_string(self):
+            '''
+            Returns VAC1_ADC_DIS string
+            0h = Enable VAC1 ADC
+            1h = Disable VAC1 ADC
+            '''
+            if self.VAC1_ADC_DIS == 0: return "Enable VAC1 ADC"
+            elif self.VAC1_ADC_DIS == 1: return "Disable VAC1 ADC"
+            else: return "unknown"
+        def get_DP_ADC_DIS(self):
+            '''return DP_ADC_DIS'''
+            return self.DP_ADC_DIS
+        def set_DP_ADC_DIS(self, DP_ADC_DIS):
+            '''
+            Set DP_ADC_DIS (0h = Enable, 1h = Disable)
+            '''
+            self.DP_ADC_DIS = DP_ADC_DIS
+            self.get()
+        def get_DM_ADC_DIS(self):
+            '''return DM_ADC_DIS'''
+            return self.DM_ADC_DIS
+        def set_DM_ADC_DIS(self, DM_ADC_DIS):
+            '''
+            Set DM_ADC_DIS (0h = Enable, 1h = Disable)
+            '''
+            self.DM_ADC_DIS = DM_ADC_DIS
+            self.get()
+        def get_VAC2_ADC_DIS(self):
+            '''return VAC2_ADC_DIS'''
+            return self.VAC2_ADC_DIS
+        def set_VAC2_ADC_DIS(self, VAC2_ADC_DIS):
+            '''
+            Set VAC2_ADC_DIS (0h = Enable VAC2 ADC, 1h = Disable VAC2 ADC)
+            '''
+            self.VAC2_ADC_DIS = VAC2_ADC_DIS
+            self.get()
+        def get_VAC1_ADC_DIS(self):
+            '''return VAC1_ADC_DIS'''
+            return self.VAC1_ADC_DIS
+        def set_VAC1_ADC_DIS(self, VAC1_ADC_DIS):
+            '''
+            Set VAC1_ADC_DIS (0h = Enable VAC1 ADC, 1h = Disable VAC1 ADC)
+            '''
+            self.VAC1_ADC_DIS = VAC1_ADC_DIS
+            self.get()
+
+        
     class REG31_IBUS_ADC(BQ25795_REGISTER):
         """
         BQ25795 - REG31_IBUS_ADC
@@ -4922,6 +5049,31 @@ class bq25792:
         def get_Vsys(self):
             return self.VSYS_ADC
 
+    class REG3F_TS_ADC(BQ25795_REGISTER):
+        """
+        BQ25795 - REG3F_TS_ADC
+        ----------
+            TS_ADC
+                TS ADC reading 
+                Type : R 
+                POR: 0% (0h) 
+                Range : 0%-99.9023% 
+                Fixed Offset : 0% 
+                Bit Step Size : 0.0976563%
+        """
+        def __init__(self, addr=0x3F, value = 0):
+            super().__init__(addr, value)
+            self.TS_ADC               = self._value
+        def set (self, value):
+            super().set(value)
+            self.TS_ADC               = self._value
+        def get(self):
+            return self._value, self.TS_ADC
+        def get_TS(self):
+            '''
+            Returns TS_ADC in %
+            '''
+            return self.TS_ADC * 0.0976563
     class REG41_TDIE_ADC(BQ25795_REGISTER):
         """
         BQ25795 - REG41_TDIE_ADC
@@ -5123,6 +5275,7 @@ class bq25792:
             self.REG2D_FAULT_Mask_1.set(self.registers[self.REG2D_FAULT_Mask_1._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG2F_ADC_Function_Disable_0.set(self.registers[self.REG2F_ADC_Function_Disable_0._addr])
+            self.REG30_ADC_Function_Disable_1.set(self.registers[self.REG30_ADC_Function_Disable_1._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
             self.REG35_VBUS_ADC.set((self.registers[self.REG35_VBUS_ADC._addr] << 8) | (self.registers[self.REG35_VBUS_ADC._addr+1]))
@@ -5130,6 +5283,7 @@ class bq25792:
             self.REG39_VAC2_ADC.set((self.registers[self.REG39_VAC2_ADC._addr] << 8) | (self.registers[self.REG39_VAC2_ADC._addr+1]))
             self.REG3B_VBAT_ADC.set((self.registers[self.REG3B_VBAT_ADC._addr] << 8) | (self.registers[self.REG3B_VBAT_ADC._addr+1]))
             self.REG3D_VSYS_ADC.set((self.registers[self.REG3D_VSYS_ADC._addr] << 8) | (self.registers[self.REG3D_VSYS_ADC._addr+1]))
+            self.REG3F_TS_ADC.set((self.registers[self.REG3F_TS_ADC._addr] << 8) | (self.registers[self.REG3F_TS_ADC._addr+1]))
             self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
             return 0
         except I2CError:
