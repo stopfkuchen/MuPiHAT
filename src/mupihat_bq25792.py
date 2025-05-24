@@ -5466,7 +5466,7 @@ class bq25792:
         """
         Reads the charger status and returns the charge status string.
         """
-        return self.REG1C_Charger_Status_1.get_CHG_STAT_STRG
+        return self.REG1C_Charger_Status_1.get_CHG_STAT_STRG()
     
     def soft_reset(self):
         """
