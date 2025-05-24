@@ -199,7 +199,7 @@ class bq25792:
             self.REG41_TDIE_ADC  = self.REG41_TDIE_ADC()
             self.REG43_DP_ADC = self.REG43_DP_ADC()
             self.REG45_DM_ADC = self.REG45_DM_ADC()
-            self.REG47_DPDM_Driver = 0x47
+            self.REG47_DPDM_Driver = self.REG47_DPDM_Driver()
             self.REG48_Part_Information = 0x48
             # handle to bus
             self.bq = smbus2.SMBus(i2c_device)
@@ -5158,6 +5158,82 @@ class bq25792:
             '''
             return self.DM_ADC * 1.0
                 
+    class REG47_DPDM_Driver(BQ25795_REGISTER):
+        """
+        BQ25795 - REG47_DPDM_Driver
+        ----------
+            DPLUS_DAC
+                D+ Output Driver 
+                Type : RW 
+                POR: 000b 
+                0h = HIZ 
+                1h = 0 
+                2h = 0.6V 
+                3h = 1.2V 
+                4h = 2.0V 
+                5h = 2.7V 
+                6h = 3.3V 
+                7h = D+/D- Short  
+            DMINUS_DAC
+                D- Output Driver 
+                Type : RW 
+                POR: 000b 
+                0h = HIZ 
+                1h = 0 
+                2h = 0.6V 
+                3h = 1.2V 
+                4h = 2.0V 
+                5h = 2.7V 
+                6h = 3.3V 
+                7h = reserved  
+        """
+        def __init__(self, addr=0x47, value = 0):
+            super().__init__(addr, value)
+            self.DPLUS_DAC            = ((self._value & 0b11100000) >> 5)
+            self.DMINUS_DAC           = ((self._value & 0b00011100) >> 2) 
+            self.DPLUS_DAC_STRG       = self.get_DPLUS_DAC_string()
+            self.DMINUS_DAC_STRG      = self.get_DMINUS_DAC_string()  
+        def set (self, value):
+            super().set(value)
+            self.DPLUS_DAC            = ((self._value & 0b11100000) >> 5)
+            self.DMINUS_DAC           = ((self._value & 0b00011100) >> 2)
+            self.DPLUS_DAC_STRG       = self.get_DPLUS_DAC_string()
+            self.DMINUS_DAC_STRG      = self.get_DMINUS_DAC_string()  
+        def get(self):
+            """
+            Returns the current register value and the D+ and D- driver values.
+            """
+            self._value = 0 | (self.DPLUS_DAC << 5) | (self.DMINUS_DAC << 2)
+            return self._value, self.DPLUS_DAC, self.DMINUS_DAC
+        def get_DPLUS_DAC_string(self):
+            """
+            Returns the D+ driver string based on the current value.
+            """
+            if self.DPLUS_DAC == 0: return "HIZ"
+            elif self.DPLUS_DAC == 1: return "0V"
+            elif self.DPLUS_DAC == 2: return "0.6V"
+            elif self.DPLUS_DAC == 3: return "1.2V"
+            elif self.DPLUS_DAC == 4: return "2.0V"
+            elif self.DPLUS_DAC == 5: return "2.7V"
+            elif self.DPLUS_DAC == 6: return "3.3V"
+            elif self.DPLUS_DAC == 7: return "D+/D- Short"
+            else: return "unknown"
+        def get_DMINUS_DAC_string(self):
+            """
+            Returns the D- driver string based on the current value.
+            """
+            if self.DMINUS_DAC == 0: return "HIZ"
+            elif self.DMINUS_DAC == 1: return "0V"
+            elif self.DMINUS_DAC == 2: return "0.6V"
+            elif self.DMINUS_DAC == 3: return "1.2V"
+            elif self.DMINUS_DAC == 4: return "2.0V"
+            elif self.DMINUS_DAC == 5: return "2.7V"
+            elif self.DMINUS_DAC == 6: return "3.3V"
+            elif self.DMINUS_DAC == 7: return "reserved"
+            else: return "unknown"
+
+         
+        
     # class methods 
     
 
@@ -5338,6 +5414,8 @@ class bq25792:
             self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
             self.REG43_DP_ADC.set((self.registers[self.REG43_DP_ADC._addr] << 8) | (self.registers[self.REG43_DP_ADC._addr+1]))
             self.REG45_DM_ADC.set((self.registers[self.REG45_DM_ADC._addr] << 8) | (self.registers[self.REG45_DM_ADC._addr+1]))
+            self.REG47_DPDM_Driver.set(self.registers[self.REG47_DPDM_Driver._addr])
+            
             return 0
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
