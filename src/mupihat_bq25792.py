@@ -197,8 +197,8 @@ class bq25792:
             self.REG3D_VSYS_ADC = self.REG3D_VSYS_ADC()
             self.REG3F_TS_ADC = self.REG3F_TS_ADC()
             self.REG41_TDIE_ADC  = self.REG41_TDIE_ADC()
-            self.REG43_Dp_ADC = 0x43
-            self.REG45_Dm_ADC = 0x45
+            self.REG43_DP_ADC = self.REG43_DP_ADC()
+            self.REG45_DM_ADC = self.REG45_DM_ADC()
             self.REG47_DPDM_Driver = 0x47
             self.REG48_Part_Information = 0x48
             # handle to bus
@@ -5106,7 +5106,58 @@ class bq25792:
             '''
             return self.TDIE_ADC
 
-        
+    class REG43_DP_ADC(BQ25795_REGISTER):
+        """
+        BQ25795 - REG43_DP_ADC
+        ----------
+            DP_ADC
+                D+ ADC reading 
+                Type : R 
+                POR: 0mV (0h) 
+                Range : 0mV-3600mV 
+                Fixed Offset : 0mV 
+                Bit Step Size : 1mV
+        """
+        def __init__(self, addr=0x43, value = 0):
+            super().__init__(addr, value)
+            self.DP_ADC               = self._value
+        def set (self, value):
+            super().set(value)
+            self.DP_ADC               = self._value
+        def get(self):
+            return self._value, self.DP_ADC
+        def get_DP(self):
+            '''
+            Returns DP_ADC in [mV]
+            '''
+            return self.DP_ADC * 1.0
+    
+    class REG43_DM_ADC(BQ25795_REGISTER):
+        """
+        BQ25795 - REG43_DM_ADC
+        ----------
+            DM_ADC
+                D- ADC reading 
+                Type : R 
+                POR: 0mV (0h) 
+                Range : 0mV-3600mV 
+                Fixed Offset : 0mV 
+                Bit Step Size : 1mV
+        """
+        def __init__(self, addr=0x45, value = 0):
+            super().__init__(addr, value)
+            self.DM_ADC               = self._value
+        def set (self, value):
+            super().set(value)
+            self.DM_ADC               = self._value
+        def get(self):
+            return self._value, self.DM_ADC
+        def get_DM(self):
+            '''
+            Returns DM_ADC in [mV]
+            '''
+            return self.DM_ADC * 1.0
+                
     # class methods 
     
 
@@ -5285,6 +5336,8 @@ class bq25792:
             self.REG3D_VSYS_ADC.set((self.registers[self.REG3D_VSYS_ADC._addr] << 8) | (self.registers[self.REG3D_VSYS_ADC._addr+1]))
             self.REG3F_TS_ADC.set((self.registers[self.REG3F_TS_ADC._addr] << 8) | (self.registers[self.REG3F_TS_ADC._addr+1]))
             self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
+            self.REG43_DP_ADC.set((self.registers[self.REG43_DP_ADC._addr] << 8) | (self.registers[self.REG43_DP_ADC._addr+1]))
+            self.REG45_DM_ADC.set((self.registers[self.REG45_DM_ADC._addr] << 8) | (self.registers[self.REG45_DM_ADC._addr+1]))
             return 0
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
