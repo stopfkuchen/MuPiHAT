@@ -5487,6 +5487,21 @@ class bq25792:
             logging.error("soft_reset failed.")
             return -1
 
+    def watchdog_reset(self):
+        """
+        Resets the watchdog timer of the charger IC.
+        This is done by writing to the REG10_Charger_Control_1 register.
+        """
+        try:
+            reg = self.REG10_Charger_Control_1
+            reg.set_WD_RST(1)  # Reset watchdog
+            self.write_register(reg)
+            logging.info("watchdog_reset done.")
+            return 0
+        except I2CError:
+            logging.error("watchdog_reset failed.")
+            return -1
+    
     def write_defaults(self):
         '''
         Write default settings to the charger IC.   
@@ -5685,8 +5700,6 @@ class bq25792:
         'Input_Current_Limit'
             Input Current Limit obtained from ICO or ILIM_HIZ pin setting
         '''
-        #self.read_all_register()
-        #self.write_defaults()
         bat_SOC, bat_Stat = self.battery_soc()
         return {
             'Charger_Status': self.read_ChargerStatus(),
