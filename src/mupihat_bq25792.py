@@ -200,7 +200,7 @@ class bq25792:
             self.REG43_DP_ADC = self.REG43_DP_ADC()
             self.REG45_DM_ADC = self.REG45_DM_ADC()
             self.REG47_DPDM_Driver = self.REG47_DPDM_Driver()
-            self.REG48_Part_Information = 0x48
+            self.REG48_Part_Information = self.REG48_Part_Information()
             # handle to bus
             self.bq = smbus2.SMBus(i2c_device)
             self.battery_conf_load()
@@ -5232,7 +5232,65 @@ class bq25792:
             elif self.DMINUS_DAC == 7: return "reserved"
             else: return "unknown"
 
-         
+    class REG48_Part_Information(BQ25795_REGISTER):
+        """
+        BQ25795 - REG48_Part_Information
+        ----------
+            PART_NUMBER
+                Device Part number 
+                POR: 001b = BQ25792 
+                All the other options are reserved 
+                Type : R
+            PART_REVISION
+                Device Revision 
+                POR: 000b = BQ25792 
+                Type : R
+        """
+        def __init__(self, addr=0x48, value = 0):
+            super().__init__(addr, value)
+            self.PART_NUMBER          = ((self._value & 0b00111000) >> 5)
+            self.PART_REVISION        = ((self._value & 0b00000111) >> 0)
+        def set (self, value):
+            super().set(value)
+            self.PART_NUMBER          = ((self._value & 0b00111000) >> 5)
+            self.PART_REVISION        = ((self._value & 0b00000111) >> 0)
+            self.PART_NUMBER_STRG     = self.get_PART_NUMBER_string()
+            self.PART_REVISION_STRG   = self.get_PART_REVISION_string()
+        def get(self):
+            """
+            Returns the current register value and the part number and revision.
+            """
+            self._value = 0 | (self.PART_NUMBER << 5) | (self.PART_REVISION << 0)
+            return self._value, self.PART_NUMBER, self.PART_REVISION
+        def get_PART_NUMBER_string(self):
+            """
+            Returns the part number string based on the current value.
+            """
+            if self.PART_NUMBER == 1: return "BQ25792"
+            elif self.PART_NUMBER == 0: return "Reserved"
+            elif self.PART_NUMBER == 2: return "Reserved"
+            elif self.PART_NUMBER == 3: return "Reserved"
+            elif self.PART_NUMBER == 4: return "Reserved"
+            elif self.PART_NUMBER == 5: return "Reserved"
+            elif self.PART_NUMBER == 6: return "Reserved"
+            elif self.PART_NUMBER == 7: return "Reserved"
+            else: return "unknown"
+        def get_PART_REVISION_string(self):
+            """
+            Returns the part revision string based on the current value.
+            """
+            if self.PART_REVISION == 0: return "BQ25792"
+            elif self.PART_REVISION == 1: return "Reserved"
+            elif self.PART_REVISION == 2: return "Reserved"
+            elif self.PART_REVISION == 3: return "Reserved"
+            elif self.PART_REVISION == 4: return "Reserved"
+            elif self.PART_REVISION == 5: return "Reserved"
+            elif self.PART_REVISION == 6: return "Reserved"
+            elif self.PART_REVISION == 7: return "Reserved"
+            else: return "unknown"
+
+            
+    
         
     # class methods 
     
@@ -5415,7 +5473,7 @@ class bq25792:
             self.REG43_DP_ADC.set((self.registers[self.REG43_DP_ADC._addr] << 8) | (self.registers[self.REG43_DP_ADC._addr+1]))
             self.REG45_DM_ADC.set((self.registers[self.REG45_DM_ADC._addr] << 8) | (self.registers[self.REG45_DM_ADC._addr+1]))
             self.REG47_DPDM_Driver.set(self.registers[self.REG47_DPDM_Driver._addr])
-            
+            self.REG48_Part_Information.set(self.registers[self.REG48_Part_Information._addr])
             return 0
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
