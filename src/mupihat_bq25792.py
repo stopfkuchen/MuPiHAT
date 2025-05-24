@@ -1876,6 +1876,18 @@ class bq25792:
             if self.TREG_STAT == 0: return "Normal"
             elif self.TREG_STAT == 1: return "Device in thermal regulation"
             else: return "unknown"
+        def get_ICO_STAT(self):
+            '''return ICO_STAT'''
+            return self.ICO_STAT
+        def get_TREG_STAT(self):
+            '''return TREG_STAT'''
+            return self.TREG_STAT
+        def get_DPDM_STAT(self):
+            '''return DPDM_STAT'''
+            return self.DPDM_STAT
+        def get_VBAT_PRESENT_STAT(self):
+            '''return VBAT_PRESENT_STAT'''
+            return self.VBAT_PRESENT_STAT
 
 
     class REG1E_Charger_Status_3(BQ25795_REGISTER):
@@ -5337,27 +5349,12 @@ class bq25792:
         Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
         If the read operation fails, it returns the last known value.
         """
-        try:
-            reg_addr = self.REG41_TDIE_ADC._addr
-            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
-            if data:
-                self.REG41_TDIE_ADC.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_TDIE_Temp failed, returning previous value.\n")
-            logging.error("read_TDIE_Temp failed, returning previous value.")
         return self.REG41_TDIE_ADC.get_IC_temperature()
 
     def read_Vbat(self) -> int:
         """
         Reads the VBAT_ADC register and returns the battery voltage in mV.
         """
-        try:
-            reg_addr = self.REG3B_VBAT_ADC._addr
-            data = self.read_register(reg_addr, length=2)
-            self.REG3B_VBAT_ADC.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_Vbat failed, returning previous value.\n")
-            logging.error("read_Vbat failed, returning previous value.")
         return self.REG3B_VBAT_ADC.get_Vbat()
 
 
@@ -5366,14 +5363,6 @@ class bq25792:
         Reads the VBUS_ADC register and returns the bus voltage in mV.
         If the read operation fails, it returns the last known value.
         """
-        try:
-            reg_addr = self.REG35_VBUS_ADC._addr
-            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
-            if data:
-                self.REG35_VBUS_ADC.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_Vbus failed, returning previous value.\n")
-            logging.error("read_Vbus failed, returning previous value.")
         return self.REG35_VBUS_ADC.get_Vbus()
 
     def read_Ibus(self):
@@ -5382,27 +5371,12 @@ class bq25792:
         The IBUS ADC reading is reported in 2's complement.
         If the read operation fails, it returns the last known value.
         """
-        try:
-            reg_addr = self.REG31_IBUS_ADC._addr
-            data = self.safe_execute(self.bq.read_i2c_block_data, self.i2c_addr, reg_addr, 2)
-            if data:
-                self.REG31_IBUS_ADC.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_Ibus failed, returning previous value.\n")
-            logging.error("read_Ibus failed, returning previous value.")
         return self.REG31_IBUS_ADC.get_Ibus()
 
     def read_Ibat(self) -> int:
         """
         Reads the IBAT_ADC register and returns the battery current in mA.
         """
-        try:
-            reg_addr = self.REG33_IBAT_ADC._addr
-            data = self.read_register(reg_addr, length=2)
-            self.REG33_IBAT_ADC.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_Ibat failed, returning previous value.\n")
-            logging.error("read_Ibat failed, returning previous value.")
         return self.REG33_IBAT_ADC.get_Ibat()
 
 
@@ -5485,14 +5459,6 @@ class bq25792:
         Reads the input current limit (ICO_ILIM) in mA.
         Returns the last known value if the read operation fails.
         """
-        try:
-            reg_addr = self.REG19_ICO_Current_Limit._addr
-            data = self.read_register(reg_addr, length=2)
-            self.REG19_ICO_Current_Limit.set((data[0] << 8) | data[1])
-        except I2CError:
-            #sys.stderr.write("read_InputCurrentLimit failed, returning previous value.\n")
-            logging.error("read_InputCurrentLimit failed, returning previous value.")
-
         return self.REG19_ICO_Current_Limit.get_ICO_ILIM()
                   
 
@@ -5500,14 +5466,7 @@ class bq25792:
         """
         Reads the charger status and returns the charge status string.
         """
-        try:
-            reg_addr = self.REG1C_Charger_Status_1._addr
-            data = self.read_register(reg_addr, length=1)
-            self.REG1C_Charger_Status_1.set(data[0])
-        except I2CError:
-            #sys.stderr.write("read_ChargerStatus failed, returning previous value.\n")
-            logging.error("read_ChargerStatus failed, returning previous value.")
-        return self.REG1C_Charger_Status_1.CHG_STAT_STRG
+        return self.REG1C_Charger_Status_1.get_CHG_STAT_STRG
     
     def soft_reset(self):
         """
@@ -5593,23 +5552,7 @@ class bq25792:
           0h = VBAT NOT present 
           1h = VBAT present
         '''
-        try:
-            #self.read_all_register()
-            # first read register
-            reg_addr = self.REG1D_Charger_Status_2._addr 
-            val = self.bq.read_byte_data(self.i2c_addr, reg_addr)
-            self.registers[reg_addr] = val
-            self.REG1D_Charger_Status_2.set((self.registers[reg_addr]))
-            value, ICO_STAT, TREG_STAT, DPDM_STAT, VBAT_PRESENT_STAT = self.REG1D_Charger_Status_2.get()
-            return VBAT_PRESENT_STAT
-        except Exception as _error:
-            #sys.stderr.write('read_VBAT_PRESENT failed, %s\n' % str(_error))
-            logging.error('read_VBAT_PRESENT failed, %s\n' % str(_error))
-            if self._exit_on_error: sys.exit(1)
-            value, ICO_STAT, TREG_STAT, DPDM_STAT, VBAT_PRESENT_STAT = self.REG1D_Charger_Status_2.get()
-            return VBAT_PRESENT_STAT
-        finally:
-            pass
+        self.REG1D_Charger_Status_2.get_VBAT_PRESENT_STAT()
 
 
     def set_input_current_limit(self, input_current_limit: int) -> None:
@@ -5744,7 +5687,6 @@ class bq25792:
         '''
         #self.read_all_register()
         self.write_defaults()
-
         bat_SOC, bat_Stat = self.battery_soc()
         return {
             'Charger_Status': self.read_ChargerStatus(),
