@@ -34,9 +34,11 @@
 ## 🚀 Quick Start
 
 ### 1. Connect the MuPiHAT
-Attach the MuPiHAT to your Raspberry Pi’s GPIO header.
+Attach the MuPiHAT to your Raspberry Pi’s GPIO header. Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information.
 
 ### 2. Install Required Software
+
+#### Option 1
 Use the provided `install.sh` script to set up the required software:
 
 ```bash
@@ -44,3 +46,6 @@ git clone https://github.com/stopfkuchen/MuPiHAT.git
 cd MuPiHAT
 chmod +x install.sh
 ./install.sh
+
+#### Option 2 
+curl -sSL https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/refs/heads/main/install.sh | sudo bash
