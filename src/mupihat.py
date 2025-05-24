@@ -102,17 +102,17 @@ def periodic_json_dump():
     """Periodically writes the register values to a JSON file."""
     global json_flag, json_file
     while True:
+        hat.read_all_register()
+        time.sleep(1)  # Allow time for the registers to be updated
         if json_flag:
             try:
-                hat.read_all_register()
                 with open(json_file, "w") as outfile:
                     json.dump(hat.to_json(), outfile, indent=4)
             except Exception as e:
                 logging.error("Failed to write JSON dump: %s", str(e))
         if log_flag:
             log_register_values()
-
-        time.sleep(5)  # Run every 5 seconds
+        time.sleep(4)  # Run every 4 seconds
 
 
 def parse_arguments():

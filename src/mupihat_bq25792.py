@@ -5686,7 +5686,7 @@ class bq25792:
             Input Current Limit obtained from ICO or ILIM_HIZ pin setting
         '''
         #self.read_all_register()
-        self.write_defaults()
+        #self.write_defaults()
         bat_SOC, bat_Stat = self.battery_soc()
         return {
             'Charger_Status': self.read_ChargerStatus(),
