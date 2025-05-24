@@ -5132,9 +5132,9 @@ class bq25792:
             '''
             return self.DP_ADC * 1.0
     
-    class REG43_DM_ADC(BQ25795_REGISTER):
+    class REG45_DM_ADC(BQ25795_REGISTER):
         """
-        BQ25795 - REG43_DM_ADC
+        BQ25795 - REG45_DM_ADC
         ----------
             DM_ADC
                 D- ADC reading 
