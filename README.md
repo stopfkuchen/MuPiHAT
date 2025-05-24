@@ -46,6 +46,11 @@ git clone https://github.com/stopfkuchen/MuPiHAT.git
 cd MuPiHAT
 chmod +x install.sh
 ./install.sh
+```
 
 #### Option 2 
+Use curl single line command:
+
+```bash
 curl -sSL https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/refs/heads/main/install.sh | sudo bash
+```
