@@ -5342,44 +5342,6 @@ class bq25792:
         self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value & 0xFF)
         self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr + 1, (reg._value >> 8) & 0xFF)
 
-   
-
-    def read_TDIE_Temp(self):
-        """
-        Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
-        If the read operation fails, it returns the last known value.
-        """
-        return self.REG41_TDIE_ADC.get_IC_temperature()
-
-    def read_Vbat(self) -> int:
-        """
-        Reads the VBAT_ADC register and returns the battery voltage in mV.
-        """
-        return self.REG3B_VBAT_ADC.get_Vbat()
-
-
-    def read_Vbus(self):
-        """
-        Reads the VBUS_ADC register and returns the bus voltage in mV.
-        If the read operation fails, it returns the last known value.
-        """
-        return self.REG35_VBUS_ADC.get_Vbus()
-
-    def read_Ibus(self):
-        """
-        Reads the IBUS_ADC register and returns the bus current in mA.
-        The IBUS ADC reading is reported in 2's complement.
-        If the read operation fails, it returns the last known value.
-        """
-        return self.REG31_IBUS_ADC.get_Ibus()
-
-    def read_Ibat(self) -> int:
-        """
-        Reads the IBAT_ADC register and returns the battery current in mA.
-        """
-        return self.REG33_IBAT_ADC.get_Ibat()
-
-
     def read_all_register(self):
         """
         Reads all BQ25792 registers and updates the class attributes.
@@ -5452,7 +5414,43 @@ class bq25792:
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
             logging.error("read_all_register failed.")
-            return -1
+            return -1 
+
+    def read_TDIE_Temp(self):
+        """
+        Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
+        If the read operation fails, it returns the last known value.
+        """
+        return self.REG41_TDIE_ADC.get_IC_temperature()
+
+    def read_Vbat(self) -> int:
+        """
+        Reads the VBAT_ADC register and returns the battery voltage in mV.
+        """
+        return self.REG3B_VBAT_ADC.get_Vbat()
+
+
+    def read_Vbus(self):
+        """
+        Reads the VBUS_ADC register and returns the bus voltage in mV.
+        If the read operation fails, it returns the last known value.
+        """
+        return self.REG35_VBUS_ADC.get_Vbus()
+
+    def read_Ibus(self):
+        """
+        Reads the IBUS_ADC register and returns the bus current in mA.
+        The IBUS ADC reading is reported in 2's complement.
+        If the read operation fails, it returns the last known value.
+        """
+        return self.REG31_IBUS_ADC.get_Ibus()
+
+    def read_Ibat(self) -> int:
+        """
+        Reads the IBAT_ADC register and returns the battery current in mA.
+        """
+        return self.REG33_IBAT_ADC.get_Ibat()
+
 
     def read_InputCurrentLimit(self) -> int:
         """
@@ -5502,6 +5500,30 @@ class bq25792:
             logging.error("watchdog_reset failed.")
             return -1
     
+    def mask_all_INTERRUPTS(self):
+        """
+        Masks all interrupts by setting the mask registers to 0xFF.
+        This is done by writing to the REG28_Charger_Mask_0, REG29_Charger_Mask_1, REG2A_Charger_Mask_2, REG2B_Charger_Mask_3, REG2C_FAULT_Mask_0, and REG2D_FAULT_Mask_1 registers.
+        """
+        try:
+            self.REG28_Charger_Mask_0.set(0xFF)
+            self.REG29_Charger_Mask_1.set(0xFF)
+            self.REG2A_Charger_Mask_2.set(0xFF)
+            self.REG2B_Charger_Mask_3.set(0xFF)
+            self.REG2C_FAULT_Mask_0.set(0xFF)
+            self.REG2D_FAULT_Mask_1.set(0xFF)
+            self.write_register(self.REG28_Charger_Mask_0)
+            self.write_register(self.REG29_Charger_Mask_1)
+            self.write_register(self.REG2A_Charger_Mask_2)
+            self.write_register(self.REG2B_Charger_Mask_3)
+            self.write_register(self.REG2C_FAULT_Mask_0)
+            self.write_register(self.REG2D_FAULT_Mask_1)
+            logging.info("mask_all_INTERRUPTS done.")
+            return 0
+        except I2CError:
+            logging.error("mask_all_INTERRUPTS failed.")
+            return -1
+    
     def write_defaults(self):
         '''
         Write default settings to the charger IC.   
@@ -5539,6 +5561,7 @@ class bq25792:
         
         self.set_input_current_limit(2200) # 2.2A input current limit
 
+        self.mask_all_INTERRUPTS()  
         return
 
     def MuPiHAT_Default(self):
