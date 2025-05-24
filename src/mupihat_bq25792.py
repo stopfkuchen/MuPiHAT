@@ -183,7 +183,7 @@ class bq25792:
             self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
             self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
             self.REG2B_Charger_Mask_3  = self.REG2B_Charger_Mask_3()
-            self.REG2C_FAULT_Mask_0   = 0x2c
+            self.REG2C_FAULT_Mask_0   = self.REG2C_FAULT_Mask_0()
             self.REG2D_FAULT_Mask_1  = 0x2d
             self.REG2E_ADC_Control = self.REG2E_ADC_Control()
             self.REG2F_ADC_Function_Disable_0 = 0x2f 
@@ -4139,6 +4139,198 @@ class bq25792:
             self.TS_HOT_MASK = TS_HOT_MASK  
             self.get()
              
+    class REG2C_FAULT_Mask_0(BQ25795_REGISTER):
+        """
+        BQ25795 - REG2C_FAULT_Mask_0
+        ----------
+        IBAT_REG_MASK
+            IBAT regulation mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = enter or exit IBAT regulation does produce INT 
+            1h = enter or exit IBAT regulation does NOT produce INT
+        VBUS_OVP_MASK
+            VBUS over-voltage mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = entering VBUS OVP does produce INT 
+            1h = entering VBUS OVP does NOT produce INT 
+        VBAT_OVP_MASK
+            VBAT over-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = entering VBAT OVP does produce INT
+            1h = entering VBAT OVP does NOT produce INT   
+        IBUS_OCP_MASK
+            IBUS over-current mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = entering IBUS OCP does produce INT 
+            1h = entering IBUS OCP does NOT produce INT
+        IBAT_OCP_MASK
+            IBAT over-current mask flag
+            Type : RW
+            POR: 0b
+            0h = entering IBAT OCP does produce INT
+            1h = entering IBAT OCP does NOT produce INT
+        CONV_OCP_MASK
+            Converter over-current mask flag 
+            Type : RW 
+            POR: 0b 
+            0h = entering converter OCP does produce INT 
+            1h = entering converter OCP does NOT produce INT
+        VAC2_OVP_MASK
+            VAC2 over-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = entering VAC2 OVP does produce INT
+            1h = entering VAC2 OVP does NOT produce INT
+        VAC1_OVP_MASK
+            VAC1 over-voltage mask flag
+            Type : RW
+            POR: 0b
+            0h = entering VAC1 OVP does produce INT 
+            1h = entering VAC1 OVP does NOT produce INT    
+        """
+        def __init__(self, addr=0x2c, value = 0):
+            super().__init__(addr, value)
+            self.IBAT_REG_MASK         = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_MASK         = ((self._value & 0b01000000) >> 6)
+            self.VBAT_OVP_MASK         = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_MASK         = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_MASK         = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_MASK         = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_MASK         = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_MASK         = ((self._value & 0b00000001) >> 0)
+            self.IBAT_REG_MASK_STRG     = self.get_IBAT_REG_MASK_string()
+            self.VBUS_OVP_MASK_STRG     = self.get_VBUS_OVP_MASK_string()
+            self.VBAT_OVP_MASK_STRG     = self.get_VBAT_OVP_MASK_string()
+            self.IBUS_OCP_MASK_STRG     = self.get_IBUS_OCP_MASK_string()
+            self.IBAT_OCP_MASK_STRG     = self.get_IBAT_OCP_MASK_string()
+            self.CONV_OCP_MASK_STRG     = self.get_CONV_OCP_MASK_string()
+            self.VAC2_OVP_MASK_STRG     = self.get_VAC2_OVP_MASK_string()
+            self.VAC1_OVP_MASK_STRG     = self.get_VAC1_OVP_MASK_string()
+        def set (self, value):
+            super().set(value)
+            self.IBAT_REG_MASK         = ((self._value & 0b10000000) >> 7)
+            self.VBUS_OVP_MASK         = ((self._value & 0b01000000) >> 6)
+            self.VBAT_OVP_MASK         = ((self._value & 0b00100000) >> 5)
+            self.IBUS_OCP_MASK         = ((self._value & 0b00010000) >> 4)
+            self.IBAT_OCP_MASK         = ((self._value & 0b00001000) >> 3)
+            self.CONV_OCP_MASK         = ((self._value & 0b00000100) >> 2)
+            self.VAC2_OVP_MASK         = ((self._value & 0b00000010) >> 1)
+            self.VAC1_OVP_MASK         = ((self._value & 0b00000001) >> 0)
+            self.IBAT_REG_MASK_STRG     = self.get_IBAT_REG_MASK_string()
+            self.VBUS_OVP_MASK_STRG     = self.get_VBUS_OVP_MASK_string()
+            self.VBAT_OVP_MASK_STRG     = self.get_VBAT_OVP_MASK_string()
+            self.IBUS_OCP_MASK_STRG     = self.get_IBUS_OCP_MASK_string()
+            self.IBAT_OCP_MASK_STRG     = self.get_IBAT_OCP_MASK_string()
+            self.CONV_OCP_MASK_STRG     = self.get_CONV_OCP_MASK_string()
+            self.VAC2_OVP_MASK_STRG     = self.get_VAC2_OVP_MASK_string()
+            self.VAC1_OVP_MASK_STRG     = self.get_VAC1_OVP_MASK_string()
+        def get (self):
+            '''
+            return IBAT_REG_MASK, VBUS_OVP_MASK, VBAT_OVP_MASK, IBUS_OCP_MASK, IBAT_OCP_MASK, CONV_OCP_MASK, VAC2_OVP_MASK, VAC1_OVP_MASK
+            '''
+            self._value = 0 | (self.IBAT_REG_MASK << 7) | (self.VBUS_OVP_MASK << 6) | (self.VBAT_OVP_MASK << 5) | (self.IBUS_OCP_MASK << 4) | (self.IBAT_OCP_MASK << 3) | (self.CONV_OCP_MASK << 2) | (self.VAC2_OVP_MASK << 1) | (self.VAC1_OVP_MASK << 0)
+            return self._value, self.IBAT_REG_MASK, self.VBUS_OVP_MASK, self.VBAT_OVP_MASK, self.IBUS_OCP_MASK, self.IBAT_OCP_MASK, self.CONV_OCP_MASK, self.VAC2_OVP_MASK, self.VAC1_OVP_MASK
+        def get_IBAT_REG_MASK(self):
+            '''return IBAT_REG_MASK'''
+            return self.IBAT_REG_MASK
+        def get_VBUS_OVP_MASK(self):
+            '''return VBUS_OVP_MASK'''
+            return self.VBUS_OVP_MASK
+        def get_VBAT_OVP_MASK(self):
+            '''return VBAT_OVP_MASK'''
+            return self.VBAT_OVP_MASK
+        def get_IBUS_OCP_MASK(self):
+            '''return IBUS_OCP_MASK'''
+            return self.IBUS_OCP_MASK
+        def get_IBAT_OCP_MASK(self):
+            '''return IBAT_OCP_MASK'''
+            return self.IBAT_OCP_MASK
+        def get_CONV_OCP_MASK(self):
+            '''return CONV_OCP_MASK'''
+            return self.CONV_OCP_MASK
+        def get_VAC2_OVP_MASK(self):
+            '''return VAC2_OVP_MASK'''
+            return self.VAC2_OVP_MASK
+        def get_VAC1_OVP_MASK(self):
+            '''return VAC1_OVP_MASK'''
+            return self.VAC1_OVP_MASK
+        def get_IBAT_REG_MASK_string(self):
+            '''
+            Returns IBAT_REG_MASK string
+            0h = enter or exit IBAT regulation does produce INT
+            1h = enter or exit IBAT regulation does NOT produce INT
+            '''
+            if self.IBAT_REG_MASK == 0: return "enter or exit IBAT regulation does produce INT"
+            elif self.IBAT_REG_MASK == 1: return "enter or exit IBAT regulation does NOT produce INT"
+            else: return "unknown"
+        def get_VBUS_OVP_MASK_string(self):
+            '''
+            Returns VBUS_OVP_MASK string
+            0h = entering VBUS OVP does produce INT
+            1h = entering VBUS OVP does NOT produce INT
+            '''
+            if self.VBUS_OVP_MASK == 0: return "entering VBUS OVP does produce INT"
+            elif self.VBUS_OVP_MASK == 1: return "entering VBUS OVP does NOT produce INT"
+            else: return "unknown"
+        def get_VBAT_OVP_MASK_string(self):
+            '''
+            Returns VBAT_OVP_MASK string
+            0h = entering VBAT OVP does produce INT
+            1h = entering VBAT OVP does NOT produce INT
+            '''
+            if self.VBAT_OVP_MASK == 0: return "entering VBAT OVP does produce INT"
+            elif self.VBAT_OVP_MASK == 1: return "entering VBAT OVP does NOT produce INT"
+            else: return "unknown"
+        def get_IBUS_OCP_MASK_string(self):
+            '''
+            Returns IBUS_OCP_MASK string
+            0h = entering IBUS OCP does produce INT
+            1h = entering IBUS OCP does NOT produce INT
+            '''
+            if self.IBUS_OCP_MASK == 0: return "entering IBUS OCP does produce INT"
+            elif self.IBUS_OCP_MASK == 1: return "entering IBUS OCP does NOT produce INT"
+            else: return "unknown"
+        def get_IBAT_OCP_MASK_string(self):
+            '''
+            Returns IBAT_OCP_MASK string
+            0h = entering IBAT OCP does produce INT
+            1h = entering IBAT OCP does NOT produce INT
+            '''
+            if self.IBAT_OCP_MASK == 0: return "entering IBAT OCP does produce INT"
+            elif self.IBAT_OCP_MASK == 1: return "entering IBAT OCP does NOT produce INT"
+            else: return "unknown"
+        def get_CONV_OCP_MASK_string(self):
+            '''
+            Returns CONV_OCP_MASK string
+            0h = entering converter OCP does produce INT
+            1h = entering converter OCP does NOT produce INT
+            '''
+            if self.CONV_OCP_MASK == 0: return "entering converter OCP does produce INT"
+            elif self.CONV_OCP_MASK == 1: return "entering converter OCP does NOT produce INT"
+            else: return "unknown"
+        def get_VAC2_OVP_MASK_string(self):
+            '''
+            Returns VAC2_OVP_MASK string
+            0h = entering VAC2 OVP does produce INT
+            1h = entering VAC2 OVP does NOT produce INT
+            '''
+            if self.VAC2_OVP_MASK == 0: return "entering VAC2 OVP does produce INT"
+            elif self.VAC2_OVP_MASK == 1: return "entering VAC2 OVP does NOT produce INT"
+            else: return "unknown"
+        def get_VAC1_OVP_MASK_string(self):
+            '''
+            Returns VAC1_OVP_MASK string
+            0h = entering VAC1 OVP does produce INT
+            1h = entering VAC1 OVP does NOT produce INT
+            '''
+            if self.VAC1_OVP_MASK == 0: return "entering VAC1 OVP does produce INT"
+            elif self.VAC1_OVP_MASK == 1: return "entering VAC1 OVP does NOT produce INT"
+            else: return "unknown"
+            
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -4596,6 +4788,7 @@ class bq25792:
             self.REG29_Charger_Mask_1.set(self.registers[self.REG29_Charger_Mask_1._addr])
             self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
             self.REG2B_Charger_Mask_3.set(self.registers[self.REG2B_Charger_Mask_3._addr])
+            self.REG2C_FAULT_Mask_0.set(self.registers[self.REG2C_FAULT_Mask_0._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
