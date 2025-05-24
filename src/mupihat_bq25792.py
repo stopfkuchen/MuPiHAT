@@ -182,7 +182,7 @@ class bq25792:
             self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
             self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
             self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
-            self.REG2B_Charger_Mask_3  = 0x2b
+            self.REG2B_Charger_Mask_3  = self.REG2B_Charger_Mask_3()
             self.REG2C_FAULT_Mask_0   = 0x2c
             self.REG2D_FAULT_Mask_1  = 0x2d
             self.REG2E_ADC_Control = self.REG2E_ADC_Control()
@@ -3983,6 +3983,162 @@ class bq25792:
            
         
         
+    class REG2B_Charger_Mask_3(BQ25795_REGISTER):
+        """
+        BQ25795 - REG2B_Charger_Mask_3
+        ----------
+        VBATOTG_LOW_MASK
+            VBAT too low to enable OTG mask 
+            Type : RW 
+            POR: 0b 
+            0h = VBAT falling below the threshold to enable the OTG mode, does produce INT 
+            1h = VBAT falling below the threshold to enable the OTG mode, does NOT produce INT
+        TS_COLD_MASK
+            TS cold temperature interrupt mask 
+            Type : RW 
+            POR: 0b 
+            0h = TS across cold temperature (T1) does produce INT 
+            1h = TS across cold temperature (T1) does NOT produce INT
+        TS_COOL_MASK
+            TS cool temperature interrupt mask 
+            Type : RW 
+            POR: 0b 
+            0h = TS across cool temperature (T2) does produce INT 
+            1h = TS across cool temperature (T2) does NOT produce INT
+        TS_WARM_MASK
+            TS warm temperature interrupt mask 
+            Type : RW 
+            POR: 0b 
+            0h = TS across warm temperature (T3) does produce INT 
+            1h = TS across warm temperature (T3) does NOT produce INT
+        TS_HOT_MASK
+            TS hot temperature interrupt mask 
+            Type : RW 
+            POR: 0b 
+            0h = TS across hot temperature (T5) does produce INT 
+            1h = TS across hot temperature (T5) does NOT produce INT
+        """
+        def __init__(self, addr=0x2b, value = 0):
+            super().__init__(addr, value)
+            self.VBATOTG_LOW_MASK      = ((self._value & 0b00010000) >> 4) 
+            self.TS_COLD_MASK          = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_MASK          = ((self._value & 0b00000100) >> 2)
+            self.TS_WARM_MASK          = ((self._value & 0b00000010) >> 1)
+            self.TS_HOT_MASK           = ((self._value & 0b00000001) >> 0)
+            self.VBATOTG_LOW_MASK_STRG  = self.get_VBATOTG_LOW_MASK_string()
+            self.TS_COLD_MASK_STRG      = self.get_TS_COLD_MASK_string()
+            self.TS_COOL_MASK_STRG      = self.get_TS_COOL_MASK_string()
+            self.TS_WARM_MASK_STRG      = self.get_TS_WARM_MASK_string()
+            self.TS_HOT_MASK_STRG       = self.get_TS_HOT_MASK_string()
+        def set (self, value):  
+            super().set(value)
+            self.VBATOTG_LOW_MASK      = ((self._value & 0b00010000) >> 4) 
+            self.TS_COLD_MASK          = ((self._value & 0b00001000) >> 3)
+            self.TS_COOL_MASK          = ((self._value & 0b00000100) >> 2)
+            self.TS_WARM_MASK          = ((self._value & 0b00000010) >> 1)
+            self.TS_HOT_MASK           = ((self._value & 0b00000001) >> 0)
+            self.VBATOTG_LOW_MASK_STRG  = self.get_VBATOTG_LOW_MASK_string()
+            self.TS_COLD_MASK_STRG      = self.get_TS_COLD_MASK_string()
+            self.TS_COOL_MASK_STRG      = self.get_TS_COOL_MASK_string()
+            self.TS_WARM_MASK_STRG      = self.get_TS_WARM_MASK_string()
+            self.TS_HOT_MASK_STRG       = self.get_TS_HOT_MASK_string()
+        def get (self):
+            '''
+            return VBATOTG_LOW_MASK, TS_COLD_MASK, TS_COOL_MASK, TS_WARM_MASK, TS_HOT_MASK
+            '''
+            self._value = 0 | (self.VBATOTG_LOW_MASK << 4) | (self.TS_COLD_MASK << 3) | (self.TS_COOL_MASK << 2) | (self.TS_WARM_MASK << 1) | (self.TS_HOT_MASK << 0)
+            return self._value, self.VBATOTG_LOW_MASK, self.TS_COLD_MASK, self.TS_COOL_MASK, self.TS_WARM_MASK, self.TS_HOT_MASK
+        def get_VBATOTG_LOW_MASK(self):
+            '''return VBATOTG_LOW_MASK'''
+            return self.VBATOTG_LOW_MASK
+        def get_TS_COLD_MASK(self):
+            '''return TS_COLD_MASK'''
+            return self.TS_COLD_MASK
+        def get_TS_COOL_MASK(self):
+            '''return TS_COOL_MASK'''
+            return self.TS_COOL_MASK
+        def get_TS_WARM_MASK(self):
+            '''return TS_WARM_MASK'''
+            return self.TS_WARM_MASK
+        def get_TS_HOT_MASK(self):
+            '''return TS_HOT_MASK'''
+            return self.TS_HOT_MASK
+        def get_VBATOTG_LOW_MASK_string(self):  
+            '''
+            Returns VBATOTG_LOW_MASK string
+            0h = VBAT falling below the threshold to enable the OTG mode, does produce INT
+            1h = VBAT falling below the threshold to enable the OTG mode, does NOT produce INT
+            '''
+            if self.VBATOTG_LOW_MASK == 0: return "VBAT falling below the threshold to enable the OTG mode, does produce INT"
+            elif self.VBATOTG_LOW_MASK == 1: return "VBAT falling below the threshold to enable the OTG mode, does NOT produce INT"
+            else: return "unknown"
+        def get_TS_COLD_MASK_string(self):
+            '''
+            Returns TS_COLD_MASK string
+            0h = TS across cold temperature (T1) does produce INT
+            1h = TS across cold temperature (T1) does NOT produce INT
+            '''
+            if self.TS_COLD_MASK == 0: return "TS across cold temperature (T1) does produce INT"
+            elif self.TS_COLD_MASK == 1: return "TS across cold temperature (T1) does NOT produce INT"
+            else: return "unknown"
+        def get_TS_COOL_MASK_string(self):
+            '''
+            Returns TS_COOL_MASK string
+            0h = TS across cool temperature (T2) does produce INT
+            1h = TS across cool temperature (T2) does NOT produce INT
+            '''
+            if self.TS_COOL_MASK == 0: return "TS across cool temperature (T2) does produce INT"
+            elif self.TS_COOL_MASK == 1: return "TS across cool temperature (T2) does NOT produce INT"
+            else: return "unknown"
+        def get_TS_WARM_MASK_string(self):
+            '''
+            Returns TS_WARM_MASK string
+            0h = TS across warm temperature (T3) does produce INT
+            1h = TS across warm temperature (T3) does NOT produce INT
+            '''
+            if self.TS_WARM_MASK == 0: return "TS across warm temperature (T3) does produce INT"
+            elif self.TS_WARM_MASK == 1: return "TS across warm temperature (T3) does NOT produce INT"
+            else: return "unknown"
+        def get_TS_HOT_MASK_string(self):
+            '''
+            Returns TS_HOT_MASK string
+            0h = TS across hot temperature (T5) does produce INT
+            1h = TS across hot temperature (T5) does NOT produce INT
+            '''
+            if self.TS_HOT_MASK == 0: return "TS across hot temperature (T5) does produce INT"
+            elif self.TS_HOT_MASK == 1: return "TS across hot temperature (T5) does NOT produce INT"
+            else: return "unknown"
+        def set_VBATOTG_LOW_MASK(self, VBATOTG_LOW_MASK):
+            '''
+            Set VBATOTG_LOW_MASK (0h = VBAT falling below the threshold to enable the OTG mode, does produce INT, 1h = VBAT falling below the threshold to enable the OTG mode, does NOT produce INT) 
+            '''
+            self.VBATOTG_LOW_MASK = VBATOTG_LOW_MASK  
+            self.get()
+        def set_TS_COLD_MASK(self, TS_COLD_MASK):
+            '''
+            Set TS_COLD_MASK (0h = TS across cold temperature (T1) does produce INT, 1h = TS across cold temperature (T1) does NOT produce INT) 
+            '''
+            self.TS_COLD_MASK = TS_COLD_MASK  
+            self.get()
+        def set_TS_COOL_MASK(self, TS_COOL_MASK):
+            '''
+            Set TS_COOL_MASK (0h = TS across cool temperature (T2) does produce INT, 1h = TS across cool temperature (T2) does NOT produce INT) 
+            '''
+            self.TS_COOL_MASK = TS_COOL_MASK  
+            self.get()
+        def set_TS_WARM_MASK(self, TS_WARM_MASK):
+            '''
+            Set TS_WARM_MASK (0h = TS across warm temperature (T3) does produce INT, 1h = TS across warm temperature (T3) does NOT produce INT) 
+            '''
+            self.TS_WARM_MASK = TS_WARM_MASK  
+            self.get()
+        def set_TS_HOT_MASK(self, TS_HOT_MASK):
+            '''
+            Set TS_HOT_MASK (0h = TS across hot temperature (T5) does produce INT, 1h = TS across hot temperature (T5) does NOT produce INT) 
+            '''
+            self.TS_HOT_MASK = TS_HOT_MASK  
+            self.get()
+             
     class REG2E_ADC_Control(BQ25795_REGISTER):
         """
         BQ25795 - REG2E_ADC_Control
@@ -4439,6 +4595,7 @@ class bq25792:
             self.REG28_Charger_Mask_0.set(self.registers[self.REG28_Charger_Mask_0._addr])
             self.REG29_Charger_Mask_1.set(self.registers[self.REG29_Charger_Mask_1._addr])
             self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
+            self.REG2B_Charger_Mask_3.set(self.registers[self.REG2B_Charger_Mask_3._addr])
             self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
             self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
             self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
