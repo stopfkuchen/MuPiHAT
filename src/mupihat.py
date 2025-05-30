@@ -156,12 +156,10 @@ def main():
     json_flag = bool(json_file)
 
     # Detect I2C bus
-    if os.path.exists("/dev/i2c-10"):
-        i2c_device = 10
-    elif os.path.exists("/dev/i2c-1"):
+    if os.path.exists("/dev/i2c-1"):
         i2c_device = 1
     else:
-        logging.error("No supported I2C device found (neither /dev/i2c-1 nor /dev/i2c-10).")
+        logging.error("No supported I2C device found (/dev/i2c-1). Check if the I2C bus is enabled.")
         sys.exit(1)
         
     # Set up logging if enabled
