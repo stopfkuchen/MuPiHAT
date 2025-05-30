@@ -149,14 +149,41 @@ else
     warn "⚠️ Konfigurationsdatei $CONFIG_FILE nicht gefunden. Überspringe Kopiervorgang."
 fi
 
+# ...existing code...
 
-info "🔧 Aktualisiere /boot/config.txt..."
-ensure_config_in_file "#--------MuPiHAT--------" "/boot/config.txt" "Marker für MuPiHAT Einstellungen"
-ensure_config_in_file "dtparam=i2c_arm=on" "/boot/config.txt" "I2C ARM aktivieren"
-ensure_config_in_file "dtparam=i2c1=on" "/boot/config.txt" "I2C1 aktivieren"
-ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "/boot/config.txt" "I2C Bus Baudrate auf 50kHz setzen"
-ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "/boot/config.txt" "Audio Overlay MAX98357A setzen"
-ensure_config_in_file "dtoverlay=i2s-mmap" "/boot/config.txt" "I2S Memory Map Overlay setzen"
+# Detect OS and set config.txt path accordingly
+if grep -qi dietpi /etc/os-release; then
+    info "ℹ️ DietPi erkannt."
+    if [ -f "/boot/config.txt" ]; then
+        CONFIG_TXT="/boot/config.txt"
+    else
+        error "❗ Konnte keine config.txt auf DietPi finden!"
+    fi
+elif grep -qi "raspbian" /etc/os-release || grep -qi "raspberry pi os" /etc/os-release; then
+    info "ℹ️ Raspberry Pi OS erkannt."
+    if [ -f "/boot/firmware/config.txt" ]; then
+        CONFIG_TXT="/boot/firmware/config.txt"
+    else
+        error "❗ Konnte keine config.txt auf Raspberry Pi OS finden!"
+    fi
+else
+    # Fallback: try common locations
+    if [ -f "/boot/config.txt" ]; then
+        CONFIG_TXT="/boot/config.txt"
+    elif [ -f "/boot/firmware/config.txt" ]; then
+        CONFIG_TXT="/boot/firmware/config.txt"
+    else
+        error "❗ Konnte keine config.txt finden!"
+    fi
+fi
+
+info "🔧 Aktualisiere $CONFIG_TXT..."
+ensure_config_in_file "#--------MuPiHAT--------" "$CONFIG_TXT" "Marker für MuPiHAT Einstellungen"
+ensure_config_in_file "dtparam=i2c_arm=on" "$CONFIG_TXT" "I2C ARM aktivieren"
+ensure_config_in_file "dtparam=i2c1=on" "$CONFIG_TXT" "I2C1 aktivieren"
+ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "$CONFIG_TXT" "I2C Bus Baudrate auf 50kHz setzen"
+ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "$CONFIG_TXT" "Audio Overlay MAX98357A setzen"
+ensure_config_in_file "dtoverlay=i2s-mmap" "$CONFIG_TXT" "I2S Memory Map Overlay setzen"
 
 info "🔧 Aktualisiere Kernelmodule..."
 ensure_kernel_modules
