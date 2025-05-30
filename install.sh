@@ -230,4 +230,15 @@ echo ""
 info "📢 WICHTIG: Bitte starte den Raspberry Pi neu, damit I2C und Audio-Overlay aktiv werden:"
 echo "    sudo reboot"
 echo ""
-info "🧪 Nach dem Neustart kannst du mit 'aplay -l' prüfen, ob das MAX98357A-Audiodevice sichtbar ist."
+
+info "📢 Teste Audioausgabe mit stereo-test.wav ..."
+if command -v aplay >/dev/null 2>&1; then
+    if [ -f "$APP_DIR/assets/stereo-test.wav" ]; then
+        aplay "$APP_DIR/assets/stereo-test.wav"
+        info "✅ Testsound wurde abgespielt."
+    else
+        warn "⚠️ Testsound-Datei $APP_DIR/assets/stereo-test.wav nicht gefunden."
+    fi
+else
+    warn "⚠️ 'aplay' ist nicht installiert. Testsound kann nicht abgespielt werden."
+fi
