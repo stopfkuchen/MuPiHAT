@@ -29,6 +29,7 @@ __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
 import sys
+import os
 import time
 import json
 import logging
@@ -154,13 +155,22 @@ def main():
     log_flag = bool(logfile)
     json_flag = bool(json_file)
 
+    # Detect I2C bus
+    if os.path.exists("/dev/i2c-10"):
+        i2c_device = 10
+    elif os.path.exists("/dev/i2c-1"):
+        i2c_device = 1
+    else:
+        logging.error("No supported I2C device found (neither /dev/i2c-1 nor /dev/i2c-10).")
+        sys.exit(1)
+        
     # Set up logging if enabled
     if log_flag:
         setup_logging(logfile)
 
     # Initialize BQ25792
     try:
-        hat = bq25792(battery_conf_file=config_file)
+        hat = bq25792(i2c_device=i2c_device, battery_conf_file=config_file)
         hat.MuPiHAT_Default()
 
     except Exception as e:

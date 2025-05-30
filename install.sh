@@ -74,6 +74,15 @@ if [ "$(uname -m)" != "armv7l" ] && [ "$(uname -m)" != "aarch64" ]; then
     warn "⚠️ Dieses Skript ist für Raspberry Pi (ARM) optimiert. Weiter geht's trotzdem..."
 fi
 
+if grep -q "Raspberry Pi 5" /proc/device-tree/model 2>/dev/null; then
+    info "✅ Raspberry Pi 5 erkannt!"
+elif grep -q "Raspberry Pi 4" /proc/device-tree/model 2>/dev/null; then
+    info "✅ Raspberry Pi 4 erkannt!"
+elif grep -q "Raspberry Pi 3" /proc/device-tree/model 2>/dev/null; then
+    info "✅ Raspberry Pi 3 erkannt!"
+else
+    warn "⚠️  Dieses Skript unterstützt offiziell nur Raspberry Pi 3, 4 oder 5."
+fi
 
 # User Input: Installationspfad abfragen
 echo ""
