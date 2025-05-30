@@ -233,7 +233,6 @@ echo ""
 
 echo ""
 read -p "🔊 Möchtest du einen Testsound abspielen? (y/n) " -n 1 -r
-echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[YyJj]$ ]]; then
     info "📢 Teste Audioausgabe mit stereo-test.wav ..."
     if command -v aplay >/dev/null 2>&1; then
