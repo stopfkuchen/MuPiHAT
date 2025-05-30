@@ -232,7 +232,8 @@ echo "    sudo reboot"
 echo ""
 
 echo ""
-read -p "🔊 Möchtest du einen Testsound abspielen? (y/n) " -n 1 -r
+read -r -e -i "y" -p "🔊 Möchtest du einen Testsound abspielen? (y/n) " REPLY < /dev/tty
+echo ""
 if [[ $REPLY =~ ^[YyJj]$ ]]; then
     info "📢 Teste Audioausgabe mit stereo-test.wav ..."
     if command -v aplay >/dev/null 2>&1; then
