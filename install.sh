@@ -97,7 +97,7 @@ GIT_BRANCH=${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}
 
 info "📦 Aktualisiere Paketliste & installiere Systempakete..."
 apt update
-apt install -y git python3 python3-pip i2c-tools libgpiod-dev
+apt install -y git python3 python3-pip python3-smbus python3-rpi.gpio i2c-tools libgpiod-dev
 
 
 # Repository klonen
@@ -114,13 +114,13 @@ fi
 
 cd "$APP_DIR"
 
-# Python-Abhängigkeiten installieren
-if [ -f "./src/requirements.txt" ]; then
-    info "📦 Installiere Python-Abhängigkeiten..."
-    pip3 install -r ./src/requirements.txt
-else
-    info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
-fi
+## Python-Abhängigkeiten installieren
+#if [ -f "./src/requirements.txt" ]; then
+#    info "📦 Installiere Python-Abhängigkeiten..."
+#    pip3 install -r ./src/requirements.txt
+#else
+#    info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
+#fi
 
 # Copy configuration file to /etc/mupihat/
 
