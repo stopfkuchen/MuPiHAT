@@ -45,7 +45,7 @@ hat = None
 log_flag = False
 json_flag = False
 json_file = "/tmp/mupihat.json"
-config_file = "/etc/mupihat/mupihatconfig.json"
+config_file = "/etc/mupibox/mupiboxconfig.json"
 
 
 def timestamp():

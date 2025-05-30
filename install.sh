@@ -6,7 +6,10 @@ set -e
 REPO_URL="https://github.com/stopfkuchen/MuPiHAT.git"
 DEFAULT_GIT_BRANCH="main"
 DEFAULT_APP_DIR="/usr/local/bin/mupihat"
+DEFAULT_CONFIG_DIR="/etc/mupihat"
+
 SERVICE_NAME="mupi_hat"
+
 
 function info() {
     echo -e "\033[1;32m$1\033[0m"
@@ -78,7 +81,14 @@ echo "📁 Wo soll das MuPiHAT installiert werden? [Standard: $DEFAULT_APP_DIR] 
 read -r -e -i "$DEFAULT_APP_DIR" APP_DIR < /dev/tty
 APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
 
+echo ""
+echo "📁 Wo soll die MuPiHAT Configuration gespeichtert werden? [Standard: $DEFAUL_CONFIG_DIR] "
+read -r -e -i "$DEFAUL_CONFIG_DIR" CONFIG_DIR < /dev/tty
+CONFIG_DIR=${CONFIG_DIR:-$DEFAULT_CONFIG_DIR}
+CONFIG_FILE="$APP_DIR/src/templates/mupihatconfig.json"
+
 info "➡️  Installation erfolgt nach: $APP_DIR"
+info "➡️  Config liegt in: $CONFIG_DIR"
 
 echo "📁 Welche Git-Branch soll verwendet werden? [Standard: $DEFAULT_GIT_BRANCH] "
 read -r -e -i "$DEFAULT_GIT_BRANCH" GIT_BRANCH < /dev/tty
@@ -107,14 +117,13 @@ cd "$APP_DIR"
 # Python-Abhängigkeiten installieren
 if [ -f "./src/requirements.txt" ]; then
     info "📦 Installiere Python-Abhängigkeiten..."
-    pip3 install --break-system-packages -r ./src/requirements.txt
+    pip3 install -r ./src/requirements.txt
 else
     info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
 fi
 
 # Copy configuration file to /etc/mupihat/
-CONFIG_DIR="/etc/mupihat"
-CONFIG_FILE="$APP_DIR/src/templates/mupihatconfig.json"
+
 info "📄 Kopiere Konfigurationsdatei nach $CONFIG_DIR"
 
 # Ensure the target directory exists
@@ -166,7 +175,6 @@ EOF
 
 # Systemd neu laden und Service aktivieren
 info "🔄 Lade Systemd-Konfiguration neu..."
-systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
