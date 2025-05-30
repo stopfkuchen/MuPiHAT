@@ -238,7 +238,7 @@ if [[ $REPLY =~ ^[YyJj]$ ]]; then
     info "📢 Teste Audioausgabe mit stereo-test.wav ..."
     if command -v aplay >/dev/null 2>&1; then
         if [ -f "$APP_DIR/assets/stereo-test.wav" ]; then
-            sudo -u "$SUDO_USER" aplay "$APP_DIR/assets/stereo-test.wav"
+            runuser -l "$SUDO_USER" -c "aplay '$APP_DIR/assets/stereo-test.wav'"
             info "✅ Testsound wurde abgespielt."
         else
             warn "⚠️ Testsound-Datei $APP_DIR/assets/stereo-test.wav nicht gefunden."
