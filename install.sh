@@ -82,8 +82,8 @@ read -r -e -i "$DEFAULT_APP_DIR" APP_DIR < /dev/tty
 APP_DIR=${APP_DIR:-$DEFAULT_APP_DIR}
 
 echo ""
-echo "📁 Wo soll die MuPiHAT Configuration gespeichtert werden? [Standard: $DEFAUL_CONFIG_DIR] "
-read -r -e -i "$DEFAUL_CONFIG_DIR" CONFIG_DIR < /dev/tty
+echo "📁 Wo soll die MuPiHAT Configuration gespeichtert werden? [Standard: $DEFAULT_CONFIG_DIR] "
+read -r -e -i "$DEFAULT_CONFIG_DIR" CONFIG_DIR < /dev/tty
 CONFIG_DIR=${CONFIG_DIR:-$DEFAULT_CONFIG_DIR}
 CONFIG_FILE="$APP_DIR/src/templates/mupihatconfig.json"
 
