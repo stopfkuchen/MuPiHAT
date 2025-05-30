@@ -184,6 +184,7 @@ ensure_config_in_file "dtparam=i2c1=on" "$CONFIG_TXT" "I2C1 aktivieren"
 ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "$CONFIG_TXT" "I2C Bus Baudrate auf 50kHz setzen"
 ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "$CONFIG_TXT" "Audio Overlay MAX98357A setzen"
 ensure_config_in_file "dtoverlay=i2s-mmap" "$CONFIG_TXT" "I2S Memory Map Overlay setzen"
+ensure_config_in_file "gpio=4=op,dh" "$CONFIG_TXT" "GPIO 4 als Output, default HIGH (wird später LOW)"
 
 info "🔧 Aktualisiere Kernelmodule..."
 ensure_kernel_modules
