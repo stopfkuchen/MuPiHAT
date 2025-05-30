@@ -231,21 +231,6 @@ info "📢 WICHTIG: Bitte starte den Raspberry Pi neu, damit I2C und Audio-Overl
 echo "    sudo reboot"
 echo ""
 
+info "🔊 Nach dem Neustart kannst du die Audioausgabe testen mit:"
+echo "    aplay $APP_DIR/assets/stereo-test.wav"
 echo ""
-read -r -e -i "y" -p "🔊 Möchtest du einen Testsound abspielen? (y/n) " REPLY < /dev/tty
-echo ""
-if [[ $REPLY =~ ^[YyJj]$ ]]; then
-    info "📢 Teste Audioausgabe mit stereo-test.wav ..."
-    if command -v aplay >/dev/null 2>&1; then
-        if [ -f "$APP_DIR/assets/stereo-test.wav" ]; then
-            runuser -l "$SUDO_USER" -c "aplay '$APP_DIR/assets/stereo-test.wav'"
-            info "✅ Testsound wurde abgespielt."
-        else
-            warn "⚠️ Testsound-Datei $APP_DIR/assets/stereo-test.wav nicht gefunden."
-        fi
-    else
-        warn "⚠️ 'aplay' ist nicht installiert. Testsound kann nicht abgespielt werden."
-    fi
-else
-    info "⏭️  Testsound wird übersprungen."
-fi
