@@ -156,6 +156,8 @@ if grep -qi dietpi /etc/os-release; then
     info "ℹ️ DietPi erkannt."
     if [ -f "/boot/config.txt" ]; then
         CONFIG_TXT="/boot/config.txt"
+    elif [ -f "/boot/firmware/config.txt" ]; then
+        CONFIG_TXT="/boot/firmware/config.txt"
     else
         error "❗ Konnte keine config.txt auf DietPi finden!"
     fi
@@ -163,6 +165,8 @@ elif grep -qi "raspbian" /etc/os-release || grep -qi "raspberry pi os" /etc/os-r
     info "ℹ️ Raspberry Pi OS erkannt."
     if [ -f "/boot/firmware/config.txt" ]; then
         CONFIG_TXT="/boot/firmware/config.txt"
+    elif [ -f "/boot/config.txt" ]; then
+        CONFIG_TXT="/boot/config.txt"
     else
         error "❗ Konnte keine config.txt auf Raspberry Pi OS finden!"
     fi
