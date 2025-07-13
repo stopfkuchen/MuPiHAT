@@ -123,13 +123,13 @@ fi
 
 cd "$APP_DIR"
 
-## Python-Abhängigkeiten installieren
-#if [ -f "./src/requirements.txt" ]; then
-#    info "📦 Installiere Python-Abhängigkeiten..."
-#    pip3 install -r ./src/requirements.txt
-#else
-#    info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
-#fi
+# Python-Abhängigkeiten installieren
+if [ -f "./src/requirements.txt" ]; then
+    info "📦 Installiere Python-Abhängigkeiten..."
+    pip3 install -r ./src/requirements.txt
+else
+    info "ℹ️ Keine requirements.txt gefunden, überspringe Python-Paketinstallation."
+fi
 
 # Copy configuration file to /etc/mupihat/
 
@@ -226,7 +226,8 @@ if systemctl is-active --quiet $SERVICE_NAME; then
     info "✅ Der Service $SERVICE_NAME läuft erfolgreich."
 else
     warn "⚠️ Der Service $SERVICE_NAME konnte nicht gestartet werden. Überprüfe die Logs mit:"
-    echo "    journalctl -u $SERVICE_NAME -xe"
+    echo "    sudo systemctl status mupi_hat.service"
+    echo "    sudo journalctl -u $SERVICE_NAME -xe"
 fi
 
 info "✅ Setup abgeschlossen!"
