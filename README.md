@@ -61,6 +61,66 @@ cd; curl -sSL https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/refs/heads/m
 sudo systemctl status mupi_hat
 ```
 
+---
+
+## 📊 Web-based Monitoring Service
+
+The MuPiHAT includes a built-in Flask-based web server that provides real-time monitoring of the battery management system (BQ25792 charger IC). This monitoring service offers both a web interface and JSON API endpoints.
+
+### Features
+
+- **Real-time Register Monitoring**: View live register values from the BQ25792 charger IC
+- **Web Interface**: User-friendly HTML dashboard that auto-refreshes every 5 seconds
+- **JSON API**: RESTful API endpoint for programmatic access to register data
+- **Continuous Data Logging**: Optional JSON file generation and logging capabilities
+
+### Accessing the Monitoring Service
+
+Once the MuPiHAT service is running, you can access the monitoring interface:
+
+- **Web Interface**: http://your-raspberry-pi-ip:5000
+- **JSON API**: http://your-raspberry-pi-ip:5000/api/registers
+
+### Key Monitoring Data
+
+The service provides real-time access to critical battery and charging parameters:
+
+- Battery voltage (VBAT) and current (IBAT)
+- Input voltage (VBUS) and current (IBUS) 
+- System voltage (VSYS)
+- IC temperature and thermal regulation status
+- Charge status and voltage limits
+- Input current limits
+
+### Usage Examples
+
+**Manual Service Start with Web Interface:**
+```bash
+python3 /usr/local/bin/mupibox/mupihat.py
+```
+
+**Service with JSON Logging:**
+```bash
+python3 /usr/local/bin/mupibox/mupihat.py -j /tmp/mupihat.json
+```
+
+**Service with Debug Logging:**
+```bash
+python3 /usr/local/bin/mupibox/mupihat.py -l /tmp/mupihat.log
+```
+
+### API Integration
+
+The JSON API endpoint returns structured data that can be integrated into monitoring systems:
+
+```bash
+curl http://localhost:5000/api/registers
+```
+
+Returns register data in JSON format for automated monitoring and alerting systems.
+
+---
+
 ### 4. Raspberry PI 5
 Damit dein Raspberry Pi 5 automatisch bootet, sobald über den GPIO 5V Strom anliegt (ohne dass du den Power-Button drücken musst), musst du das Verhalten der Power-Management-Einheit (PMIC) ändern. Der Raspberry Pi 5 ist der erste Pi mit einer eigenen Power-Taste und entsprechend auch mit einem anderen Power-Up-Verhalten als frühere Modelle.
 
