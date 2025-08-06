@@ -121,19 +121,19 @@ Returns register data in JSON format for automated monitoring and alerting syste
 
 ---
 
-### 4. Raspberry PI 5
-Damit dein Raspberry Pi 5 automatisch bootet, sobald über den GPIO 5V Strom anliegt (ohne dass du den Power-Button drücken musst), musst du das Verhalten der Power-Management-Einheit (PMIC) ändern. Der Raspberry Pi 5 ist der erste Pi mit einer eigenen Power-Taste und entsprechend auch mit einem anderen Power-Up-Verhalten als frühere Modelle.
+### 4. Raspberry Pi 5
+To make your Raspberry Pi 5 automatically boot as soon as 5V power is applied via GPIO (without having to press the power button), you need to change the behavior of the Power Management Integrated Circuit (PMIC). The Raspberry Pi 5 is the first Pi with its own power button and accordingly has different power-up behavior than earlier models.
 
 ```bash
 lars@raspi5:~ $ sudo rpi-eeprom-config --out current-config.txt
 lars@raspi5:~ $ sudo nano current-config.txt
 ```
 
-Folgende Zeile finden und anpassen (oder ergänzen):
+Find and modify (or add) the following line:
 ```bash
 POWER_ON = 1
 ```
-Neue Konfiguration flashen:
+Flash the new configuration:
 ```bash
 lars@raspi5:~ $ sudo rpi-eeprom-config --apply current-config.txt
 Updating bootloader EEPROM
@@ -167,3 +167,4 @@ Verifying update
 VERIFY: SUCCESS
 UPDATE SUCCESSFUL
 ```
+
