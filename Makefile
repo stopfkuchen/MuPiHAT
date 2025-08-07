@@ -1,4 +1,4 @@
-.PHONY: format lint check test install dev-install
+.PHONY: format lint check test install dev-install venv clean-venv
 
 # Format code with ruff
 format:
@@ -28,3 +28,14 @@ dev-install:
 # Run pre-commit hooks on all files
 pre-commit:
 	uv run pre-commit run --all-files
+
+# Create virtual environment
+venv:
+	uv venv .venv
+	@echo "Virtual environment created at .venv"
+	@echo "To activate: source .venv/bin/activate (Linux/Mac) or .venv\\Scripts\\activate (Windows)"
+
+# Remove virtual environment
+clean-venv:
+	rm -rf .venv
+	@echo "Virtual environment removed"
