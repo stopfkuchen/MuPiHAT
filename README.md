@@ -34,9 +34,52 @@
 ## 🚀 Quick Start
 
 ### 1. Connect the MuPiHAT
-Attach the MuPiHAT to your Raspberry Pi’s GPIO header. Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information.
+Attach the MuPiHAT to your Raspberry Pi's GPIO header. Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information.
 
-### 2. Install Required Software
+### 2. Development Setup
+
+For developers working on the MuPiHAT software:
+
+#### Prerequisites
+- Python 3.8 or higher
+- [uv](https://docs.astral.sh/uv/) package manager
+
+#### Setup Development Environment
+
+1. Clone the repository:
+```bash
+git clone https://github.com/stopfkuchen/MuPiHAT.git
+cd MuPiHAT
+```
+
+2. Set up the complete development environment:
+```bash
+make dev-env
+```
+
+3. Activate the virtual environment:
+```bash
+source .venv/bin/activate  # Linux/Mac
+# or .venv\Scripts\activate  # Windows
+```
+
+#### Development Commands
+
+- `make format` - Format code with Ruff
+- `make lint` - Check for linting issues  
+- `make lint-fix` - Automatically fix linting issues
+- `make check` - Run both linting and format checks
+- `make pre-commit` - Run pre-commit hooks on all files
+- `make clean-venv` - Remove virtual environment
+
+#### Code Quality
+
+This project uses:
+- **Ruff** for fast Python linting and formatting
+- **Pre-commit hooks** for automated code quality checks
+- **uv** for fast Python package management
+
+### 3. Install Required Software (Production)
 
 #### Option 1
 Use the provided `install.sh` script to set up the required software:
@@ -55,7 +98,7 @@ Use single line command:
 cd; curl -sSL https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/refs/heads/main/install.sh -o install.sh; sudo bash install.sh
 ```
 
-### 3. Useful debugging checks
+### 4. Useful debugging checks
 
 ```bash
 sudo systemctl status mupi_hat
@@ -121,7 +164,7 @@ Returns register data in JSON format for automated monitoring and alerting syste
 
 ---
 
-### 4. Raspberry PI 5
+### 5. Raspberry PI 5
 Damit dein Raspberry Pi 5 automatisch bootet, sobald über den GPIO 5V Strom anliegt (ohne dass du den Power-Button drücken musst), musst du das Verhalten der Power-Management-Einheit (PMIC) ändern. Der Raspberry Pi 5 ist der erste Pi mit einer eigenen Power-Taste und entsprechend auch mit einem anderen Power-Up-Verhalten als frühere Modelle.
 
 ```bash
