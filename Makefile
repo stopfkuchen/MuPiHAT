@@ -43,11 +43,6 @@ clean-venv:
 # Set up complete development environment
 dev-env: clean-venv venv dev-install
 	@echo "Development environment ready!"
-	@if [ -f .venv/bin/activate ]; then \
-		echo "Activating virtual environment..."; \
-		. .venv/bin/activate; \
-		echo "Virtual environment activated!"; \
-	else \
-		echo "Warning: Could not find .venv/bin/activate"; \
-		echo "If you're on Windows, manually activate with: .venv\\Scripts\\activate"; \
-	fi
+	@echo "To activate the virtual environment, run:"
+	@echo "  source .venv/bin/activate    # Linux/Mac"
+	@echo "  .venv\\Scripts\\activate      # Windows"
