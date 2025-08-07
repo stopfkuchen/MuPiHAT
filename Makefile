@@ -1,4 +1,4 @@
-.PHONY: format lint check test install dev-install venv clean-venv
+.PHONY: format lint check test install dev-install venv clean-venv dev-env
 
 # Format code with ruff
 format:
@@ -31,11 +31,16 @@ pre-commit:
 
 # Create virtual environment
 venv:
-	uv venv .venv
-	@echo "Virtual environment created at .venv"
+	uv venv .venv --python 3.8
+	@echo "Virtual environment created at .venv with Python 3.8"
 	@echo "To activate: source .venv/bin/activate (Linux/Mac) or .venv\\Scripts\\activate (Windows)"
 
 # Remove virtual environment
 clean-venv:
 	rm -rf .venv
 	@echo "Virtual environment removed"
+
+# Set up complete development environment
+dev-env: clean-venv venv dev-install
+	@echo "Development environment ready!"
+	@echo "To activate: source .venv/bin/activate (Linux/Mac) or .venv\\Scripts\\activate (Windows)"

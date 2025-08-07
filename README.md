@@ -52,16 +52,15 @@ git clone https://github.com/stopfkuchen/MuPiHAT.git
 cd MuPiHAT
 ```
 
-2. Create and activate a virtual environment:
+2. Set up the complete development environment:
 ```bash
-make venv
-source .venv/bin/activate  # Linux/Mac
-# or .venv\Scripts\activate  # Windows
+make dev-env
 ```
 
-3. Install dependencies:
+3. Activate the virtual environment:
 ```bash
-make dev-install
+source .venv/bin/activate  # Linux/Mac
+# or .venv\Scripts\activate  # Windows
 ```
 
 #### Development Commands
