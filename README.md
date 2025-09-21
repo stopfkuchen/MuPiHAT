@@ -15,13 +15,63 @@
 
 ## 📦 Overview
 
-**MuPiHAT** is a custom-designed expansion board (HAT) for the Raspberry Pi. It adds buttons, LEDs, and optional components to create a robust and playful audio experience using the [MuPiBox](https://mupibox.de) platform.
+**MuPiHAT** is the ideal expansion board (HAT) for the Raspberry Pi when you are looking for a Audio Player with battery. 
+
+It is the **All-In-ONE HAT** for building a mobile, battery powered Audio Player! It combines battery management and audio card in a single PCB -  maybe the unique feature of currently shims for the RaspberryPi HATs.
+
+It adds connectors for buttons, LEDs, and optional components such as RFID reader to create a robust and playful audio experience using varios open-source software platforms.
+
+
+<table>
+  <tr>
+    <td>
+      <a href="https://phoniebox.de/" target="_blank">
+        <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/phoniebox.png" width="100" alt="Phoniebox">
+      </a>
+    </td>
+    <td>
+      <b>Phoniebox</b><br>
+      The open-source jukebox for kids and families.
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://mupibox.de" target="_blank">
+        <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/MuPiBox_Header_75h.png" width="200" alt="MuPiBox">
+      </a>
+    </td>
+    <td>
+      <b>MuPiBox</b><br>
+      The open-source Music-Player with Display for kids and families.
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://volumio.com/" target="_blank">
+        <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/volumio-logo.png" width="250" alt="Volumio>"
+      </a>
+    </td>
+    <td>
+      <b>Volumio</b><br>
+      The Music player made for music lovers by music lovers
+    </td>
+  </tr>
+</table>
+
+
+
+<p align="left">
+  
+</p>
+
+
 
 ---
 
 ## 🔧 Features
 
-- Compatible with Raspberry Pi 3 and 4
+- Compatible with Raspberry Pi 3 and 4.  
+**Note: For PI-5 a new Revision is coming soon**
 - GPIO-based interface for:
   - Playback buttons (Play, Pause, Next, Previous)
   - Status LEDs
