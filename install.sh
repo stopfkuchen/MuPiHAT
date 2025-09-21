@@ -188,7 +188,9 @@ ensure_config_in_file "dtparam=i2c1=on" "$CONFIG_TXT" "Enable I2C1"
 ensure_config_in_file "dtparam=i2c_arm_baudrate=50000" "$CONFIG_TXT" "Set I2C bus baudrate to 50kHz"
 ensure_config_in_file "dtoverlay=max98357a,sdmode-pin=16" "$CONFIG_TXT" "Set audio overlay MAX98357A"
 ensure_config_in_file "dtoverlay=i2s-mmap" "$CONFIG_TXT" "Set I2S memory map overlay"
-ensure_config_in_file "gpio=4=op,dh" "$CONFIG_TXT" "GPIO 4 as output, default HIGH (will be LOW later)"
+ensure_config_in_file "dtparam=gpio=on" "$CONFIG_TXT" "Enable GPIO"
+ensure_config_in_file "dtoverlay=gpio-poweroff,gpiopin=4,active_low=1" "$CONFIG_TXT" "Enable GPIO power-off overlay"
+ensure_config_in_file "dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up" "$CONFIG_TXT" "Enable GPIO shutdown overlay"
 
 info "🔧 Updating kernel modules..."
 ensure_kernel_modules
