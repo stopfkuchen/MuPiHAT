@@ -273,15 +273,15 @@ Returns register data in JSON format for automated monitoring and alerting syste
 
 ---
 
-### 4. Raspberry PI 5
+### Raspberry PI 5
 
-#### 4.1 MuPiHAT with RPI5
+#### MuPiHAT with RPI5
 ⚠️ **Important:** The Raspberry Pi 5’s PMIC (Power Management IC) and bootloader expect a fast, clean 5V ramp-up.  MuPIHAT Revision 3.x is not fully supporting RPI5 due to slow voltage ramp-up (20ms), but  20 ms rise time is too slow and can prevent the PMIC from recognizing the power-on event properly.
 
 ⚡A new version coming soon fully supporting PI5 
 
 
-#### 4.1 EEPROM Boot Configuration 
+#### EEPROM Boot Configuration 
 So that your Raspberry Pi 5 automatically boots as soon as 5V power is applied via the GPIO (without having to press the power button), you need to change the behavior of the Power Management IC (PMIC). The Raspberry Pi 5 is the first Pi with its own power button and therefore also has a different power-up behavior than previous models.
 
 ```bash
