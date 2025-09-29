@@ -4,7 +4,7 @@
 
 <h1 align="center">MuPiHAT</h1>
 <p align="center">
-  A Raspberry Pi HAT for the <a href="https://mupibox.de">MuPiBox</a> – a fun, child-friendly music player system.
+  The All-In-One Raspberry Pi HAT for anyone who wants to create a battery powered audio player.
 </p>
 
 <p align="center">
