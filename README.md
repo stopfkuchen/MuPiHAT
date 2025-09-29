@@ -70,23 +70,113 @@ It adds connectors for buttons, LEDs, and optional components such as RFID reade
 
 ## 🔧 Features
 
-- Compatible with Raspberry Pi 3 and 4.  
-**Note: For PI-5 a new Revision is coming soon**
-- GPIO-based interface for:
-  - Playback buttons (Play, Pause, Next, Previous)
-  - Status LEDs
-- Optional components:
-  - Power button
-  - RFID reader (e.g., MFRC522)
+
+- 🎵 2 × 3 W Class-D Audio Amplifier (MAX98357A, Stereo/Mono selectable)  
+- 🔋 Fully integrated fast charger for 2-cell Li-Ion batteries (TI BQ25792)  
+- 🔌 USB-C Power Delivery compliant (up to 4A for Raspberry Pi)  
+- 📴 On/Off Shim function with push-button (clean shutdown + hard-off)  
+- ⚡ Uninterrupted Power Supply (UPS) with battery fallback  
+- 🔧 I²C & GPIO pin header for extensions/LEDs  
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/MuPiHatv3.2_0019.jpg" width="200" alt="MuPiHAT PCB">
+</p>
 
 ---
+
+## PCB Versions
+
+- **2.0** – Initial design (deprecated)  
+- **3.0** – First release of current generation  
+- **3.1** – Improved connectors  
+- **3.2** – Current version (Jan 2025)
+
+---
+
+## Hardware Overview
+
+| Connector | Function                 | Type/Notes |
+|-----------|--------------------------|------------|
+| J1        | Push Button              | Power on/off, shutdown |
+| J15       | LED (GPIO13)             | Status LED connector |
+| J2        | 5V Output                | For powering display |
+| J3        | Charger Status LED (3.2) | External status LED |
+| J4        | USB-C Power IN           | 3.6–12 V, typical 5 V |
+| J6        | Battery Power            | 2-cell Li-Ion (7.4 V) |
+| J7        | Battery Thermal Sensor   | NTC 10K input |
+| J8        | Speaker Output           | 4 Ω or 8 Ω speaker |
+| J5        | GPIO/I²C                 | 8 GPIO + SDA/SCL |
+| J10       | Raspberry Pi Connector   | 40-pin HAT header |
+
+---
+
+## Switch & Jumper Settings
+
+| Switch/Jumper | Function                      | Default |
+|---------------|-------------------------------|---------|
+| SW1           | Enable LEDs / On-Off Shim     | ON      |
+| SW2           | Battery config (enable/disable)| Use Battery |
+| SW3           | Stereo/Mono audio config      | Stereo  |
+| JP2           | Power supply source select    | Open (when Pi powered externally) |
+
+⚠️ **Important:** If JP2 is closed *and* 5V comes from Raspberry Pi USB, the HAT will be damaged.
+
+---
+
+## 🚀 Installation & Quick Start
+
+1. Attach the HAT to Raspberry Pi (use ≥2 cm standoffs). Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information. 
+2. Connect speakers to **J8**.  
+3. *Optionally:* Connect pushbutton (J1) & LED (J15).  
+4. *Optionally:* Attach Li-Ion battery pack (2-cell, J6).  
+5. Connect USB-C PD charger (20 W recommended).  
+6. Power on and depending on your software  
+  a) MupiBox: enable MuPiHAT service in Admin Menu. [MuPiBox Installation Guide](https://mupibox.de/anleitungen/installationsanleitung/einfache-installation/)  
+  b) Volumio: install MuPiHat Plugin (*coming soon*)  
+  c) Phonibox [Phoniebox + MuPiHAT setup](https://github.com/DontUPanic/MuPiHAT_on_phoniebox2.7)  
+  d) others: using install script
+
+---
+
+## Raspberry Pi Configuration
+
+Edit `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
+
+```ini
+dtparam=i2c_arm=on
+dtparam=i2c1=on
+dtparam=i2c_arm_baudrate=50000
+dtoverlay=max98357a,sdmode-pin=16
+dtoverlay=i2s-mmap
+dtparam=gpio=on
+
+dtoverlay=gpio-poweroff,gpiopin=4,active_low=1
+dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up
+```
+
+*Note:* If you use the **MuPiBox software**, or **Volumio Plugin** this is done automatically.
+
+---
+
+## Battery & Charger Notes
+
+- Only **2-cell Li-Ion packs (7.4 V nominal)** supported.  
+- Use packs with **internal over-discharge protection**.  
+- Typical runtimes:  
+  - 2S1P (2 × 18650, ~3500 mAh) → ~4 h  
+  - 2S2P (4 × 18650, ~7000–10000 mAh) → ~8–12 h  
+
+Charger follows **JEITA safety guidelines**, includes OVP, OCP, thermal shutdown, and safety timer.  
+
+Datasheet: [TI BQ25792](https://www.ti.com/lit/gpn/bq25792)  
+
 
 ## 🚀 Quick Start
 
 ### 1. Connect the MuPiHAT
 Attach the MuPiHAT to your Raspberry Pi’s GPIO header. Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information.
 
-### 2. Install Required Software
+### Install MuPiHAT and Service
 
 #### Option 1
 Use the provided `install.sh` script to set up the required software:
@@ -217,3 +307,25 @@ Verifying update
 VERIFY: SUCCESS
 UPDATE SUCCESSFUL
 ```
+
+
+---
+
+## Change Log
+
+- **2.4 (Jan 2025)** – PCB v3.2, current release  
+- 2.3 (Nov 2024) – PCB v3.1  
+- 2.2 (Oct 2024) – JP2 caution added  
+- 2.1 (Oct 2024) – J2 pin marking erratum  
+- 2.0 (Jul 2024) – PCB v3.0  
+
+---
+
+## Links
+
+- 🌐 [MuPiHAT Website](https://mupihat.de)  
+- 📦 [MuPiBox Project](https://mupibox.de)  
+
+---
+
+© 2025 MuPiHAT – Version 2.4 (25.01.2025)
