@@ -262,20 +262,31 @@ Returns register data in JSON format for automated monitoring and alerting syste
 ---
 
 ### 4. Raspberry PI 5
-Damit dein Raspberry Pi 5 automatisch bootet, sobald über den GPIO 5V Strom anliegt (ohne dass du den Power-Button drücken musst), musst du das Verhalten der Power-Management-Einheit (PMIC) ändern. Der Raspberry Pi 5 ist der erste Pi mit einer eigenen Power-Taste und entsprechend auch mit einem anderen Power-Up-Verhalten als frühere Modelle.
+
+#### 4.1 MuPiHAT with RPI5
+⚠️ **Important:** The Raspberry Pi 5’s PMIC (Power Management IC) and bootloader expect a fast, clean 5V ramp-up.  MuPIHAT Revision 3.x is not fully supporting RPI5 due to slow voltage ramp-up (20ms), but  20 ms rise time is too slow and can prevent the PMIC from recognizing the power-on event properly.
+
+⚡A new version coming soon fully supporting PI5 
+
+
+#### 4.1 EEPROM Boot Configuration 
+So that your Raspberry Pi 5 automatically boots as soon as 5V power is applied via the GPIO (without having to press the power button), you need to change the behavior of the Power Management IC (PMIC). The Raspberry Pi 5 is the first Pi with its own power button and therefore also has a different power-up behavior than previous models.
 
 ```bash
 lars@raspi5:~ $ sudo rpi-eeprom-config --out current-config.txt
 lars@raspi5:~ $ sudo nano current-config.txt
 ```
 
-Folgende Zeile finden und anpassen (oder ergänzen):
+Find and adjust (or add) the following line:
 ```bash
 POWER_ON = 1
 ```
-Neue Konfiguration flashen:
+Flash the new configuration:
 ```bash
 lars@raspi5:~ $ sudo rpi-eeprom-config --apply current-config.txt
+```
+Will do:
+```bash
 Updating bootloader EEPROM
  image: /usr/lib/firmware/raspberrypi/bootloader-2712/default/pieeprom-2025-03-10.bin
 config_src: current-config.txt
@@ -311,16 +322,6 @@ UPDATE SUCCESSFUL
 
 ---
 
-## Change Log
-
-- **2.4 (Jan 2025)** – PCB v3.2, current release  
-- 2.3 (Nov 2024) – PCB v3.1  
-- 2.2 (Oct 2024) – JP2 caution added  
-- 2.1 (Oct 2024) – J2 pin marking erratum  
-- 2.0 (Jul 2024) – PCB v3.0  
-
----
-
 ## Links
 
 - 🌐 [MuPiHAT Website](https://mupihat.de)  
@@ -328,4 +329,4 @@ UPDATE SUCCESSFUL
 
 ---
 
-© 2025 MuPiHAT – Version 2.4 (25.01.2025)
+© 2025 MuPiHAT
