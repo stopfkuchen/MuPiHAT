@@ -13,6 +13,23 @@
 
 ---
 
+## Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [PCB Versions](#pcb-versions)
+- [Hardware Overview](#hardware-overview)
+- [Switch & Jumper Settings](#switch--jumper-settings)
+- [Installation & Quick Start](#-installation--quick-start)
+- [Install MuPiHAT and Service](#install-mupihat-and-service)
+- [Useful debugging checks](#3-useful-debugging-checks)
+- [Raspberry Pi Configuration](#raspberry-pi-configuration)
+- [Battery & Charger Notes](#battery--charger-notes)
+- [Web-based Monitoring Service](#-web-based-monitoring-service)
+- [Raspberry PI 5](#4-raspberry-pi-5)
+- [Links](#links)
+---
+
 ## 📦 Overview
 
 **MuPiHAT** is the ideal expansion board (HAT) for the Raspberry Pi when you are looking for a Audio Player with battery. 
@@ -125,6 +142,8 @@ It adds connectors for buttons, LEDs, and optional components such as RFID reade
 
 ## 🚀 Installation & Quick Start
 
+### Step-By-Step
+
 1. Attach the HAT to Raspberry Pi (use ≥2 cm standoffs). Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information. 
 2. Connect speakers to **J8**.  
 3. *Optionally:* Connect pushbutton (J1) & LED (J15).  
@@ -137,45 +156,6 @@ It adds connectors for buttons, LEDs, and optional components such as RFID reade
   d) others: using install script
 
 ---
-
-## Raspberry Pi Configuration
-
-Edit `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
-
-```ini
-dtparam=i2c_arm=on
-dtparam=i2c1=on
-dtparam=i2c_arm_baudrate=50000
-dtoverlay=max98357a,sdmode-pin=16
-dtoverlay=i2s-mmap
-dtparam=gpio=on
-
-dtoverlay=gpio-poweroff,gpiopin=4,active_low=1
-dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up
-```
-
-*Note:* If you use the **MuPiBox software**, or **Volumio Plugin** this is done automatically.
-
----
-
-## Battery & Charger Notes
-
-- Only **2-cell Li-Ion packs (7.4 V nominal)** supported.  
-- Use packs with **internal over-discharge protection**.  
-- Typical runtimes:  
-  - 2S1P (2 × 18650, ~3500 mAh) → ~4 h  
-  - 2S2P (4 × 18650, ~7000–10000 mAh) → ~8–12 h  
-
-Charger follows **JEITA safety guidelines**, includes OVP, OCP, thermal shutdown, and safety timer.  
-
-Datasheet: [TI BQ25792](https://www.ti.com/lit/gpn/bq25792)  
-
-
-## 🚀 Quick Start
-
-### 1. Connect the MuPiHAT
-Attach the MuPiHAT to your Raspberry Pi’s GPIO header. Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information.
-
 ### Install MuPiHAT and Service
 
 #### Option 1
@@ -202,6 +182,38 @@ sudo systemctl status mupi_hat
 ```
 
 ---
+### Raspberry Pi Configuration
+
+Edit `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
+
+```ini
+dtparam=i2c_arm=on
+dtparam=i2c1=on
+dtparam=i2c_arm_baudrate=50000
+dtoverlay=max98357a,sdmode-pin=16
+dtoverlay=i2s-mmap
+dtparam=gpio=on
+
+dtoverlay=gpio-poweroff,gpiopin=4,active_low=1
+dtoverlay=gpio-shutdown,gpio_pin=17,active_low=1,gpio_pull=up
+```
+
+*Note:* If you use the **install.sh** or **MuPiBox software**, or **Volumio Plugin** this is done automatically.
+
+---
+
+## Battery & Charger Notes
+
+- Only **2-cell Li-Ion packs (7.4 V nominal)** supported.  
+- Use packs with **internal over-discharge protection**.  
+- Typical runtimes:  
+  - 2S1P (2 × 18650, ~3500 mAh) → ~4 h  
+  - 2S2P (4 × 18650, ~7000–10000 mAh) → ~8–12 h  
+
+Charger follows **JEITA safety guidelines**, includes OVP, OCP, thermal shutdown, and safety timer.  
+
+Datasheet: [TI BQ25792](https://www.ti.com/lit/gpn/bq25792)  
+
 
 ## 📊 Web-based Monitoring Service
 
