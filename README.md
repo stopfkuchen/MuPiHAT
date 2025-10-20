@@ -208,6 +208,11 @@ Goto your Volumio plugin-manger (typically http://volumio.local/plugin-manager)
   <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/volumio_plugin2.png" width="200" alt="Volumio Plugin">
 </p>
 
+* Check I2S
+Volumio I2S DAC must be enabled. However the correct overlay is not yet part of the dacs.json in Volumio. You can select  The plugin installs the correct overlay, but Volumio backend is overloading it with the overlay once I2S DAC is enabled. 
+Therefore you need to manually delete from /boot/config.txt the line
+
+
 ## Phoniebox
 Phoniebox [Phoniebox + MuPiHAT setup](https://github.com/DontUPanic/MuPiHAT_on_phoniebox2.7)  
 
