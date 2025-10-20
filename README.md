@@ -139,26 +139,80 @@ It adds connectors for buttons, LEDs, and optional components such as RFID reade
 ⚠️ **Important:** If JP2 is closed *and* 5V comes from Raspberry Pi USB, the HAT will be damaged.
 
 ---
+# 🛠️ Hardware Installation
 
 ## 🚀 Installation & Quick Start
 
 ### Step-By-Step
 
 1. Attach the HAT to Raspberry Pi (use ≥2 cm standoffs). Check out user manual <a href="https://mupihat.de">https://mupihat.de</a> for more information. 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/IMG_1253.jpg" width="200" alt="HW Installation">
+</p>
+
+
 2. Connect speakers to **J8**.  
 3. *Optionally:* Connect pushbutton (J1) & LED (J15).  
 4. *Optionally:* Attach Li-Ion battery pack (2-cell, J6).  
 5. Connect USB-C PD charger (20 W recommended).  
-6. Power on and depending on your software  
-  a) MupiBox: enable MuPiHAT service in Admin Menu. [MuPiBox Installation Guide](https://mupibox.de/anleitungen/installationsanleitung/einfache-installation/)  
-  b) Volumio: install MuPiHat Plugin (*coming soon*)  
-  c) Phonibox [Phoniebox + MuPiHAT setup](https://github.com/DontUPanic/MuPiHAT_on_phoniebox2.7)  
-  d) others: using install script
+6. Power on  
+Depending on your software - follow the Software Installation Guide
 
----
-### Install MuPiHAT and Service
 
-#### Option 1
+# 🚀 Software Installation
+
+## MuPiBox
+If you are using MuPiBox software, all what you need is part of the MuPiBox Software
+
+Enable MuPiHAT service in Admin Menu. [MuPiBox Installation Guide](https://mupibox.de/anleitungen/installationsanleitung/einfache-installation/)  
+
+## Volumio
+A plugin is currently under development, but not yet in official Volumio branch
+
+Temporarily until official plugin is available you can use the plugin from this repo:
+
+* Clone Repo on your Volumio device:
+
+```bash
+git clone https://github.com/stopfkuchen/volumio-plugins-sources-bookworm.git
+```
+
+* Install Plugin
+
+```bash
+cd volumio-plugins-sources-bookworm/mupihat/
+volumio plugin install
+```
+
+* Confirm Installation
+
+```bash
+This command will install the plugin on your device
+
+ ================================ WARNING ====================================
+ 
+This plugin is not verified by Volumio. Installing it is UNSAFE and can make your system UNSTABLE!
+You are STRONGLY advised not to install plugins manually, better wait they are officially available.
+ 
+ =============================================================================
+? Do you want to install this plugin anyway? (y/N) 
+```
+
+* Check and Activate Plugin
+Goto your Volumio plugin-manger (typically http://volumio.local/plugin-manager)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/volumio_plugin1.png" width="200" alt="Volumio Plugin">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/stopfkuchen/MuPiHAT/main/assets/volumio_plugin2.png" width="200" alt="Volumio Plugin">
+</p>
+
+## Phoniebox
+Phoniebox [Phoniebox + MuPiHAT setup](https://github.com/DontUPanic/MuPiHAT_on_phoniebox2.7)  
+
+## General Install (Raspian or Dietpi)
+### Option 1
 Use the provided `install.sh` script to set up the required software:
 
 ```bash
@@ -168,7 +222,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-#### Option 2 
+### Option 2 
 Use single line command:
 
 ```bash
@@ -273,15 +327,15 @@ Returns register data in JSON format for automated monitoring and alerting syste
 
 ---
 
-### Raspberry PI 5
+## Raspberry PI 5
 
-#### MuPiHAT with RPI5
+### MuPiHAT with RPI5
 ⚠️ **Important:** The Raspberry Pi 5’s PMIC (Power Management IC) and bootloader expect a fast, clean 5V ramp-up.  MuPIHAT Revision 3.x is not fully supporting RPI5 due to slow voltage ramp-up (20ms), but  20 ms rise time is too slow and can prevent the PMIC from recognizing the power-on event properly.
 
 ⚡A new version coming soon fully supporting PI5 
 
 
-#### EEPROM Boot Configuration 
+### EEPROM Boot Configuration 
 So that your Raspberry Pi 5 automatically boots as soon as 5V power is applied via the GPIO (without having to press the power button), you need to change the behavior of the Power Management IC (PMIC). The Raspberry Pi 5 is the first Pi with its own power button and therefore also has a different power-up behavior than previous models.
 
 ```bash
