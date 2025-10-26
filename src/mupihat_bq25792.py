@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 __author__ = "Lars Stopfkuchen"
 __license__ = "GPLv3"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
@@ -143,64 +143,67 @@ class bq25792:
             self.i2c_addr = i2c_addr
             self.busWS_ms = busWS_ms
             self.registers = [0xFF]*73
-            #BQ25792 Register
-            self.REG00_Minimal_System_Voltage = self.REG00_Minimal_System_Voltage()
-            self.REG01_Charge_Voltage_Limit = self.REG01_Charge_Voltage_Limit()
-            self.REG03_Charge_Current_Limit = self.REG03_Charge_Current_Limit()
-            self.REG05_Input_Voltage_Limit = self.REG05_Input_Voltage_Limit()
-            self.REG06_Input_Current_Limit = self.REG06_Input_Current_Limit()
-            self.REG08_Precharge_Control = self.REG08_Precharge_Control()
-            self.REG09_Termination_Control = self.REG09_Termination_Control()
-            self.REG0A_Recharge_Control = self.REG0A_Recharge_Control() 
-            self.REG0B_VOTG_regulation = self.REG0B_VOTG_regulation()
-            self.REG0D_IOTG_regulation = self.REG0D_IOTG_regulation()
-            self.REG0E_Timer_Control = self.REG0E_Timer_Control()
-            self.REG0F_Charger_Control_0 = self.REG0F_Charger_Control_0()
-            self.REG10_Charger_Control_1 = self.REG10_Charger_Control_1()
-            self.REG11_Charger_Control_2 = self.REG11_Charger_Control_2()
-            self.REG12_Charger_Control_3 = self.REG12_Charger_Control_3()
-            self.REG13_Charger_Control_4 = self.REG13_Charger_Control_4()
-            self.REG14_Charger_Control_5 = self.REG14_Charger_Control_5()
-            self.REG15_Reserved = self.REG15_Reserved()
-            self.REG16_Temperature_Control = self.REG16_Temperature_Control()
-            self.REG17_NTC_Control_0 = self.REG17_NTC_Control_0()
-            self.REG18_NTC_Control_1 = self.REG18_NTC_Control_1()
-            self.REG19_ICO_Current_Limit = self.REG19_ICO_Current_Limit()
-            self.REG1B_Charger_Status_0 = self.REG1B_Charger_Status_0()
-            self.REG1C_Charger_Status_1 = self.REG1C_Charger_Status_1()
-            self.REG1D_Charger_Status_2 = self.REG1D_Charger_Status_2()
-            self.REG1E_Charger_Status_3 = self.REG1E_Charger_Status_3()
-            self.REG1F_Charger_Status_4 = self.REG1F_Charger_Status_4()
-            self.REG20_FAULT_Status_0  = self.REG20_FAULT_Status_0()
-            self.REG21_FAULT_Status_1  = self.REG21_FAULT_Status_1()
-            self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
-            self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
-            self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
-            self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
-            self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
-            self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
-            self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
-            self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
-            self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
-            self.REG2B_Charger_Mask_3  = self.REG2B_Charger_Mask_3()
-            self.REG2C_FAULT_Mask_0   = self.REG2C_FAULT_Mask_0()
-            self.REG2D_FAULT_Mask_1  = self.REG2D_FAULT_Mask_1()
-            self.REG2E_ADC_Control = self.REG2E_ADC_Control()
-            self.REG2F_ADC_Function_Disable_0 = self.REG2F_ADC_Function_Disable_0() 
-            self.REG30_ADC_Function_Disable_1 = self.REG30_ADC_Function_Disable_1()
-            self.REG31_IBUS_ADC = self.REG31_IBUS_ADC()
-            self.REG33_IBAT_ADC = self.REG33_IBAT_ADC()
-            self.REG35_VBUS_ADC = self.REG35_VBUS_ADC()
-            self.REG37_VAC1_ADC = self.REG37_VAC1_ADC()
-            self.REG39_VAC2_ADC = self.REG39_VAC2_ADC()
-            self.REG3B_VBAT_ADC = self.REG3B_VBAT_ADC()
-            self.REG3D_VSYS_ADC = self.REG3D_VSYS_ADC()
-            self.REG3F_TS_ADC = self.REG3F_TS_ADC()
-            self.REG41_TDIE_ADC  = self.REG41_TDIE_ADC()
-            self.REG43_DP_ADC = self.REG43_DP_ADC()
-            self.REG45_DM_ADC = self.REG45_DM_ADC()
-            self.REG47_DPDM_Driver = self.REG47_DPDM_Driver()
-            self.REG48_Part_Information = self.REG48_Part_Information()
+            # Collect register instances in a map for convenient access without name shadowing
+            # Keys are the nested register class names; values are new instance objects
+            self.reg = {
+                "REG00_Minimal_System_Voltage": self.REG00_Minimal_System_Voltage(),
+                "REG01_Charge_Voltage_Limit": self.REG01_Charge_Voltage_Limit(),
+                "REG03_Charge_Current_Limit": self.REG03_Charge_Current_Limit(),
+                "REG05_Input_Voltage_Limit": self.REG05_Input_Voltage_Limit(),
+                "REG06_Input_Current_Limit": self.REG06_Input_Current_Limit(),
+                "REG08_Precharge_Control": self.REG08_Precharge_Control(),
+                "REG09_Termination_Control": self.REG09_Termination_Control(),
+                "REG0A_Recharge_Control": self.REG0A_Recharge_Control(),
+                "REG0B_VOTG_regulation": self.REG0B_VOTG_regulation(),
+                "REG0D_IOTG_regulation": self.REG0D_IOTG_regulation(),
+                "REG0E_Timer_Control": self.REG0E_Timer_Control(),
+                "REG0F_Charger_Control_0": self.REG0F_Charger_Control_0(),
+                "REG10_Charger_Control_1": self.REG10_Charger_Control_1(),
+                "REG11_Charger_Control_2": self.REG11_Charger_Control_2(),
+                "REG12_Charger_Control_3": self.REG12_Charger_Control_3(),
+                "REG13_Charger_Control_4": self.REG13_Charger_Control_4(),
+                "REG14_Charger_Control_5": self.REG14_Charger_Control_5(),
+                "REG15_Reserved": self.REG15_Reserved(),
+                "REG16_Temperature_Control": self.REG16_Temperature_Control(),
+                "REG17_NTC_Control_0": self.REG17_NTC_Control_0(),
+                "REG18_NTC_Control_1": self.REG18_NTC_Control_1(),
+                "REG19_ICO_Current_Limit": self.REG19_ICO_Current_Limit(),
+                "REG1B_Charger_Status_0": self.REG1B_Charger_Status_0(),
+                "REG1C_Charger_Status_1": self.REG1C_Charger_Status_1(),
+                "REG1D_Charger_Status_2": self.REG1D_Charger_Status_2(),
+                "REG1E_Charger_Status_3": self.REG1E_Charger_Status_3(),
+                "REG1F_Charger_Status_4": self.REG1F_Charger_Status_4(),
+                "REG20_FAULT_Status_0": self.REG20_FAULT_Status_0(),
+                "REG21_FAULT_Status_1": self.REG21_FAULT_Status_1(),
+                "REG22_Charger_Flag_0": self.REG22_Charger_Flag_0(),
+                "REG23_Charger_Flag_1": self.REG23_Charger_Flag_1(),
+                "REG24_Charger_Flag_2": self.REG24_Charger_Flag_2(),
+                "REG25_Charger_Flag_3": self.REG25_Charger_Flag_3(),
+                "REG26_FAULT_Flag_0": self.REG26_FAULT_Flag_0(),
+                "REG27_FAULT_Flag_1": self.REG27_FAULT_Flag_1(),
+                "REG28_Charger_Mask_0": self.REG28_Charger_Mask_0(),
+                "REG29_Charger_Mask_1": self.REG29_Charger_Mask_1(),
+                "REG2A_Charger_Mask_2": self.REG2A_Charger_Mask_2(),
+                "REG2B_Charger_Mask_3": self.REG2B_Charger_Mask_3(),
+                "REG2C_FAULT_Mask_0": self.REG2C_FAULT_Mask_0(),
+                "REG2D_FAULT_Mask_1": self.REG2D_FAULT_Mask_1(),
+                "REG2E_ADC_Control": self.REG2E_ADC_Control(),
+                "REG2F_ADC_Function_Disable_0": self.REG2F_ADC_Function_Disable_0(),
+                "REG30_ADC_Function_Disable_1": self.REG30_ADC_Function_Disable_1(),
+                "REG31_IBUS_ADC": self.REG31_IBUS_ADC(),
+                "REG33_IBAT_ADC": self.REG33_IBAT_ADC(),
+                "REG35_VBUS_ADC": self.REG35_VBUS_ADC(),
+                "REG37_VAC1_ADC": self.REG37_VAC1_ADC(),
+                "REG39_VAC2_ADC": self.REG39_VAC2_ADC(),
+                "REG3B_VBAT_ADC": self.REG3B_VBAT_ADC(),
+                "REG3D_VSYS_ADC": self.REG3D_VSYS_ADC(),
+                "REG3F_TS_ADC": self.REG3F_TS_ADC(),
+                "REG41_TDIE_ADC": self.REG41_TDIE_ADC(),
+                "REG43_DP_ADC": self.REG43_DP_ADC(),
+                "REG45_DM_ADC": self.REG45_DM_ADC(),
+                "REG47_DPDM_Driver": self.REG47_DPDM_Driver(),
+                "REG48_Part_Information": self.REG48_Part_Information(),
+            }
             # handle to bus
             self.bq = smbus2.SMBus(i2c_device)
             self.battery_conf_load()
@@ -210,6 +213,14 @@ class bq25792:
             if self._exit_on_error: sys.exit(1)
         finally:
             pass
+
+    def get_reg(self, key: str):
+        """Return a register instance from the reg map by its key (e.g., 'REG00_Minimal_System_Voltage')."""
+        return self.reg[key]
+
+    def get_reg_c(self, reg_class):
+        """Return a register instance by providing the nested register class (e.g., self.REG00_Minimal_System_Voltage)."""
+        return self.reg[reg_class.__name__]
 
     def battery_conf_load(self):
         '''
@@ -5352,64 +5363,64 @@ class bq25792:
             val[32:63] = self.read_register(0x20, 32)
             val[64:72] = self.read_register(0x40, 9)
             self.registers = val
-            # Update register values
-            self.REG00_Minimal_System_Voltage.set(self.registers[self.REG00_Minimal_System_Voltage._addr])
-            self.REG01_Charge_Voltage_Limit.set((self.registers[self.REG01_Charge_Voltage_Limit._addr] << 8) | (self.registers[self.REG01_Charge_Voltage_Limit._addr+1]))
-            self.REG03_Charge_Current_Limit.set((self.registers[self.REG03_Charge_Current_Limit._addr] << 8) | (self.registers[self.REG03_Charge_Current_Limit._addr+1]))
-            self.REG05_Input_Voltage_Limit.set(self.registers[self.REG05_Input_Voltage_Limit._addr])
-            self.REG06_Input_Current_Limit.set((self.registers[self.REG06_Input_Current_Limit._addr] << 8) | (self.registers[self.REG06_Input_Current_Limit._addr+1]))
-            self.REG08_Precharge_Control.set(self.registers[self.REG08_Precharge_Control._addr])
-            self.REG09_Termination_Control.set(self.registers[self.REG09_Termination_Control._addr])
-            self.REG0A_Recharge_Control.set(self.registers[self.REG0A_Recharge_Control._addr])
-            self.REG0B_VOTG_regulation.set((self.registers[self.REG0B_VOTG_regulation._addr]<< 8) | (self.registers[self.REG0B_VOTG_regulation._addr+1]))  
-            self.REG0D_IOTG_regulation.set(self.registers[self.REG0D_IOTG_regulation._addr])
-            self.REG0E_Timer_Control.set(self.registers[self.REG0E_Timer_Control._addr])
-            self.REG0F_Charger_Control_0.set(self.registers[self.REG0F_Charger_Control_0._addr])
-            self.REG10_Charger_Control_1.set(self.registers[self.REG10_Charger_Control_1._addr])
-            self.REG11_Charger_Control_2.set(self.registers[self.REG11_Charger_Control_2._addr])
-            self.REG12_Charger_Control_3.set(self.registers[self.REG12_Charger_Control_3._addr])
-            self.REG13_Charger_Control_4.set(self.registers[self.REG13_Charger_Control_4._addr])
-            self.REG14_Charger_Control_5.set(self.registers[self.REG14_Charger_Control_5._addr])
-            self.REG15_Reserved.set(self.registers[self.REG15_Reserved._addr])
-            self.REG16_Temperature_Control.set(self.registers[self.REG16_Temperature_Control._addr])
-            self.REG17_NTC_Control_0.set(self.registers[self.REG17_NTC_Control_0._addr])
-            self.REG18_NTC_Control_1.set(self.registers[self.REG18_NTC_Control_1._addr])
-            self.REG19_ICO_Current_Limit.set((self.registers[self.REG19_ICO_Current_Limit._addr] << 8) | (self.registers[self.REG19_ICO_Current_Limit._addr+1]))
-            self.REG1B_Charger_Status_0.set(self.registers[self.REG1B_Charger_Status_0._addr])
-            self.REG1C_Charger_Status_1.set(self.registers[self.REG1C_Charger_Status_1._addr])
-            self.REG1D_Charger_Status_2.set(self.registers[self.REG1D_Charger_Status_2._addr])
-            self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
-            self.REG1F_Charger_Status_4.set(self.registers[self.REG1F_Charger_Status_4._addr])
-            self.REG20_FAULT_Status_0.set(self.registers[self.REG20_FAULT_Status_0._addr])
-            self.REG21_FAULT_Status_1.set(self.registers[self.REG21_FAULT_Status_1._addr])
-            self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
-            self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
-            self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
-            self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
-            self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
-            self.REG27_FAULT_Flag_1.set(self.registers[self.REG27_FAULT_Flag_1._addr])
-            self.REG28_Charger_Mask_0.set(self.registers[self.REG28_Charger_Mask_0._addr])
-            self.REG29_Charger_Mask_1.set(self.registers[self.REG29_Charger_Mask_1._addr])
-            self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
-            self.REG2B_Charger_Mask_3.set(self.registers[self.REG2B_Charger_Mask_3._addr])
-            self.REG2C_FAULT_Mask_0.set(self.registers[self.REG2C_FAULT_Mask_0._addr])
-            self.REG2D_FAULT_Mask_1.set(self.registers[self.REG2D_FAULT_Mask_1._addr])
-            self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
-            self.REG2F_ADC_Function_Disable_0.set(self.registers[self.REG2F_ADC_Function_Disable_0._addr])
-            self.REG30_ADC_Function_Disable_1.set(self.registers[self.REG30_ADC_Function_Disable_1._addr])
-            self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
-            self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
-            self.REG35_VBUS_ADC.set((self.registers[self.REG35_VBUS_ADC._addr] << 8) | (self.registers[self.REG35_VBUS_ADC._addr+1]))
-            self.REG37_VAC1_ADC.set((self.registers[self.REG37_VAC1_ADC._addr] << 8) | (self.registers[self.REG37_VAC1_ADC._addr+1]))
-            self.REG39_VAC2_ADC.set((self.registers[self.REG39_VAC2_ADC._addr] << 8) | (self.registers[self.REG39_VAC2_ADC._addr+1]))
-            self.REG3B_VBAT_ADC.set((self.registers[self.REG3B_VBAT_ADC._addr] << 8) | (self.registers[self.REG3B_VBAT_ADC._addr+1]))
-            self.REG3D_VSYS_ADC.set((self.registers[self.REG3D_VSYS_ADC._addr] << 8) | (self.registers[self.REG3D_VSYS_ADC._addr+1]))
-            self.REG3F_TS_ADC.set((self.registers[self.REG3F_TS_ADC._addr] << 8) | (self.registers[self.REG3F_TS_ADC._addr+1]))
-            self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
-            self.REG43_DP_ADC.set((self.registers[self.REG43_DP_ADC._addr] << 8) | (self.registers[self.REG43_DP_ADC._addr+1]))
-            self.REG45_DM_ADC.set((self.registers[self.REG45_DM_ADC._addr] << 8) | (self.registers[self.REG45_DM_ADC._addr+1]))
-            self.REG47_DPDM_Driver.set(self.registers[self.REG47_DPDM_Driver._addr])
-            self.REG48_Part_Information.set(self.registers[self.REG48_Part_Information._addr])
+            # Update register values using reg map to avoid class/instance shadowing
+            self.get_reg("REG00_Minimal_System_Voltage").set(self.registers[self.get_reg("REG00_Minimal_System_Voltage")._addr])
+            self.get_reg("REG01_Charge_Voltage_Limit").set((self.registers[self.get_reg("REG01_Charge_Voltage_Limit")._addr] << 8) | (self.registers[self.get_reg("REG01_Charge_Voltage_Limit")._addr+1]))
+            self.get_reg("REG03_Charge_Current_Limit").set((self.registers[self.get_reg("REG03_Charge_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG03_Charge_Current_Limit")._addr+1]))
+            self.get_reg("REG05_Input_Voltage_Limit").set(self.registers[self.get_reg("REG05_Input_Voltage_Limit")._addr])
+            self.get_reg("REG06_Input_Current_Limit").set((self.registers[self.get_reg("REG06_Input_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG06_Input_Current_Limit")._addr+1]))
+            self.get_reg("REG08_Precharge_Control").set(self.registers[self.get_reg("REG08_Precharge_Control")._addr])
+            self.get_reg("REG09_Termination_Control").set(self.registers[self.get_reg("REG09_Termination_Control")._addr])
+            self.get_reg("REG0A_Recharge_Control").set(self.registers[self.get_reg("REG0A_Recharge_Control")._addr])
+            self.get_reg("REG0B_VOTG_regulation").set((self.registers[self.get_reg("REG0B_VOTG_regulation")._addr] << 8) | (self.registers[self.get_reg("REG0B_VOTG_regulation")._addr+1]))
+            self.get_reg("REG0D_IOTG_regulation").set(self.registers[self.get_reg("REG0D_IOTG_regulation")._addr])
+            self.get_reg("REG0E_Timer_Control").set(self.registers[self.get_reg("REG0E_Timer_Control")._addr])
+            self.get_reg("REG0F_Charger_Control_0").set(self.registers[self.get_reg("REG0F_Charger_Control_0")._addr])
+            self.get_reg("REG10_Charger_Control_1").set(self.registers[self.get_reg("REG10_Charger_Control_1")._addr])
+            self.get_reg("REG11_Charger_Control_2").set(self.registers[self.get_reg("REG11_Charger_Control_2")._addr])
+            self.get_reg("REG12_Charger_Control_3").set(self.registers[self.get_reg("REG12_Charger_Control_3")._addr])
+            self.get_reg("REG13_Charger_Control_4").set(self.registers[self.get_reg("REG13_Charger_Control_4")._addr])
+            self.get_reg("REG14_Charger_Control_5").set(self.registers[self.get_reg("REG14_Charger_Control_5")._addr])
+            self.get_reg("REG15_Reserved").set(self.registers[self.get_reg("REG15_Reserved")._addr])
+            self.get_reg("REG16_Temperature_Control").set(self.registers[self.get_reg("REG16_Temperature_Control")._addr])
+            self.get_reg("REG17_NTC_Control_0").set(self.registers[self.get_reg("REG17_NTC_Control_0")._addr])
+            self.get_reg("REG18_NTC_Control_1").set(self.registers[self.get_reg("REG18_NTC_Control_1")._addr])
+            self.get_reg("REG19_ICO_Current_Limit").set((self.registers[self.get_reg("REG19_ICO_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG19_ICO_Current_Limit")._addr+1]))
+            self.get_reg("REG1B_Charger_Status_0").set(self.registers[self.get_reg("REG1B_Charger_Status_0")._addr])
+            self.get_reg("REG1C_Charger_Status_1").set(self.registers[self.get_reg("REG1C_Charger_Status_1")._addr])
+            self.get_reg("REG1D_Charger_Status_2").set(self.registers[self.get_reg("REG1D_Charger_Status_2")._addr])
+            self.get_reg("REG1E_Charger_Status_3").set(self.registers[self.get_reg("REG1E_Charger_Status_3")._addr])
+            self.get_reg("REG1F_Charger_Status_4").set(self.registers[self.get_reg("REG1F_Charger_Status_4")._addr])
+            self.get_reg("REG20_FAULT_Status_0").set(self.registers[self.get_reg("REG20_FAULT_Status_0")._addr])
+            self.get_reg("REG21_FAULT_Status_1").set(self.registers[self.get_reg("REG21_FAULT_Status_1")._addr])
+            self.get_reg("REG22_Charger_Flag_0").set(self.registers[self.get_reg("REG22_Charger_Flag_0")._addr])
+            self.get_reg("REG23_Charger_Flag_1").set(self.registers[self.get_reg("REG23_Charger_Flag_1")._addr])
+            self.get_reg("REG24_Charger_Flag_2").set(self.registers[self.get_reg("REG24_Charger_Flag_2")._addr])
+            self.get_reg("REG25_Charger_Flag_3").set(self.registers[self.get_reg("REG25_Charger_Flag_3")._addr])
+            self.get_reg("REG26_FAULT_Flag_0").set(self.registers[self.get_reg("REG26_FAULT_Flag_0")._addr])
+            self.get_reg("REG27_FAULT_Flag_1").set(self.registers[self.get_reg("REG27_FAULT_Flag_1")._addr])
+            self.get_reg("REG28_Charger_Mask_0").set(self.registers[self.get_reg("REG28_Charger_Mask_0")._addr])
+            self.get_reg("REG29_Charger_Mask_1").set(self.registers[self.get_reg("REG29_Charger_Mask_1")._addr])
+            self.get_reg("REG2A_Charger_Mask_2").set(self.registers[self.get_reg("REG2A_Charger_Mask_2")._addr])
+            self.get_reg("REG2B_Charger_Mask_3").set(self.registers[self.get_reg("REG2B_Charger_Mask_3")._addr])
+            self.get_reg("REG2C_FAULT_Mask_0").set(self.registers[self.get_reg("REG2C_FAULT_Mask_0")._addr])
+            self.get_reg("REG2D_FAULT_Mask_1").set(self.registers[self.get_reg("REG2D_FAULT_Mask_1")._addr])
+            self.get_reg("REG2E_ADC_Control").set(self.registers[self.get_reg("REG2E_ADC_Control")._addr])
+            self.get_reg("REG2F_ADC_Function_Disable_0").set(self.registers[self.get_reg("REG2F_ADC_Function_Disable_0")._addr])
+            self.get_reg("REG30_ADC_Function_Disable_1").set(self.registers[self.get_reg("REG30_ADC_Function_Disable_1")._addr])
+            self.get_reg("REG31_IBUS_ADC").set((self.registers[self.get_reg("REG31_IBUS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG31_IBUS_ADC")._addr+1]))
+            self.get_reg("REG33_IBAT_ADC").set((self.registers[self.get_reg("REG33_IBAT_ADC")._addr] << 8) | (self.registers[self.get_reg("REG33_IBAT_ADC")._addr+1]))
+            self.get_reg("REG35_VBUS_ADC").set((self.registers[self.get_reg("REG35_VBUS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG35_VBUS_ADC")._addr+1]))
+            self.get_reg("REG37_VAC1_ADC").set((self.registers[self.get_reg("REG37_VAC1_ADC")._addr] << 8) | (self.registers[self.get_reg("REG37_VAC1_ADC")._addr+1]))
+            self.get_reg("REG39_VAC2_ADC").set((self.registers[self.get_reg("REG39_VAC2_ADC")._addr] << 8) | (self.registers[self.get_reg("REG39_VAC2_ADC")._addr+1]))
+            self.get_reg("REG3B_VBAT_ADC").set((self.registers[self.get_reg("REG3B_VBAT_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3B_VBAT_ADC")._addr+1]))
+            self.get_reg("REG3D_VSYS_ADC").set((self.registers[self.get_reg("REG3D_VSYS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3D_VSYS_ADC")._addr+1]))
+            self.get_reg("REG3F_TS_ADC").set((self.registers[self.get_reg("REG3F_TS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3F_TS_ADC")._addr+1]))
+            self.get_reg("REG41_TDIE_ADC").set((self.registers[self.get_reg("REG41_TDIE_ADC")._addr] << 8) | (self.registers[self.get_reg("REG41_TDIE_ADC")._addr+1]))
+            self.get_reg("REG43_DP_ADC").set((self.registers[self.get_reg("REG43_DP_ADC")._addr] << 8) | (self.registers[self.get_reg("REG43_DP_ADC")._addr+1]))
+            self.get_reg("REG45_DM_ADC").set((self.registers[self.get_reg("REG45_DM_ADC")._addr] << 8) | (self.registers[self.get_reg("REG45_DM_ADC")._addr+1]))
+            self.get_reg("REG47_DPDM_Driver").set(self.registers[self.get_reg("REG47_DPDM_Driver")._addr])
+            self.get_reg("REG48_Part_Information").set(self.registers[self.get_reg("REG48_Part_Information")._addr])
             return 0
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
@@ -5421,13 +5432,13 @@ class bq25792:
         Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
         If the read operation fails, it returns the last known value.
         """
-        return self.REG41_TDIE_ADC.get_IC_temperature()
+        return self.get_reg("REG41_TDIE_ADC").get_IC_temperature()
 
     def read_Vbat(self) -> int:
         """
         Reads the VBAT_ADC register and returns the battery voltage in mV.
         """
-        return self.REG3B_VBAT_ADC.get_Vbat()
+        return self.get_reg("REG3B_VBAT_ADC").get_Vbat()
 
 
     def read_Vbus(self):
@@ -5435,7 +5446,7 @@ class bq25792:
         Reads the VBUS_ADC register and returns the bus voltage in mV.
         If the read operation fails, it returns the last known value.
         """
-        return self.REG35_VBUS_ADC.get_Vbus()
+        return self.get_reg("REG35_VBUS_ADC").get_Vbus()
 
     def read_Ibus(self):
         """
@@ -5443,13 +5454,13 @@ class bq25792:
         The IBUS ADC reading is reported in 2's complement.
         If the read operation fails, it returns the last known value.
         """
-        return self.REG31_IBUS_ADC.get_Ibus()
+        return self.get_reg("REG31_IBUS_ADC").get_Ibus()
 
     def read_Ibat(self) -> int:
         """
         Reads the IBAT_ADC register and returns the battery current in mA.
         """
-        return self.REG33_IBAT_ADC.get_Ibat()
+        return self.get_reg("REG33_IBAT_ADC").get_Ibat()
 
 
     def read_InputCurrentLimit(self) -> int:
@@ -5457,25 +5468,25 @@ class bq25792:
         Reads the input current limit (ICO_ILIM) in mA.
         Returns the last known value if the read operation fails.
         """
-        return self.REG19_ICO_Current_Limit.get_ICO_ILIM()
+        return self.get_reg("REG19_ICO_Current_Limit").get_ICO_ILIM()
                   
 
     def read_ChargerStatus(self) -> str:
         """
         Reads the charger status and returns the charge status string.
         """
-        return self.REG1C_Charger_Status_1.get_CHG_STAT_STRG()
+        return self.get_reg("REG1C_Charger_Status_1").get_CHG_STAT_STRG()
     
     def soft_reset(self):
         """
         Performs a soft reset of the charger IC.
         """
         try:
-            reg = self.REG09_Termination_Control
+            reg = self.get_reg("REG09_Termination_Control")
             reg.set_REG_RST(1)
             self.write_register(reg)
             time.sleep(0.1)
-            reg = self.REG09_Termination_Control
+            reg = self.get_reg("REG09_Termination_Control")
             reg.set_REG_RST(0)
             self.write_register(reg)
             time.sleep(0.1)
@@ -5491,7 +5502,7 @@ class bq25792:
         This is done by writing to the REG10_Charger_Control_1 register.
         """
         try:
-            reg = self.REG10_Charger_Control_1
+            reg = self.get_reg("REG10_Charger_Control_1")
             reg.set_WD_RST(1)  # Reset watchdog
             self.write_register(reg)
             logging.info("watchdog_reset done.")
@@ -5506,18 +5517,18 @@ class bq25792:
         This is done by writing to the REG28_Charger_Mask_0, REG29_Charger_Mask_1, REG2A_Charger_Mask_2, REG2B_Charger_Mask_3, REG2C_FAULT_Mask_0, and REG2D_FAULT_Mask_1 registers.
         """
         try:
-            self.REG28_Charger_Mask_0.set(0xFF)
-            self.REG29_Charger_Mask_1.set(0xFF)
-            self.REG2A_Charger_Mask_2.set(0xFF)
-            self.REG2B_Charger_Mask_3.set(0xFF)
-            self.REG2C_FAULT_Mask_0.set(0xFF)
-            self.REG2D_FAULT_Mask_1.set(0xFF)
-            self.write_register(self.REG28_Charger_Mask_0)
-            self.write_register(self.REG29_Charger_Mask_1)
-            self.write_register(self.REG2A_Charger_Mask_2)
-            self.write_register(self.REG2B_Charger_Mask_3)
-            self.write_register(self.REG2C_FAULT_Mask_0)
-            self.write_register(self.REG2D_FAULT_Mask_1)
+            r28 = self.get_reg("REG28_Charger_Mask_0"); r28.set(0xFF)
+            r29 = self.get_reg("REG29_Charger_Mask_1"); r29.set(0xFF)
+            r2A = self.get_reg("REG2A_Charger_Mask_2"); r2A.set(0xFF)
+            r2B = self.get_reg("REG2B_Charger_Mask_3"); r2B.set(0xFF)
+            r2C = self.get_reg("REG2C_FAULT_Mask_0"); r2C.set(0xFF)
+            r2D = self.get_reg("REG2D_FAULT_Mask_1"); r2D.set(0xFF)
+            self.write_register(r28)
+            self.write_register(r29)
+            self.write_register(r2A)
+            self.write_register(r2B)
+            self.write_register(r2C)
+            self.write_register(r2D)
             logging.info("mask_all_INTERRUPTS done.")
             return 0
         except I2CError:
@@ -5529,18 +5540,18 @@ class bq25792:
         Write default settings to the charger IC.   
         ''' 
         #Watchdog
-        reg = self.REG10_Charger_Control_1
+        reg = self.get_reg("REG10_Charger_Control_1")
         reg.set_WATCHDOG(7) #160s watchdog
         reg.set_WD_RST(1) #reset watchdog    
         self.write_register(reg)
 
         # Thermal Regulation Threshold - a bit more conservative
-        reg = self.REG16_Temperature_Control
+        reg = self.get_reg("REG16_Temperature_Control")
         reg.set_TREG(0x2) #100°C
         reg.set_TSHUT(0x2) #120°C
         self.write_register(reg)
 
-        reg = self.REG2E_ADC_Control
+        reg = self.get_reg("REG2E_ADC_Control")
         reg.set_ADC_RATE(0) # Continuous conversion
         reg.set_ADC_EN(1) # Enable ADC
         reg.set_ADC_SAMPLE(0) # 15bit resolution
@@ -5548,12 +5559,12 @@ class bq25792:
         reg.set_ADC_AVG_INIT(0) # start average using the existing register value
         self.write_register(reg)
 
-        reg = self.REG0F_Charger_Control_0
+        reg = self.get_reg("REG0F_Charger_Control_0")
         reg.set_EN_CHG(1)   # Enable Charger
         reg.set_EN_TERM(1)  # Enable Charge Termination
         self.write_register(reg)
 
-        reg = self.REG14_Charger_Control_5
+        reg = self.get_reg("REG14_Charger_Control_5")
         reg.set_EN_IBAT(1) # Enable the IBAT discharge current sensing for ADC
         reg.set_EN_EXTILIM(1) # Enable External ILIM_HIZ Input Current Limit pin input
         self.write_register(reg)
@@ -5578,7 +5589,7 @@ class bq25792:
         reads and return IC temperature of charger IC 
         '''
         self.read_all_register()
-        return self.REG41_TDIE_ADC.get_IC_temperature()
+        return self.get_reg("REG41_TDIE_ADC").get_IC_temperature()
 
     
     
@@ -5590,7 +5601,7 @@ class bq25792:
           0h = VBAT NOT present 
           1h = VBAT present
         '''
-        return self.REG1D_Charger_Status_2.get_VBAT_PRESENT_STAT()
+        return self.get_reg("REG1D_Charger_Status_2").get_VBAT_PRESENT_STAT()
 
 
     def set_input_current_limit(self, input_current_limit: int) -> None:
@@ -5614,7 +5625,7 @@ class bq25792:
             input_current_limit = (input_current_limit // 10) * 10
 
             # Set the input current limit in the register
-            reg = self.REG06_Input_Current_Limit
+            reg = self.get_reg("REG06_Input_Current_Limit")
             reg.set_input_current_limit(input_current_limit)
 
             # Write the high and low bytes of the register value
@@ -5637,29 +5648,29 @@ class bq25792:
         """
         Get the IBAT current in mA, reports positive value for the battery charging current, and negative value for the battery discharging current
         """
-        return self.REG33_IBAT_ADC.IBAT_ADC
+        return self.get_reg("REG33_IBAT_ADC").IBAT_ADC
     
     def get_ibus(self) -> int:
         """
         Get the IBUS current in mA
         """
-        return self.REG31_IBUS_ADC.IBUS_ADC
+        return self.get_reg("REG31_IBUS_ADC").IBUS_ADC
     
     def get_vbat(self) -> int:
         """
         Get the VBAT Battery Voltage  in mV
         """
-        return self.REG3B_VBAT_ADC.VBAT_ADC
+        return self.get_reg("REG3B_VBAT_ADC").VBAT_ADC
     def get_vbus(self) -> int:
         """
         Get the VBUS Bus Voltage  in mV
         """
-        return self.REG35_VBUS_ADC.VBUS_ADC
+        return self.get_reg("REG35_VBUS_ADC").VBUS_ADC
     
     def bq25792_REG1C_Charger_Status_1(self, i2c_read=True):
         if i2c_read:
             self.read_all_register()
-        val = self.registers[self.REG1C_Charger_Status_1]
+        val = self.registers[self.get_reg("REG1C_Charger_Status_1")._addr]
         CHG_STAT = val >> 5
         if CHG_STAT == 0x0: ret = 'Not Charging'
         elif CHG_STAT == 0x01: ret = 'Trickle Charge'
@@ -5675,7 +5686,7 @@ class bq25792:
     def bq25792_REG0F_Charger_Control_0(self, i2c_read=True):
         if i2c_read:
             self.read_all_register()
-        val = self.registers[self.REG0F_Charger_Control_0]
+        val = self.registers[self.get_reg("REG0F_Charger_Control_0")._addr]
         EN_AUTO_IBATDIS = ((val & 0b10000000) == 128)
         FORCE_IBATDIS   = ((val & 0b01000000) == 64)
         EN_CHG          = ((val & 0b00100000) == 32)
@@ -5745,17 +5756,14 @@ class bq25792:
         """
         registers_data = {}
 
-        # Iterate over all attributes of the bq25792 class
-        for attr_name in dir(self):
-            attr = getattr(self, attr_name)
-            # Check if the attribute is an instance of BQ25795_REGISTER
-            if isinstance(attr, self.BQ25795_REGISTER):
-                # Collect all variables and their values from the instance
+        # Iterate over all register instances in the map
+        for name, reg in self.reg.items():
+            if isinstance(reg, self.BQ25795_REGISTER):
                 register_values = {}
-                for var_name, var_value in vars(attr).items():
-                    if not var_name.startswith("_"):  # Skip private/internal variables
+                for var_name, var_value in vars(reg).items():
+                    if not var_name.startswith("_"):
                         register_values[var_name] = var_value
-                registers_data[attr_name] = register_values
+                registers_data[name] = register_values
 
         # Add battery_conf to the JSON output
         registers_data["battery_conf"] = self.battery_conf

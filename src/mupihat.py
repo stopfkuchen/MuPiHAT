@@ -24,7 +24,7 @@ none
 
 __author__ = "Lars Stopfkuchen"
 __license__ = "GPLv3"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
@@ -66,25 +66,30 @@ def setup_logging(logfile):
 
 def log_register_values():
     """Logs register values for debugging."""
+    if hat is None:
+        logging.warning("MuPiHAT not initialized yet; skipping log_register_values")
+        return
     logging.info("*** Timestamp: %s", timestamp())
-    logging.info("Thermal Regulation Threshold: %s", hat.REG16_Temperature_Control.get_thermal_reg_threshold())
-    logging.info("Thermal Shutdown Threshold: %s", hat.REG16_Temperature_Control.get_thermal_shutdown_threshold())
-    logging.info("Temperature Charger IC: %s", hat.REG41_TDIE_ADC.get_IC_temperature())
-    logging.info("Temperature Regulation Status: %s", hat.REG1D_Charger_Status_2.get_thermal_regulation_status())
-    logging.info("Charger Status: %s", hat.REG1C_Charger_Status_1.CHG_STAT_STRG)
+    logging.info("Thermal Regulation Threshold: %s", hat.get_reg("REG16_Temperature_Control").get_thermal_reg_threshold())
+    logging.info("Thermal Shutdown Threshold: %s", hat.get_reg("REG16_Temperature_Control").get_thermal_shutdown_threshold())
+    logging.info("Temperature Charger IC: %s", hat.get_reg("REG41_TDIE_ADC").get_IC_temperature())
+    logging.info("Temperature Regulation Status: %s", hat.get_reg("REG1D_Charger_Status_2").get_thermal_regulation_status())
+    logging.info("Charger Status: %s", hat.read_ChargerStatus())
     logging.info("IBUS [mA]: %s", hat.get_ibus())
     logging.info("IBAT [mA]: %s", hat.get_ibat())
     logging.info("VBUS [mV]: %s", hat.get_vbus())
     logging.info("VBAT [mV]: %s", hat.get_vbat())
-    logging.info("VSYS [mV]: %s", hat.REG3D_VSYS_ADC.VSYS_ADC)
-    logging.info("Charge Voltage Limit: %s", hat.REG01_Charge_Voltage_Limit.VREG)
-    logging.info("Input Current Limit: %s", hat.REG06_Input_Current_Limit.get())
+    logging.info("VSYS [mV]: %s", hat.get_reg("REG3D_VSYS_ADC").VSYS_ADC)
+    logging.info("Charge Voltage Limit: %s", hat.get_reg("REG01_Charge_Voltage_Limit").VREG)
+    logging.info("Input Current Limit: %s", hat.get_reg("REG06_Input_Current_Limit").get())
 
 
 @app.route("/")
 def index():
     """Flask route to display register values."""
     try:
+        if hat is None:
+            return "MuPiHAT not initialized", 503
         return render_template("index.html", registers=hat.to_json_registers())
     except Exception as e:
         return f"Error reading registers: {str(e)}", 500
@@ -94,6 +99,8 @@ def index():
 def api_registers():
     """Flask API endpoint to return register values as JSON."""
     try:     
+        if hat is None:
+            return jsonify({"error": "MuPiHAT not initialized"}), 503
         return jsonify(hat.to_json_registers())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -103,6 +110,9 @@ def periodic_json_dump():
     """Periodically writes the register values to a JSON file."""
     global json_flag, json_file
     while True:
+        if hat is None:
+            time.sleep(1)
+            continue
         hat.watchdog_reset()
         time.sleep(0.1)  # Allow time for the watchdog reset
         hat.read_all_register()
