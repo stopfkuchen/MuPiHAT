@@ -106,7 +106,12 @@ GIT_BRANCH=${GIT_BRANCH:-$DEFAULT_GIT_BRANCH}
 
 info "📦 Updating package list & installing system packages..."
 apt update
-apt install -y git python3 python3-pip python3-smbus python3-rpi.gpio i2c-tools libgpiod-dev
+apt install -y git python3 python3-smbus python3-rpi.gpio i2c-tools libgpiod-dev curl
+
+# Install uv - fast Python package manager
+info "📦 Installing uv (fast Python package manager)..."
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.cargo/bin:$PATH"
 
 
 # Clone repository
@@ -125,8 +130,11 @@ cd "$APP_DIR"
 
 # Install Python dependencies
 if [ -f "./src/requirements.txt" ]; then
-    info "📦 Installing Python dependencies..."
-    sudo -u "$SUDO_USER" pip3 install --break-system-packages -r ./src/requirements.txt
+    info "📦 Installing Python dependencies with uv..."
+    # Ensure uv is available in the current shell
+    export PATH="$HOME/.cargo/bin:$PATH"
+    # Install dependencies using uv (faster and more reliable than pip)
+    sudo -u "$SUDO_USER" bash -c "export PATH=\"$HOME/.cargo/bin:\$PATH\"; uv pip install --system -r ./src/requirements.txt"
 else
     info "ℹ️ No requirements.txt found, skipping Python package installation."
 fi
