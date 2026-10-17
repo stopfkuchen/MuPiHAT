@@ -200,6 +200,9 @@ ensure_kernel_modules
 info "⚙️ Creating systemd service $SERVICE_NAME..."
 tee /etc/systemd/system/$SERVICE_NAME.service > /dev/null <<EOF
 [Unit]
+# Never give up restarting (default: 5 tries in 10 s, then dead): without this service the charger
+# watchdog expires after 160 s and the chip falls back to POR defaults (VREG 8400 instead of 8300).
+StartLimitIntervalSec=0
 Description=MuPiHAT Service
 Before=basic.target
 After=local-fs.target sysinit.target
@@ -211,6 +214,7 @@ WorkingDirectory=$APP_DIR
 User=root
 ExecStart=/usr/bin/python3 -B $APP_DIR/src/mupihat.py -j /tmp/mupihat.json -c $CONFIG_DIR/mupihatconfig.json
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=basic.target

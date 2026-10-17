@@ -24,7 +24,7 @@ none
 
 __author__ = "Lars Stopfkuchen"
 __license__ = "GPLv3"
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
@@ -36,13 +36,19 @@ import logging
 import argparse
 from datetime import datetime
 from flask import Flask, render_template, jsonify
-from threading import Thread
+from threading import Thread, Lock
 from mupihat_bq25792 import bq25792
 
 app = Flask(__name__)
 
 # Global variables
 hat = None
+# AR5-5: Flask is threaded by default — without serialising access to the
+# shared BQ25792 driver, the periodic_json_dump background thread and the
+# Flask request workers can interleave their I2C transactions on the same
+# smbus2.SMBus handle, producing "Remote I/O error" (errno 121) on the
+# Pi's i2c bus. All hat.* calls below run under this lock.
+i2c_lock = Lock()
 log_flag = False
 json_flag = False
 json_file = "/tmp/mupihat.json"
@@ -70,18 +76,18 @@ def log_register_values():
         logging.warning("MuPiHAT not initialized yet; skipping log_register_values")
         return
     logging.info("*** Timestamp: %s", timestamp())
-    logging.info("Thermal Regulation Threshold: %s", hat.get_reg("REG16_Temperature_Control").get_thermal_reg_threshold())
-    logging.info("Thermal Shutdown Threshold: %s", hat.get_reg("REG16_Temperature_Control").get_thermal_shutdown_threshold())
-    logging.info("Temperature Charger IC: %s", hat.get_reg("REG41_TDIE_ADC").get_IC_temperature())
-    logging.info("Temperature Regulation Status: %s", hat.get_reg("REG1D_Charger_Status_2").get_thermal_regulation_status())
-    logging.info("Charger Status: %s", hat.read_ChargerStatus())
+    logging.info("Thermal Regulation Threshold: %s", hat.REG16_Temperature_Control.get_thermal_reg_threshold())
+    logging.info("Thermal Shutdown Threshold: %s", hat.REG16_Temperature_Control.get_thermal_shutdown_threshold())
+    logging.info("Temperature Charger IC: %s", hat.REG41_TDIE_ADC.get_IC_temperature())
+    logging.info("Temperature Regulation Status: %s", hat.REG1D_Charger_Status_2.get_thermal_regulation_status())
+    logging.info("Charger Status: %s", hat.REG1C_Charger_Status_1.CHG_STAT_STRG)
     logging.info("IBUS [mA]: %s", hat.get_ibus())
     logging.info("IBAT [mA]: %s", hat.get_ibat())
     logging.info("VBUS [mV]: %s", hat.get_vbus())
     logging.info("VBAT [mV]: %s", hat.get_vbat())
-    logging.info("VSYS [mV]: %s", hat.get_reg("REG3D_VSYS_ADC").VSYS_ADC)
-    logging.info("Charge Voltage Limit: %s", hat.get_reg("REG01_Charge_Voltage_Limit").VREG)
-    logging.info("Input Current Limit: %s", hat.get_reg("REG06_Input_Current_Limit").get())
+    logging.info("VSYS [mV]: %s", hat.REG3D_VSYS_ADC.VSYS_ADC)
+    logging.info("Charge Voltage Limit: %s", hat.REG01_Charge_Voltage_Limit.VREG)
+    logging.info("Input Current Limit: %s", hat.REG06_Input_Current_Limit.get())
 
 
 @app.route("/")
@@ -90,7 +96,9 @@ def index():
     try:
         if hat is None:
             return "MuPiHAT not initialized", 503
-        return render_template("index.html", registers=hat.to_json_registers())
+        with i2c_lock:
+            registers = hat.to_json_registers()
+        return render_template("index.html", registers=registers)
     except Exception as e:
         return f"Error reading registers: {str(e)}", 500
 
@@ -98,10 +106,12 @@ def index():
 @app.route("/api/registers")
 def api_registers():
     """Flask API endpoint to return register values as JSON."""
-    try:     
+    try:
         if hat is None:
             return jsonify({"error": "MuPiHAT not initialized"}), 503
-        return jsonify(hat.to_json_registers())
+        with i2c_lock:
+            registers = hat.to_json_registers()
+        return jsonify(registers)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -113,19 +123,37 @@ def periodic_json_dump():
         if hat is None:
             time.sleep(1)
             continue
-        hat.watchdog_reset()
-        time.sleep(0.1)  # Allow time for the watchdog reset
-        hat.read_all_register()
-        time.sleep(1)  # Allow time for the registers to be updated
-        if json_flag:
+        # AR5-5: serialise I2C work via i2c_lock so Flask request workers
+        # don't interleave bus transactions with this thread. Sleeps stay
+        # OUTSIDE the lock so request workers can fit between phases.
+        snapshot = None
+        try:
+            with i2c_lock:
+                hat.watchdog_reset()
+            time.sleep(0.1)  # Allow time for the watchdog reset
+            with i2c_lock:
+                hat.read_all_register()
+                # Phase-12: append the current VBAT to the smoothing ring so
+                # battery_percent_granular() sees a moving-average of the
+                # last ~32s instead of a single sample. Cheap, done inside
+                # the lock so we use the value the bulk-read just refreshed.
+                hat.record_vbat_sample(hat.read_Vbat())
+                hat.update_charge_estimate()
+            time.sleep(1)  # Allow time for the registers to be updated
+            with i2c_lock:
+                if json_flag:
+                    snapshot = hat.to_json()
+                if log_flag:
+                    log_register_values()
+        except Exception as e:
+            logging.error("periodic_json_dump I2C cycle failed: %s", str(e))
+        if snapshot is not None:
             try:
                 with open(json_file, "w") as outfile:
-                    json.dump(hat.to_json(), outfile, indent=4)
+                    json.dump(snapshot, outfile, indent=4)
             except Exception as e:
                 logging.error("Failed to write JSON dump: %s", str(e))
-        if log_flag:
-            log_register_values()
-        time.sleep(3.9)  # Run every 4 seconds
+        time.sleep(3.9)  # Run every ~4 seconds
 
 
 def parse_arguments():
@@ -137,7 +165,10 @@ def parse_arguments():
         "-l", "--logfile",
         type=str,
         help="Enable logging and specify the log file path",
-        default="/tmp/mupihat.log"
+        # No default: with "/tmp/mupihat.log" as default the register dump (13 lines) ran every
+        # cycle and, since the driver module configures a stdout handler at import, went to the
+        # journal - about 250,000 lines a day that buried real I2C errors. Pass -l to get it.
+        default=None
     )
     parser.add_argument(
         "-j", "--json",
@@ -171,7 +202,7 @@ def main():
     else:
         logging.error("No supported I2C device found (/dev/i2c-1). Check if the I2C bus is enabled.")
         sys.exit(1)
-        
+
     # Set up logging if enabled
     if log_flag:
         setup_logging(logfile)
@@ -179,7 +210,21 @@ def main():
     # Initialize BQ25792
     try:
         hat = bq25792(i2c_device=i2c_device, battery_conf_file=config_file)
-        hat.MuPiHAT_Default()
+        # A write that did not stick used to be only a log line. Retry a few times (a transient
+        # I2C error is the usual cause); a cell count that stays wrong is the dangerous case (a 2S
+        # pack with a 4S latch has a 16800 mV charge target), so charging is switched off then.
+        # A VREG that stays at its POR default (4.2 V/cell) is within cell spec: logged only.
+        cell_ok, vreg_ok = hat.MuPiHAT_Default()
+        for attempt in range(2):
+            if cell_ok and vreg_ok:
+                break
+            logging.warning("Charger settings not verified (cell ok: %s, VREG ok: %s), retrying...", cell_ok, vreg_ok)
+            time.sleep(2)
+            cell_ok, vreg_ok = hat.MuPiHAT_Default()
+        if not cell_ok:
+            hat.disable_charging()
+        elif not vreg_ok:
+            logging.error("VREG from the battery profile could not be set; the chip keeps its default.")
 
     except Exception as e:
         logging.error("MuPiHAT initialization failed: %s", str(e))
@@ -190,9 +235,16 @@ def main():
         json_thread = Thread(target=periodic_json_dump, daemon=True)
         json_thread.start()
 
-    # Flask web server
+    # AR5-20: bind the debug Flask server to loopback only. No consumer on
+    # the box hits port 5000 — all consumers (frontend, admin-ui, server.ts,
+    # telegram_*.py, mqtt.py, .bashrc, fan_control.py) read /tmp/mupihat.json
+    # directly. Port 5000 is the BQ25792 register inspector at "/" and
+    # "/api/registers". With 0.0.0.0 the raw charger registers were
+    # unauthenticated for every client on the LAN; harmless on a home
+    # WLAN, problematic on guest/school networks. For remote debugging
+    # use `ssh -L 5000:127.0.0.1:5000 mupibox`.
     try:
-        app.run(host="0.0.0.0", port=5000, debug=False)
+        app.run(host="127.0.0.1", port=5000, debug=False)
     except KeyboardInterrupt:
         print("MuPiHAT stopped by Keyboard Interrupt")
         sys.exit(0)

@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 __author__ = "Lars Stopfkuchen"
 __license__ = "GPLv3"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __email__ = "larsstopfkuchen@mupihat.de"
 __status__ = "released"
 
@@ -35,6 +35,12 @@ import time
 import json
 
 import logging
+import re
+
+try:
+    from charge_estimate import ChargeEstimator
+except ImportError:  # an old install without the file: the percent then comes from the voltage alone
+    ChargeEstimator = None
 
 # Configure logging
 logging.basicConfig(
@@ -126,6 +132,26 @@ class bq25792:
     hat.read_all_register()
     print(hat.to_json())
     """
+
+    # Plausibility bounds for the ADC readings, per signal: (min, max).
+    # The BQ25792 ADC occasionally returns single-sample garbage. Observed on
+    # a live box: IBus 9892 mA while the input was hard-limited to 1700 mA,
+    # and Ibat 2428 mA at an input power of 8.7 W. Those spikes propagate
+    # straight into /tmp/mupihat.json and from there into battery_log.jsonl
+    # and the frontend charts, where a single outlier flattens the whole
+    # y-axis. The bounds are deliberately wide -- they reject the physically
+    # impossible, not the merely unusual.
+    _ADC_LIMITS = {
+        'Vbat': (0, 20000),     # chip supports up to 4S (~18.8 V VREG)
+        'Vbus': (0, 30000),     # VBUS ADC range per datasheet
+        'IBus': (-5000, 5000),  # MuPiHAT input path cannot carry more
+        'Ibat': (-6000, 6000),
+    }
+    # Never substitute a held value forever: after this many consecutive
+    # rejects we trust the sensor again, so a genuine new operating point
+    # (or a real fault) cannot be masked indefinitely.
+    _ADC_MAX_HOLD = 5
+
      # constructor method
     def __init__(self, i2c_device=1, i2c_addr=0x6b, busWS_ms=10, exit_on_error = False, battery_conf_file="/etc/mupibox/mupiboxconfig.json"):
         try:
@@ -139,71 +165,83 @@ class bq25792:
                                  'th_warning': 7000,
                                  'th_shutdown': 6800 }
             self._exit_on_error = exit_on_error
+            # Phase-12: VBAT history for granular-percent smoothing (5%-step display).
+            # Voltage swings 30-100 mV under load (Bass-pumping, Display wake);
+            # without smoothing the 5%-display would visibly flap. 8 samples at
+            # 4s cycle = ~32s window, well below the timescale of real SoC
+            # change but long enough to absorb the load-sag transients.
+            self._vbat_history: list[int] = []
+            # percent while charging and time until full (charge_estimate.py), made when the profile is known
+            self._charge = None
+            self._charge_capacity = None
+            self._was_charging = False
+            self._vbat_history_max = 8
+            # ADC plausibility filter: last accepted reading per signal and
+            # how many implausible samples in a row we have suppressed.
+            self._adc_last: dict[str, int] = {}
+            self._adc_reject_streak: dict[str, int] = {}
             self.i2c_device = i2c_device
             self.i2c_addr = i2c_addr
             self.busWS_ms = busWS_ms
             self.registers = [0xFF]*73
-            # Collect register instances in a map for convenient access without name shadowing
-            # Keys are the nested register class names; values are new instance objects
-            self.reg = {
-                "REG00_Minimal_System_Voltage": self.REG00_Minimal_System_Voltage(),
-                "REG01_Charge_Voltage_Limit": self.REG01_Charge_Voltage_Limit(),
-                "REG03_Charge_Current_Limit": self.REG03_Charge_Current_Limit(),
-                "REG05_Input_Voltage_Limit": self.REG05_Input_Voltage_Limit(),
-                "REG06_Input_Current_Limit": self.REG06_Input_Current_Limit(),
-                "REG08_Precharge_Control": self.REG08_Precharge_Control(),
-                "REG09_Termination_Control": self.REG09_Termination_Control(),
-                "REG0A_Recharge_Control": self.REG0A_Recharge_Control(),
-                "REG0B_VOTG_regulation": self.REG0B_VOTG_regulation(),
-                "REG0D_IOTG_regulation": self.REG0D_IOTG_regulation(),
-                "REG0E_Timer_Control": self.REG0E_Timer_Control(),
-                "REG0F_Charger_Control_0": self.REG0F_Charger_Control_0(),
-                "REG10_Charger_Control_1": self.REG10_Charger_Control_1(),
-                "REG11_Charger_Control_2": self.REG11_Charger_Control_2(),
-                "REG12_Charger_Control_3": self.REG12_Charger_Control_3(),
-                "REG13_Charger_Control_4": self.REG13_Charger_Control_4(),
-                "REG14_Charger_Control_5": self.REG14_Charger_Control_5(),
-                "REG15_Reserved": self.REG15_Reserved(),
-                "REG16_Temperature_Control": self.REG16_Temperature_Control(),
-                "REG17_NTC_Control_0": self.REG17_NTC_Control_0(),
-                "REG18_NTC_Control_1": self.REG18_NTC_Control_1(),
-                "REG19_ICO_Current_Limit": self.REG19_ICO_Current_Limit(),
-                "REG1B_Charger_Status_0": self.REG1B_Charger_Status_0(),
-                "REG1C_Charger_Status_1": self.REG1C_Charger_Status_1(),
-                "REG1D_Charger_Status_2": self.REG1D_Charger_Status_2(),
-                "REG1E_Charger_Status_3": self.REG1E_Charger_Status_3(),
-                "REG1F_Charger_Status_4": self.REG1F_Charger_Status_4(),
-                "REG20_FAULT_Status_0": self.REG20_FAULT_Status_0(),
-                "REG21_FAULT_Status_1": self.REG21_FAULT_Status_1(),
-                "REG22_Charger_Flag_0": self.REG22_Charger_Flag_0(),
-                "REG23_Charger_Flag_1": self.REG23_Charger_Flag_1(),
-                "REG24_Charger_Flag_2": self.REG24_Charger_Flag_2(),
-                "REG25_Charger_Flag_3": self.REG25_Charger_Flag_3(),
-                "REG26_FAULT_Flag_0": self.REG26_FAULT_Flag_0(),
-                "REG27_FAULT_Flag_1": self.REG27_FAULT_Flag_1(),
-                "REG28_Charger_Mask_0": self.REG28_Charger_Mask_0(),
-                "REG29_Charger_Mask_1": self.REG29_Charger_Mask_1(),
-                "REG2A_Charger_Mask_2": self.REG2A_Charger_Mask_2(),
-                "REG2B_Charger_Mask_3": self.REG2B_Charger_Mask_3(),
-                "REG2C_FAULT_Mask_0": self.REG2C_FAULT_Mask_0(),
-                "REG2D_FAULT_Mask_1": self.REG2D_FAULT_Mask_1(),
-                "REG2E_ADC_Control": self.REG2E_ADC_Control(),
-                "REG2F_ADC_Function_Disable_0": self.REG2F_ADC_Function_Disable_0(),
-                "REG30_ADC_Function_Disable_1": self.REG30_ADC_Function_Disable_1(),
-                "REG31_IBUS_ADC": self.REG31_IBUS_ADC(),
-                "REG33_IBAT_ADC": self.REG33_IBAT_ADC(),
-                "REG35_VBUS_ADC": self.REG35_VBUS_ADC(),
-                "REG37_VAC1_ADC": self.REG37_VAC1_ADC(),
-                "REG39_VAC2_ADC": self.REG39_VAC2_ADC(),
-                "REG3B_VBAT_ADC": self.REG3B_VBAT_ADC(),
-                "REG3D_VSYS_ADC": self.REG3D_VSYS_ADC(),
-                "REG3F_TS_ADC": self.REG3F_TS_ADC(),
-                "REG41_TDIE_ADC": self.REG41_TDIE_ADC(),
-                "REG43_DP_ADC": self.REG43_DP_ADC(),
-                "REG45_DM_ADC": self.REG45_DM_ADC(),
-                "REG47_DPDM_Driver": self.REG47_DPDM_Driver(),
-                "REG48_Part_Information": self.REG48_Part_Information(),
-            }
+            #BQ25792 Register
+            self.REG00_Minimal_System_Voltage = self.REG00_Minimal_System_Voltage()
+            self.REG01_Charge_Voltage_Limit = self.REG01_Charge_Voltage_Limit()
+            self.REG03_Charge_Current_Limit = self.REG03_Charge_Current_Limit()
+            self.REG05_Input_Voltage_Limit = self.REG05_Input_Voltage_Limit()
+            self.REG06_Input_Current_Limit = self.REG06_Input_Current_Limit()
+            self.REG08_Precharge_Control = self.REG08_Precharge_Control()
+            self.REG09_Termination_Control = self.REG09_Termination_Control()
+            self.REG0A_Recharge_Control = self.REG0A_Recharge_Control() 
+            self.REG0B_VOTG_regulation = self.REG0B_VOTG_regulation()
+            self.REG0D_IOTG_regulation = self.REG0D_IOTG_regulation()
+            self.REG0E_Timer_Control = self.REG0E_Timer_Control()
+            self.REG0F_Charger_Control_0 = self.REG0F_Charger_Control_0()
+            self.REG10_Charger_Control_1 = self.REG10_Charger_Control_1()
+            self.REG11_Charger_Control_2 = self.REG11_Charger_Control_2()
+            self.REG12_Charger_Control_3 = self.REG12_Charger_Control_3()
+            self.REG13_Charger_Control_4 = self.REG13_Charger_Control_4()
+            self.REG14_Charger_Control_5 = self.REG14_Charger_Control_5()
+            self.REG15_Reserved = self.REG15_Reserved()
+            self.REG16_Temperature_Control = self.REG16_Temperature_Control()
+            self.REG17_NTC_Control_0 = self.REG17_NTC_Control_0()
+            self.REG18_NTC_Control_1 = self.REG18_NTC_Control_1()
+            self.REG19_ICO_Current_Limit = self.REG19_ICO_Current_Limit()
+            self.REG1B_Charger_Status_0 = self.REG1B_Charger_Status_0()
+            self.REG1C_Charger_Status_1 = self.REG1C_Charger_Status_1()
+            self.REG1D_Charger_Status_2 = self.REG1D_Charger_Status_2()
+            self.REG1E_Charger_Status_3 = self.REG1E_Charger_Status_3()
+            self.REG1F_Charger_Status_4 = self.REG1F_Charger_Status_4()
+            self.REG20_FAULT_Status_0  = self.REG20_FAULT_Status_0()
+            self.REG21_FAULT_Status_1  = self.REG21_FAULT_Status_1()
+            self.REG22_Charger_Flag_0  = self.REG22_Charger_Flag_0()
+            self.REG23_Charger_Flag_1  = self.REG23_Charger_Flag_1()
+            self.REG24_Charger_Flag_2  = self.REG24_Charger_Flag_2()
+            self.REG25_Charger_Flag_3  = self.REG25_Charger_Flag_3()
+            self.REG26_FAULT_Flag_0  = self.REG26_FAULT_Flag_0()
+            self.REG27_FAULT_Flag_1  = self.REG27_FAULT_Flag_1()
+            self.REG28_Charger_Mask_0  = self.REG28_Charger_Mask_0()
+            self.REG29_Charger_Mask_1  = self.REG29_Charger_Mask_1()
+            self.REG2A_Charger_Mask_2  = self.REG2A_Charger_Mask_2()
+            self.REG2B_Charger_Mask_3  = self.REG2B_Charger_Mask_3()
+            self.REG2C_FAULT_Mask_0   = self.REG2C_FAULT_Mask_0()
+            self.REG2D_FAULT_Mask_1  = self.REG2D_FAULT_Mask_1()
+            self.REG2E_ADC_Control = self.REG2E_ADC_Control()
+            self.REG2F_ADC_Function_Disable_0 = self.REG2F_ADC_Function_Disable_0() 
+            self.REG30_ADC_Function_Disable_1 = self.REG30_ADC_Function_Disable_1()
+            self.REG31_IBUS_ADC = self.REG31_IBUS_ADC()
+            self.REG33_IBAT_ADC = self.REG33_IBAT_ADC()
+            self.REG35_VBUS_ADC = self.REG35_VBUS_ADC()
+            self.REG37_VAC1_ADC = self.REG37_VAC1_ADC()
+            self.REG39_VAC2_ADC = self.REG39_VAC2_ADC()
+            self.REG3B_VBAT_ADC = self.REG3B_VBAT_ADC()
+            self.REG3D_VSYS_ADC = self.REG3D_VSYS_ADC()
+            self.REG3F_TS_ADC = self.REG3F_TS_ADC()
+            self.REG41_TDIE_ADC  = self.REG41_TDIE_ADC()
+            self.REG43_DP_ADC = self.REG43_DP_ADC()
+            self.REG45_DM_ADC = self.REG45_DM_ADC()
+            self.REG47_DPDM_Driver = self.REG47_DPDM_Driver()
+            self.REG48_Part_Information = self.REG48_Part_Information()
             # handle to bus
             self.bq = smbus2.SMBus(i2c_device)
             self.battery_conf_load()
@@ -215,12 +253,15 @@ class bq25792:
             pass
 
     def get_reg(self, key: str):
-        """Return a register instance from the reg map by its key (e.g., 'REG00_Minimal_System_Voltage')."""
-        return self.reg[key]
+        """Return a register instance by its name (e.g., 'REG00_Minimal_System_Voltage')."""
+        reg = getattr(self, key, None)
+        if not isinstance(reg, self.BQ25795_REGISTER):
+            raise KeyError(key)
+        return reg
 
     def get_reg_c(self, reg_class):
-        """Return a register instance by providing the nested register class (e.g., self.REG00_Minimal_System_Voltage)."""
-        return self.reg[reg_class.__name__]
+        """Return a register instance by providing the nested register class (e.g., bq25792.REG00_Minimal_System_Voltage)."""
+        return self.get_reg(reg_class.__name__)
 
     def battery_conf_load(self):
         '''
@@ -241,8 +282,26 @@ class bq25792:
                     self.battery_conf["v_0"] = int(bt["config"]["v_0"])
                     self.battery_conf["th_warning"] = int(bt["config"]["th_warning"])
                     self.battery_conf["th_shutdown"] = int(bt["config"]["th_shutdown"])
+                    # Phase 13a: optional VREG (Charge Voltage Limit) per battery profile.
+                    # When set, write_defaults() applies it to BQ25792 REG01. When
+                    # absent (legacy profiles, USB-C mode, custom-without-vreg),
+                    # the POR default (typ. 8400 mV / 4.20 V/cell) stays active.
+                    vreg_raw = bt["config"].get("vreg")
+                    self.battery_conf["vreg"] = int(vreg_raw) if vreg_raw not in (None, "", "0") else None
+                    # Optional VSYSMIN per battery profile, same opt-in shape as
+                    # vreg above. battery_conf is an explicit whitelist, not a
+                    # copy of the profile dict -- a key that is not listed here
+                    # never reaches write_defaults(), no matter what the JSON says.
+                    cap_raw = bt["config"].get("capacity")
+                    cap = int(cap_raw) if str(cap_raw or "").strip().isdigit() else None
+                    if cap is None:
+                        m = re.search(r"(\d+)[.,]?(\d{3})\s*mAh", selected_battery_name)
+                        cap = int(m.group(1) + m.group(2)) if m else None
+                    self.battery_conf["capacity_mah"] = cap
+                    vsysmin_raw = bt["config"].get("vsysmin")
+                    self.battery_conf["vsysmin"] = int(vsysmin_raw) if vsysmin_raw not in (None, "", "0") else None
                     logging.info("Battery configuration loaded from JSON: %s", self.battery_conf_file)
-                    break            
+                    break
             return 0
         except Exception as _error:
             logging.error("battery_conf_load from JSON failed, use standard configuration, %s", str(_error))
@@ -270,17 +329,206 @@ class bq25792:
 
         VBat = self.read_Vbat()
 
-        if VBat > v_100     : Bat_SOC = "100%"
-        elif VBat > v_75    : Bat_SOC = "75%"
-        elif VBat > v_50    : Bat_SOC = "50%"
-        elif VBat > v_25    : Bat_SOC = "25%"
-        elif VBat > v_0     : Bat_SOC = "0%"
+        # Phase-12 follow-up: changed > to >= so a pack sitting exactly at
+        # the v_100 threshold (8200 mV for a freshly-finished CV charge on
+        # the 2S3P pack) renders as "100%" / Battery100.svg instead of
+        # falling through to "75%" / Battery70.svg. Without this the icon
+        # bucket disagrees with the new granular Bat_Percent text at the
+        # exact-voll-Fall (icon: 3/4-strich, text: 100%) which looks broken.
+        if VBat >= v_100    : Bat_SOC = "100%"
+        elif VBat >= v_75   : Bat_SOC = "75%"
+        elif VBat >= v_50   : Bat_SOC = "50%"
+        elif VBat >= v_25   : Bat_SOC = "25%"
+        else                : Bat_SOC = "0%"
 
         if VBat > th_warning : Bat_Stat = 'OK'
         elif (VBat < th_warning) & (VBat > th_shutdown) : Bat_Stat = 'LOW'
         elif (VBat < th_shutdown) : Bat_Stat = 'SHUTDOWN'
 
         return Bat_SOC, Bat_Stat
+
+    def record_vbat_sample(self, vbat_mv: int):
+        '''
+        Phase-12: append a VBAT reading to the smoothing ring buffer.
+        Called from mupihat.py's periodic_json_dump after read_all_register().
+        Drops the oldest sample once the buffer is full so the average always
+        reflects the most-recent ~32s window.
+        '''
+        if vbat_mv is None or vbat_mv <= 0:
+            return  # ignore invalid reads (post-reopen, etc.)
+        self._vbat_history.append(int(vbat_mv))
+        if len(self._vbat_history) > self._vbat_history_max:
+            self._vbat_history.pop(0)
+
+    def smoothed_vbat(self) -> int:
+        '''
+        Return the moving-average VBAT over the recorded samples. Falls back
+        to the current single read if the buffer is empty (cold start).
+        '''
+        if not self._vbat_history:
+            return self.read_Vbat()
+        return sum(self._vbat_history) // len(self._vbat_history)
+
+    # the resistance of the pack and its wiring in ohms (2S: two cells and the cables): a current of 0.5 A is 60 mV
+    PACK_RESISTANCE_OHM = 0.12
+
+    def _voltage_percent(self):
+        '''
+        The percent the (smoothed) battery voltage says, as a float 0-100 - the rest curve of the profile. None without
+        a profile that has voltages (USB-C mode).
+        '''
+        try:
+            v_100 = int(self.battery_conf['v_100'])
+            v_75  = int(self.battery_conf['v_75'])
+            v_50  = int(self.battery_conf['v_50'])
+            v_25  = int(self.battery_conf['v_25'])
+            v_0   = int(self.battery_conf['v_0'])
+        except (KeyError, ValueError, TypeError):
+            return None
+        if v_100 <= 10:
+            return None
+        return self._percent_at(self.smoothed_vbat())
+
+    def _percent_at(self, v):
+        '''The percent a rest voltage (mV) stands for on the profile's curve (float, 0-100); None without a curve.'''
+        try:
+            v_100 = int(self.battery_conf['v_100'])
+            v_75  = int(self.battery_conf['v_75'])
+            v_50  = int(self.battery_conf['v_50'])
+            v_25  = int(self.battery_conf['v_25'])
+            v_0   = int(self.battery_conf['v_0'])
+        except (KeyError, ValueError, TypeError):
+            return None
+        if v_100 <= 10:
+            return None
+        if v >= v_100:
+            return 100.0
+        if v >= v_75:
+            return 75.0 + 25.0 * (v - v_75) / max(1, v_100 - v_75)
+        if v >= v_50:
+            return 50.0 + 25.0 * (v - v_50) / max(1, v_75 - v_50)
+        if v >= v_25:
+            return 25.0 + 25.0 * (v - v_25) / max(1, v_50 - v_25)
+        if v >= v_0:
+            return 25.0 * (v - v_0) / max(1, v_25 - v_0)
+        return 0.0
+
+    def update_charge_estimate(self):
+        '''
+        Feeds the charge estimate (percent while charging, time until full) with the current readings. Called every
+        cycle of the service, after the registers were read; never raises.
+        '''
+        if ChargeEstimator is None:
+            return
+        try:
+            cap = self.battery_conf.get('capacity_mah')
+            if self._charge is None:
+                iterm = None
+                try:
+                    iterm = int(self.REG09_Termination_Control.get_ITERM())
+                except Exception:
+                    pass
+                self._charge = ChargeEstimator(capacity_mah=cap, iterm_ma=iterm or 200, state_file="/tmp/mupihat_charge.json")
+            if cap != self._charge_capacity:
+                self._charge.set_capacity(cap)
+                self._charge_capacity = cap
+            if self._voltage_percent() is None:
+                return
+            # What the pack would read at rest: the voltage less the drop the current causes in the pack (charging) or
+            # plus it (discharging). Only the estimate takes this value; the percent shown at rest is the plain voltage.
+            ibat = self.read_Ibat()
+            v_rest = self.smoothed_vbat() - ibat * self.PACK_RESISTANCE_OHM
+            vreg = None
+            try:
+                vreg = int(self.REG01_Charge_Voltage_Limit.VREG)
+            except Exception:
+                pass
+            self._charge.update(ibat, self.read_ChargerStatus(), self._percent_at(v_rest), self.read_Vbat(), vreg)
+            # The charge ended (cable out): the smoothing still holds the voltages of the charge - half a minute of
+            # "80 %" - so it starts anew from the voltage the pack has now.
+            charging = self._charge.percent is not None and self._charge.phase in ("precharge", "cc", "cv", "topoff")
+            if self._was_charging and not charging:
+                self._vbat_history.clear()
+            self._was_charging = charging
+        except Exception as _error:
+            logging.error("charge estimate failed: %s", str(_error))
+
+    def battery_percent_granular(self):
+        '''
+        Phase-12: piecewise-linear interpolation between the 5 thresholds for
+        a 0-100 % SoC value, rounded to 5 % steps. Returns a tuple:
+            (percent: int, source: str)
+        where source is "charging" while CC/Taper charge is running (the
+        voltage-based estimate is systematically optimistic during active
+        charge because the pack is held above its rest curve), otherwise
+        "voltage". The frontend can show a ⚡ next to the number when
+        source == "charging" to signal the disclaimer.
+
+        Uses smoothed_vbat() to absorb sub-second voltage swings -- without
+        smoothing the 5%-display would flap visibly under audio load.
+
+        Why 5% steps and not 1%: the discharge curve in the plateau region
+        (~3.7-3.9 V/cell) gives ~2-3 mV per 1 %, smaller than the BQ25792
+        ADC's noise floor (~10 mV) and far smaller than load-sag transients
+        (30-60 mV under typical box load). 1 % steps would zap-zap-zap
+        constantly; 5 % steps map cleanly to ~90 mV per step which IS
+        resolvable above the noise.
+        '''
+        try:
+            v_100 = int(self.battery_conf['v_100'])
+            v_75  = int(self.battery_conf['v_75'])
+            v_50  = int(self.battery_conf['v_50'])
+            v_25  = int(self.battery_conf['v_25'])
+            v_0   = int(self.battery_conf['v_0'])
+        except (KeyError, ValueError, TypeError):
+            return (0, "voltage")  # config not loaded yet — safe default
+
+        # USB-C mode profile has v_*=1 (sentinel for "no battery"). Don't
+        # report any percent in that case — the icon will fall back to its
+        # plug-symbol mode.
+        if v_100 <= 10:
+            # "none": the display and the app show no battery then (a battery that is there but runs
+            # under this profile read as 0 % before)
+            return (0, "none")
+
+        v = self.smoothed_vbat()
+
+        # Piecewise linear: each segment maps [v_lower, v_upper] to a
+        # 25-percentage-point range linearly.
+        if v >= v_100:
+            pct = 100.0
+        elif v >= v_75:
+            pct = 75.0 + 25.0 * (v - v_75) / max(1, v_100 - v_75)
+        elif v >= v_50:
+            pct = 50.0 + 25.0 * (v - v_50) / max(1, v_75 - v_50)
+        elif v >= v_25:
+            pct = 25.0 + 25.0 * (v - v_25) / max(1, v_50 - v_25)
+        elif v >= v_0:
+            pct = 0.0  + 25.0 * (v - v_0)  / max(1, v_25 - v_0)
+        else:
+            pct = 0.0
+
+        # While it charges, the voltage reads far too high (the charger holds the pack above its rest curve): the
+        # estimate of the charge that went in (charge_estimate.py) is shown instead, up to "full" when the charger
+        # says it ended the charge.
+        est = self._charge
+        # (shortly after a charge too - est.settling: the voltage reads the charge for a while after the cable is out)
+        if est is not None and est.percent is not None and (est.phase in ("precharge", "cc", "cv", "topoff", "done") or est.settling):
+            pct = est.percent
+
+        # Round to 5 % steps -- see docstring above for why not 1 %.
+        rounded = int(round(pct / 5.0) * 5)
+        rounded = max(0, min(100, rounded))
+
+        # During active charging the voltage-based estimate is too optimistic
+        # (pack held above rest curve by CC current). Flag the source so the
+        # frontend can render a charging indicator (⚡) instead of treating
+        # the number as a settled SoC reading.
+        # (the phase is the estimate's: the chip's text is "Fast charge (CC mode)" and "Taper Charge (CV mode)", spelled
+        # differently, so a search for one word missed one of them)
+        source = "charging" if est is not None and est.percent is not None and est.phase in ("precharge", "cc", "cv", "topoff") else "voltage"
+
+        return (rounded, source)
 
     # BQ25795 Register
     class BQ25795_REGISTER:
@@ -341,7 +589,7 @@ class bq25792:
             self.VREG = self._value * 10
         def set (self, value):
             super().set(value)
-            self.VRE0G = self._value * 10
+            self.VREG = self._value * 10
 
     class REG03_Charge_Current_Limit(BQ25795_REGISTER):
         #Charge Current Limit During POR, the device reads the resistance tie to PROG pin, to identify the default battery cell count and determine the default power-on battery charging current: 1s and 2s: 3s and 4s: 1A Type : RW Range : 50mA-5000mA Fixed Offset : 0mA Bit Step Size : 10mA
@@ -5318,15 +5566,43 @@ class bq25792:
     # class methods 
     
 
+    def _reopen_bus(self):
+        """
+        Close and re-open the SMBus handle. Used after a Remote I/O error
+        to clear a hung bus state on the BQ25792 (errno 121 leaves the bus
+        in an indeterminate state on the Pi's i2c-bcm2835 driver).
+        """
+        try:
+            self.bq.close()
+        except Exception:
+            pass
+        self.bq = smbus2.SMBus(self.i2c_device)
+
     def safe_execute(self, func, *args, **kwargs):
         """
         Executes a function safely, catching exceptions and handling errors.
+        On the first OSError (typically errno 121 "Remote I/O error" caused
+        by an interleaved I2C transaction or transient bus glitch), reopen
+        the SMBus handle and retry once. A second failure escalates to
+        I2CError so the caller can choose whether to skip the cycle.
         If `_exit_on_error` is True, the program will exit on error.
         """
         try:
             return func(*args, **kwargs)
+        except OSError as e:
+            logging.warning(f"OSError in {func.__name__}: {str(e)} — reopening I2C bus and retrying once")
+            self._reopen_bus()
+            try:
+                # Re-bind the bound method to the new bus handle if needed
+                if hasattr(func, '__self__') and func.__self__ is not None:
+                    func = getattr(self.bq, func.__name__)
+                return func(*args, **kwargs)
+            except Exception as e2:
+                logging.error(f"Error in {func.__name__} after bus reopen: {str(e2)}")
+                if self._exit_on_error:
+                    sys.exit(1)
+                raise I2CError(f"Failed to execute {func.__name__}") from e2
         except Exception as e:
-            #sys.stderr.write(f"Error in {func.__name__}: {str(e)}\n")
             logging.error(f"Error in {func.__name__}: {str(e)}")
             if self._exit_on_error:
                 sys.exit(1)
@@ -5348,10 +5624,19 @@ class bq25792:
     def write_register_word(self, reg):
         """
         Writes a two-byte register value safely.
+
+        BQ25792 word registers are big-endian: the lower I2C address holds the
+        most-significant byte. Verified against the live chip — for the 8400 mV
+        VREG POR default (840 = 0x0348) REG01h reads 0x03 and REG02h reads 0x48.
+        read_all_register() decodes the same way ((reg[addr] << 8) | reg[addr+1]),
+        so the write must place the HIGH byte at addr and the LOW byte at addr+1.
+        The previous little-endian order silently corrupted every word write
+        (VREG never reached 8300 mV; IINDPM was masked to 0 and only worked
+        because the hardware ILIM_HIZ resistor caps input current at 2.2 A).
         """
         reg.get()
-        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, reg._value & 0xFF)
-        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr + 1, (reg._value >> 8) & 0xFF)
+        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr, (reg._value >> 8) & 0xFF)
+        self.safe_execute(self.bq.write_byte_data, self.i2c_addr, reg._addr + 1, reg._value & 0xFF)
 
     def read_all_register(self):
         """
@@ -5363,64 +5648,64 @@ class bq25792:
             val[32:63] = self.read_register(0x20, 32)
             val[64:72] = self.read_register(0x40, 9)
             self.registers = val
-            # Update register values using reg map to avoid class/instance shadowing
-            self.get_reg("REG00_Minimal_System_Voltage").set(self.registers[self.get_reg("REG00_Minimal_System_Voltage")._addr])
-            self.get_reg("REG01_Charge_Voltage_Limit").set((self.registers[self.get_reg("REG01_Charge_Voltage_Limit")._addr] << 8) | (self.registers[self.get_reg("REG01_Charge_Voltage_Limit")._addr+1]))
-            self.get_reg("REG03_Charge_Current_Limit").set((self.registers[self.get_reg("REG03_Charge_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG03_Charge_Current_Limit")._addr+1]))
-            self.get_reg("REG05_Input_Voltage_Limit").set(self.registers[self.get_reg("REG05_Input_Voltage_Limit")._addr])
-            self.get_reg("REG06_Input_Current_Limit").set((self.registers[self.get_reg("REG06_Input_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG06_Input_Current_Limit")._addr+1]))
-            self.get_reg("REG08_Precharge_Control").set(self.registers[self.get_reg("REG08_Precharge_Control")._addr])
-            self.get_reg("REG09_Termination_Control").set(self.registers[self.get_reg("REG09_Termination_Control")._addr])
-            self.get_reg("REG0A_Recharge_Control").set(self.registers[self.get_reg("REG0A_Recharge_Control")._addr])
-            self.get_reg("REG0B_VOTG_regulation").set((self.registers[self.get_reg("REG0B_VOTG_regulation")._addr] << 8) | (self.registers[self.get_reg("REG0B_VOTG_regulation")._addr+1]))
-            self.get_reg("REG0D_IOTG_regulation").set(self.registers[self.get_reg("REG0D_IOTG_regulation")._addr])
-            self.get_reg("REG0E_Timer_Control").set(self.registers[self.get_reg("REG0E_Timer_Control")._addr])
-            self.get_reg("REG0F_Charger_Control_0").set(self.registers[self.get_reg("REG0F_Charger_Control_0")._addr])
-            self.get_reg("REG10_Charger_Control_1").set(self.registers[self.get_reg("REG10_Charger_Control_1")._addr])
-            self.get_reg("REG11_Charger_Control_2").set(self.registers[self.get_reg("REG11_Charger_Control_2")._addr])
-            self.get_reg("REG12_Charger_Control_3").set(self.registers[self.get_reg("REG12_Charger_Control_3")._addr])
-            self.get_reg("REG13_Charger_Control_4").set(self.registers[self.get_reg("REG13_Charger_Control_4")._addr])
-            self.get_reg("REG14_Charger_Control_5").set(self.registers[self.get_reg("REG14_Charger_Control_5")._addr])
-            self.get_reg("REG15_Reserved").set(self.registers[self.get_reg("REG15_Reserved")._addr])
-            self.get_reg("REG16_Temperature_Control").set(self.registers[self.get_reg("REG16_Temperature_Control")._addr])
-            self.get_reg("REG17_NTC_Control_0").set(self.registers[self.get_reg("REG17_NTC_Control_0")._addr])
-            self.get_reg("REG18_NTC_Control_1").set(self.registers[self.get_reg("REG18_NTC_Control_1")._addr])
-            self.get_reg("REG19_ICO_Current_Limit").set((self.registers[self.get_reg("REG19_ICO_Current_Limit")._addr] << 8) | (self.registers[self.get_reg("REG19_ICO_Current_Limit")._addr+1]))
-            self.get_reg("REG1B_Charger_Status_0").set(self.registers[self.get_reg("REG1B_Charger_Status_0")._addr])
-            self.get_reg("REG1C_Charger_Status_1").set(self.registers[self.get_reg("REG1C_Charger_Status_1")._addr])
-            self.get_reg("REG1D_Charger_Status_2").set(self.registers[self.get_reg("REG1D_Charger_Status_2")._addr])
-            self.get_reg("REG1E_Charger_Status_3").set(self.registers[self.get_reg("REG1E_Charger_Status_3")._addr])
-            self.get_reg("REG1F_Charger_Status_4").set(self.registers[self.get_reg("REG1F_Charger_Status_4")._addr])
-            self.get_reg("REG20_FAULT_Status_0").set(self.registers[self.get_reg("REG20_FAULT_Status_0")._addr])
-            self.get_reg("REG21_FAULT_Status_1").set(self.registers[self.get_reg("REG21_FAULT_Status_1")._addr])
-            self.get_reg("REG22_Charger_Flag_0").set(self.registers[self.get_reg("REG22_Charger_Flag_0")._addr])
-            self.get_reg("REG23_Charger_Flag_1").set(self.registers[self.get_reg("REG23_Charger_Flag_1")._addr])
-            self.get_reg("REG24_Charger_Flag_2").set(self.registers[self.get_reg("REG24_Charger_Flag_2")._addr])
-            self.get_reg("REG25_Charger_Flag_3").set(self.registers[self.get_reg("REG25_Charger_Flag_3")._addr])
-            self.get_reg("REG26_FAULT_Flag_0").set(self.registers[self.get_reg("REG26_FAULT_Flag_0")._addr])
-            self.get_reg("REG27_FAULT_Flag_1").set(self.registers[self.get_reg("REG27_FAULT_Flag_1")._addr])
-            self.get_reg("REG28_Charger_Mask_0").set(self.registers[self.get_reg("REG28_Charger_Mask_0")._addr])
-            self.get_reg("REG29_Charger_Mask_1").set(self.registers[self.get_reg("REG29_Charger_Mask_1")._addr])
-            self.get_reg("REG2A_Charger_Mask_2").set(self.registers[self.get_reg("REG2A_Charger_Mask_2")._addr])
-            self.get_reg("REG2B_Charger_Mask_3").set(self.registers[self.get_reg("REG2B_Charger_Mask_3")._addr])
-            self.get_reg("REG2C_FAULT_Mask_0").set(self.registers[self.get_reg("REG2C_FAULT_Mask_0")._addr])
-            self.get_reg("REG2D_FAULT_Mask_1").set(self.registers[self.get_reg("REG2D_FAULT_Mask_1")._addr])
-            self.get_reg("REG2E_ADC_Control").set(self.registers[self.get_reg("REG2E_ADC_Control")._addr])
-            self.get_reg("REG2F_ADC_Function_Disable_0").set(self.registers[self.get_reg("REG2F_ADC_Function_Disable_0")._addr])
-            self.get_reg("REG30_ADC_Function_Disable_1").set(self.registers[self.get_reg("REG30_ADC_Function_Disable_1")._addr])
-            self.get_reg("REG31_IBUS_ADC").set((self.registers[self.get_reg("REG31_IBUS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG31_IBUS_ADC")._addr+1]))
-            self.get_reg("REG33_IBAT_ADC").set((self.registers[self.get_reg("REG33_IBAT_ADC")._addr] << 8) | (self.registers[self.get_reg("REG33_IBAT_ADC")._addr+1]))
-            self.get_reg("REG35_VBUS_ADC").set((self.registers[self.get_reg("REG35_VBUS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG35_VBUS_ADC")._addr+1]))
-            self.get_reg("REG37_VAC1_ADC").set((self.registers[self.get_reg("REG37_VAC1_ADC")._addr] << 8) | (self.registers[self.get_reg("REG37_VAC1_ADC")._addr+1]))
-            self.get_reg("REG39_VAC2_ADC").set((self.registers[self.get_reg("REG39_VAC2_ADC")._addr] << 8) | (self.registers[self.get_reg("REG39_VAC2_ADC")._addr+1]))
-            self.get_reg("REG3B_VBAT_ADC").set((self.registers[self.get_reg("REG3B_VBAT_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3B_VBAT_ADC")._addr+1]))
-            self.get_reg("REG3D_VSYS_ADC").set((self.registers[self.get_reg("REG3D_VSYS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3D_VSYS_ADC")._addr+1]))
-            self.get_reg("REG3F_TS_ADC").set((self.registers[self.get_reg("REG3F_TS_ADC")._addr] << 8) | (self.registers[self.get_reg("REG3F_TS_ADC")._addr+1]))
-            self.get_reg("REG41_TDIE_ADC").set((self.registers[self.get_reg("REG41_TDIE_ADC")._addr] << 8) | (self.registers[self.get_reg("REG41_TDIE_ADC")._addr+1]))
-            self.get_reg("REG43_DP_ADC").set((self.registers[self.get_reg("REG43_DP_ADC")._addr] << 8) | (self.registers[self.get_reg("REG43_DP_ADC")._addr+1]))
-            self.get_reg("REG45_DM_ADC").set((self.registers[self.get_reg("REG45_DM_ADC")._addr] << 8) | (self.registers[self.get_reg("REG45_DM_ADC")._addr+1]))
-            self.get_reg("REG47_DPDM_Driver").set(self.registers[self.get_reg("REG47_DPDM_Driver")._addr])
-            self.get_reg("REG48_Part_Information").set(self.registers[self.get_reg("REG48_Part_Information")._addr])
+            # Update register values
+            self.REG00_Minimal_System_Voltage.set(self.registers[self.REG00_Minimal_System_Voltage._addr])
+            self.REG01_Charge_Voltage_Limit.set((self.registers[self.REG01_Charge_Voltage_Limit._addr] << 8) | (self.registers[self.REG01_Charge_Voltage_Limit._addr+1]))
+            self.REG03_Charge_Current_Limit.set((self.registers[self.REG03_Charge_Current_Limit._addr] << 8) | (self.registers[self.REG03_Charge_Current_Limit._addr+1]))
+            self.REG05_Input_Voltage_Limit.set(self.registers[self.REG05_Input_Voltage_Limit._addr])
+            self.REG06_Input_Current_Limit.set((self.registers[self.REG06_Input_Current_Limit._addr] << 8) | (self.registers[self.REG06_Input_Current_Limit._addr+1]))
+            self.REG08_Precharge_Control.set(self.registers[self.REG08_Precharge_Control._addr])
+            self.REG09_Termination_Control.set(self.registers[self.REG09_Termination_Control._addr])
+            self.REG0A_Recharge_Control.set(self.registers[self.REG0A_Recharge_Control._addr])
+            self.REG0B_VOTG_regulation.set((self.registers[self.REG0B_VOTG_regulation._addr]<< 8) | (self.registers[self.REG0B_VOTG_regulation._addr+1]))  
+            self.REG0D_IOTG_regulation.set(self.registers[self.REG0D_IOTG_regulation._addr])
+            self.REG0E_Timer_Control.set(self.registers[self.REG0E_Timer_Control._addr])
+            self.REG0F_Charger_Control_0.set(self.registers[self.REG0F_Charger_Control_0._addr])
+            self.REG10_Charger_Control_1.set(self.registers[self.REG10_Charger_Control_1._addr])
+            self.REG11_Charger_Control_2.set(self.registers[self.REG11_Charger_Control_2._addr])
+            self.REG12_Charger_Control_3.set(self.registers[self.REG12_Charger_Control_3._addr])
+            self.REG13_Charger_Control_4.set(self.registers[self.REG13_Charger_Control_4._addr])
+            self.REG14_Charger_Control_5.set(self.registers[self.REG14_Charger_Control_5._addr])
+            self.REG15_Reserved.set(self.registers[self.REG15_Reserved._addr])
+            self.REG16_Temperature_Control.set(self.registers[self.REG16_Temperature_Control._addr])
+            self.REG17_NTC_Control_0.set(self.registers[self.REG17_NTC_Control_0._addr])
+            self.REG18_NTC_Control_1.set(self.registers[self.REG18_NTC_Control_1._addr])
+            self.REG19_ICO_Current_Limit.set((self.registers[self.REG19_ICO_Current_Limit._addr] << 8) | (self.registers[self.REG19_ICO_Current_Limit._addr+1]))
+            self.REG1B_Charger_Status_0.set(self.registers[self.REG1B_Charger_Status_0._addr])
+            self.REG1C_Charger_Status_1.set(self.registers[self.REG1C_Charger_Status_1._addr])
+            self.REG1D_Charger_Status_2.set(self.registers[self.REG1D_Charger_Status_2._addr])
+            self.REG1E_Charger_Status_3.set(self.registers[self.REG1E_Charger_Status_3._addr])
+            self.REG1F_Charger_Status_4.set(self.registers[self.REG1F_Charger_Status_4._addr])
+            self.REG20_FAULT_Status_0.set(self.registers[self.REG20_FAULT_Status_0._addr])
+            self.REG21_FAULT_Status_1.set(self.registers[self.REG21_FAULT_Status_1._addr])
+            self.REG22_Charger_Flag_0.set(self.registers[self.REG22_Charger_Flag_0._addr])
+            self.REG23_Charger_Flag_1.set(self.registers[self.REG23_Charger_Flag_1._addr])
+            self.REG24_Charger_Flag_2.set(self.registers[self.REG24_Charger_Flag_2._addr])
+            self.REG25_Charger_Flag_3.set(self.registers[self.REG25_Charger_Flag_3._addr])
+            self.REG26_FAULT_Flag_0.set(self.registers[self.REG26_FAULT_Flag_0._addr])
+            self.REG27_FAULT_Flag_1.set(self.registers[self.REG27_FAULT_Flag_1._addr])
+            self.REG28_Charger_Mask_0.set(self.registers[self.REG28_Charger_Mask_0._addr])
+            self.REG29_Charger_Mask_1.set(self.registers[self.REG29_Charger_Mask_1._addr])
+            self.REG2A_Charger_Mask_2.set(self.registers[self.REG2A_Charger_Mask_2._addr])
+            self.REG2B_Charger_Mask_3.set(self.registers[self.REG2B_Charger_Mask_3._addr])
+            self.REG2C_FAULT_Mask_0.set(self.registers[self.REG2C_FAULT_Mask_0._addr])
+            self.REG2D_FAULT_Mask_1.set(self.registers[self.REG2D_FAULT_Mask_1._addr])
+            self.REG2E_ADC_Control.set(self.registers[self.REG2E_ADC_Control._addr])
+            self.REG2F_ADC_Function_Disable_0.set(self.registers[self.REG2F_ADC_Function_Disable_0._addr])
+            self.REG30_ADC_Function_Disable_1.set(self.registers[self.REG30_ADC_Function_Disable_1._addr])
+            self.REG31_IBUS_ADC.set((self.registers[self.REG31_IBUS_ADC._addr] << 8) | (self.registers[self.REG31_IBUS_ADC._addr+1]))
+            self.REG33_IBAT_ADC.set((self.registers[self.REG33_IBAT_ADC._addr] << 8) | (self.registers[self.REG33_IBAT_ADC._addr+1]))
+            self.REG35_VBUS_ADC.set((self.registers[self.REG35_VBUS_ADC._addr] << 8) | (self.registers[self.REG35_VBUS_ADC._addr+1]))
+            self.REG37_VAC1_ADC.set((self.registers[self.REG37_VAC1_ADC._addr] << 8) | (self.registers[self.REG37_VAC1_ADC._addr+1]))
+            self.REG39_VAC2_ADC.set((self.registers[self.REG39_VAC2_ADC._addr] << 8) | (self.registers[self.REG39_VAC2_ADC._addr+1]))
+            self.REG3B_VBAT_ADC.set((self.registers[self.REG3B_VBAT_ADC._addr] << 8) | (self.registers[self.REG3B_VBAT_ADC._addr+1]))
+            self.REG3D_VSYS_ADC.set((self.registers[self.REG3D_VSYS_ADC._addr] << 8) | (self.registers[self.REG3D_VSYS_ADC._addr+1]))
+            self.REG3F_TS_ADC.set((self.registers[self.REG3F_TS_ADC._addr] << 8) | (self.registers[self.REG3F_TS_ADC._addr+1]))
+            self.REG41_TDIE_ADC.set((self.registers[self.REG41_TDIE_ADC._addr] << 8) | (self.registers[self.REG41_TDIE_ADC._addr+1]))
+            self.REG43_DP_ADC.set((self.registers[self.REG43_DP_ADC._addr] << 8) | (self.registers[self.REG43_DP_ADC._addr+1]))
+            self.REG45_DM_ADC.set((self.registers[self.REG45_DM_ADC._addr] << 8) | (self.registers[self.REG45_DM_ADC._addr+1]))
+            self.REG47_DPDM_Driver.set(self.registers[self.REG47_DPDM_Driver._addr])
+            self.REG48_Part_Information.set(self.registers[self.REG48_Part_Information._addr])
             return 0
         except I2CError:
             #ys.stderr.write("read_all_register failed.\n")
@@ -5432,13 +5717,55 @@ class bq25792:
         Reads the TDIE_ADC register and returns the IC temperature in degrees Celsius.
         If the read operation fails, it returns the last known value.
         """
-        return self.get_reg("REG41_TDIE_ADC").get_IC_temperature()
+        return self.REG41_TDIE_ADC.get_IC_temperature()
+
+    def _adc_filter(self, name: str, value, reason: str = None):
+        """
+        Reject implausible ADC samples and hold the last accepted value instead.
+
+        Every consumer -- to_json(), the log loop, battery_soc(),
+        battery_percent_granular() -- goes through the read_* methods, so this
+        is the single choke point where an outlier can be stopped before it
+        reaches /tmp/mupihat.json, battery_log.jsonl and the frontend charts.
+
+        `reason` lets the caller reject a sample that is inside the static
+        bounds but fails a cross-check (see read_Ibat). Returns the last
+        accepted value while suppressing, and falls back to passing the raw
+        value through once _ADC_MAX_HOLD rejects in a row have piled up, so a
+        real change of operating point is never masked permanently.
+        """
+        if reason is None:
+            lo, hi = self._ADC_LIMITS[name]
+            if value is None:
+                reason = "no reading"
+            elif not lo <= value <= hi:
+                reason = f"outside {lo}..{hi}"
+
+        if reason is None:
+            self._adc_last[name] = value
+            self._adc_reject_streak[name] = 0
+            return value
+
+        streak = self._adc_reject_streak.get(name, 0) + 1
+        self._adc_reject_streak[name] = streak
+        last = self._adc_last.get(name)
+
+        if last is None or streak > self._ADC_MAX_HOLD:
+            logging.error(
+                "ADC %s implausible (%s, %s) and no usable fallback after %d "
+                "rejects -- passing the raw value through.", name, value, reason, streak)
+            self._adc_last[name] = value
+            return value
+
+        logging.warning("ADC %s implausible (%s, %s), holding last value %s.",
+                        name, value, reason, last)
+        return last
 
     def read_Vbat(self) -> int:
         """
         Reads the VBAT_ADC register and returns the battery voltage in mV.
         """
-        return self.get_reg("REG3B_VBAT_ADC").get_Vbat()
+        return self._adc_filter('Vbat', self.REG3B_VBAT_ADC.get_Vbat())
 
 
     def read_Vbus(self):
@@ -5446,7 +5773,7 @@ class bq25792:
         Reads the VBUS_ADC register and returns the bus voltage in mV.
         If the read operation fails, it returns the last known value.
         """
-        return self.get_reg("REG35_VBUS_ADC").get_Vbus()
+        return self._adc_filter('Vbus', self.REG35_VBUS_ADC.get_Vbus())
 
     def read_Ibus(self):
         """
@@ -5454,13 +5781,32 @@ class bq25792:
         The IBUS ADC reading is reported in 2's complement.
         If the read operation fails, it returns the last known value.
         """
-        return self.get_reg("REG31_IBUS_ADC").get_Ibus()
+        return self._adc_filter('IBus', self.REG31_IBUS_ADC.get_Ibus())
 
     def read_Ibat(self) -> int:
         """
         Reads the IBAT_ADC register and returns the battery current in mA.
+
+        On top of the static bounds this cross-checks charge current against
+        input power: the converter cannot put more into the battery than the
+        input delivers. The observed 2428 mA spike sat well inside the static
+        bounds but claimed 15.6 W of charge power from an 8.7 W input -- only
+        the energy check catches that class of outlier. Discharge (negative
+        Ibat) is fed from the battery itself and is not bounded this way, so
+        it is checked against the static limits only.
         """
-        return self.get_reg("REG33_IBAT_ADC").get_Ibat()
+        ibat = self.REG33_IBAT_ADC.get_Ibat()
+        reason = None
+        if ibat is not None and ibat > 0:
+            # All four come from the register cache filled by
+            # read_all_register(), so this costs no extra I2C traffic.
+            vbat, vbus, ibus = self.read_Vbat(), self.read_Vbus(), self.read_Ibus()
+            if all(v is not None for v in (vbat, vbus, ibus)) and vbat > 0 and ibus > 0:
+                # 1.1 covers ADC tolerance; the converter is never >100% efficient.
+                ibat_max = (vbus * ibus * 1.1) / vbat
+                if ibat > ibat_max:
+                    reason = f"charge power exceeds input power (max ~{int(ibat_max)} mA)"
+        return self._adc_filter('Ibat', ibat, reason)
 
 
     def read_InputCurrentLimit(self) -> int:
@@ -5468,25 +5814,25 @@ class bq25792:
         Reads the input current limit (ICO_ILIM) in mA.
         Returns the last known value if the read operation fails.
         """
-        return self.get_reg("REG19_ICO_Current_Limit").get_ICO_ILIM()
+        return self.REG19_ICO_Current_Limit.get_ICO_ILIM()
                   
 
     def read_ChargerStatus(self) -> str:
         """
         Reads the charger status and returns the charge status string.
         """
-        return self.get_reg("REG1C_Charger_Status_1").get_CHG_STAT_STRG()
+        return self.REG1C_Charger_Status_1.get_CHG_STAT_STRG()
     
     def soft_reset(self):
         """
         Performs a soft reset of the charger IC.
         """
         try:
-            reg = self.get_reg("REG09_Termination_Control")
+            reg = self.REG09_Termination_Control
             reg.set_REG_RST(1)
             self.write_register(reg)
             time.sleep(0.1)
-            reg = self.get_reg("REG09_Termination_Control")
+            reg = self.REG09_Termination_Control
             reg.set_REG_RST(0)
             self.write_register(reg)
             time.sleep(0.1)
@@ -5502,10 +5848,10 @@ class bq25792:
         This is done by writing to the REG10_Charger_Control_1 register.
         """
         try:
-            reg = self.get_reg("REG10_Charger_Control_1")
+            reg = self.REG10_Charger_Control_1
             reg.set_WD_RST(1)  # Reset watchdog
             self.write_register(reg)
-            logging.info("watchdog_reset done.")
+            logging.debug("watchdog_reset done.")  # every few seconds - not for the journal
             return 0
         except I2CError:
             logging.error("watchdog_reset failed.")
@@ -5517,41 +5863,100 @@ class bq25792:
         This is done by writing to the REG28_Charger_Mask_0, REG29_Charger_Mask_1, REG2A_Charger_Mask_2, REG2B_Charger_Mask_3, REG2C_FAULT_Mask_0, and REG2D_FAULT_Mask_1 registers.
         """
         try:
-            r28 = self.get_reg("REG28_Charger_Mask_0"); r28.set(0xFF)
-            r29 = self.get_reg("REG29_Charger_Mask_1"); r29.set(0xFF)
-            r2A = self.get_reg("REG2A_Charger_Mask_2"); r2A.set(0xFF)
-            r2B = self.get_reg("REG2B_Charger_Mask_3"); r2B.set(0xFF)
-            r2C = self.get_reg("REG2C_FAULT_Mask_0"); r2C.set(0xFF)
-            r2D = self.get_reg("REG2D_FAULT_Mask_1"); r2D.set(0xFF)
-            self.write_register(r28)
-            self.write_register(r29)
-            self.write_register(r2A)
-            self.write_register(r2B)
-            self.write_register(r2C)
-            self.write_register(r2D)
+            self.REG28_Charger_Mask_0.set(0xFF)
+            self.REG29_Charger_Mask_1.set(0xFF)
+            self.REG2A_Charger_Mask_2.set(0xFF)
+            self.REG2B_Charger_Mask_3.set(0xFF)
+            self.REG2C_FAULT_Mask_0.set(0xFF)
+            self.REG2D_FAULT_Mask_1.set(0xFF)
+            self.write_register(self.REG28_Charger_Mask_0)
+            self.write_register(self.REG29_Charger_Mask_1)
+            self.write_register(self.REG2A_Charger_Mask_2)
+            self.write_register(self.REG2B_Charger_Mask_3)
+            self.write_register(self.REG2C_FAULT_Mask_0)
+            self.write_register(self.REG2D_FAULT_Mask_1)
             logging.info("mask_all_INTERRUPTS done.")
             return 0
         except I2CError:
             logging.error("mask_all_INTERRUPTS failed.")
             return -1
     
+    def _verify_register(self, addr: int, expected: int, label: str, width: int = 1) -> bool:
+        """
+        Read a register back after writing it and log when the write did not stick.
+
+        The BQ25792 silently ignores writes that violate its internal
+        constraints -- there is no error bit and no exception. Observed in the
+        field: with the charger latched to 4 cells, VREG could not be set below
+        VSYSMIN (12000 mV), so every write of 8300 mV was dropped while the
+        driver cheerfully logged "VREG set to 8300 mV". The chip kept 16800 mV,
+        the pack stayed in precharge for over a week and drained to 0 % while
+        plugged in - nothing in the log pointed at the cause. The
+        input current limit fails the same way (driver logs 2200 mA, register
+        holds 1790 mA because the external ILIM_HIZ pin governs).
+
+        A write without a read-back is a wish, not a setting.
+        """
+        try:
+            raw = self.read_register(addr, width)
+            actual = raw[0] if width == 1 else (raw[0] << 8) | raw[1]
+        except I2CError:
+            logging.warning("%s: read-back failed, cannot verify the write.", label)
+            return False
+        if actual != expected:
+            logging.warning("%s: write did not stick -- wrote 0x%0*X, chip holds 0x%0*X.",
+                            label, width * 2, expected, width * 2, actual)
+            return False
+        logging.info("%s: verified.", label)
+        return True
+
+    def _battery_cell_count(self):
+        """
+        Derive the pack's cell count from the configured battery profile.
+
+        The charger latches CELL from the PROG pin resistance at POR. That
+        latch was observed to come up wrong once on a live box (4 cells for a
+        2S pack), and every derived default follows it off a cliff: VREG
+        16800 mV, VSYSMIN 12000 mV, and a precharge-to-fastcharge threshold of
+        71.4% x VREG = 12 V that a 2S pack can never reach. The pack then sits
+        in precharge forever, gets no current, and discharges while plugged in.
+
+        Deriving the count from the profile lets write_defaults() correct such
+        a misread instead of inheriting it. Returns None when the profile
+        carries no usable pack voltage (e.g. the USB-C / no-battery profile),
+        in which case the POR latch is left untouched.
+        """
+        for key in ("vreg", "v_100"):
+            try:
+                mv = int(self.battery_conf.get(key) or 0)
+            except (TypeError, ValueError):
+                continue
+            if mv < 3000:          # no battery configured on this profile
+                continue
+            cells = int(round(mv / 4200.0))
+            if 1 <= cells <= 4:
+                return cells
+            logging.warning("Battery profile %s=%s mV implies %d cells, out of range 1-4.",
+                            key, mv, cells)
+        return None
+
     def write_defaults(self):
         '''
-        Write default settings to the charger IC.   
-        ''' 
+        Write default settings to the charger IC.
+        '''
         #Watchdog
-        reg = self.get_reg("REG10_Charger_Control_1")
+        reg = self.REG10_Charger_Control_1
         reg.set_WATCHDOG(7) #160s watchdog
         reg.set_WD_RST(1) #reset watchdog    
         self.write_register(reg)
 
         # Thermal Regulation Threshold - a bit more conservative
-        reg = self.get_reg("REG16_Temperature_Control")
+        reg = self.REG16_Temperature_Control
         reg.set_TREG(0x2) #100°C
         reg.set_TSHUT(0x2) #120°C
         self.write_register(reg)
 
-        reg = self.get_reg("REG2E_ADC_Control")
+        reg = self.REG2E_ADC_Control
         reg.set_ADC_RATE(0) # Continuous conversion
         reg.set_ADC_EN(1) # Enable ADC
         reg.set_ADC_SAMPLE(0) # 15bit resolution
@@ -5559,37 +5964,133 @@ class bq25792:
         reg.set_ADC_AVG_INIT(0) # start average using the existing register value
         self.write_register(reg)
 
-        reg = self.get_reg("REG0F_Charger_Control_0")
+        reg = self.REG0F_Charger_Control_0
         reg.set_EN_CHG(1)   # Enable Charger
         reg.set_EN_TERM(1)  # Enable Charge Termination
         self.write_register(reg)
 
-        reg = self.get_reg("REG14_Charger_Control_5")
+        reg = self.REG14_Charger_Control_5
         reg.set_EN_IBAT(1) # Enable the IBAT discharge current sensing for ADC
         reg.set_EN_EXTILIM(1) # Enable External ILIM_HIZ Input Current Limit pin input
         self.write_register(reg)
-        
-        
-        self.set_input_current_limit(2200) # 2.2A input current limit
 
-        self.mask_all_INTERRUPTS()  
-        return
+        # The next three writes MUST stay in this order: CELL, then VSYSMIN,
+        # then VREG. The chip derives VREG and VSYSMIN defaults from the cell
+        # count and rejects a VREG below VSYSMIN, so writing VREG first means
+        # writing it into a value the chip immediately overrides (when CELL
+        # changes) or refuses outright (when VSYSMIN is still the 4S default).
+        # With the wrong 4S latch that is exactly what happened: the 8300 mV VREG
+        # was written first and refused, and the chip kept 16800 mV.
+
+        # Correct a wrong PROG-pin cell latch. Writing CELL makes the chip
+        # re-derive VREG and VSYSMIN for that cell count on its own -- verified
+        # on hardware: CELL 4S -> 2S moved VSYSMIN 12000 -> 7000 mV and VREG
+        # 16800 -> 8400 mV in the same instant.
+        cells = self._battery_cell_count()
+        # Returned to the caller: a cell latch that stays wrong (4S on a 2S pack, charge target
+        # 16800 mV) must not be left charging; a VREG that did not stick (POR 8400 mV = 4.2 V/cell)
+        # is within cell spec and only retried.
+        cell_ok = True
+        vreg_ok = True
+        if cells:
+            try:
+                reg0a = self.read_register(0x0A, 1)[0]
+                want = (reg0a & 0b00111111) | ((cells - 1) << 6)
+                if want != reg0a:
+                    logging.warning(
+                        "Charger reports %d cell(s) but the battery profile implies %d -- correcting.",
+                        (reg0a >> 6) + 1, cells)
+                    self.safe_execute(self.bq.write_byte_data, self.i2c_addr, 0x0A, want)
+                    cell_ok = self._verify_register(0x0A, want, f"CELL ({cells}s)")
+            except I2CError:
+                cell_ok = False
+                logging.error("CELL correction failed, keeping the POR latch.")
+
+        # Optional VSYSMIN override from the battery profile. Left alone when
+        # unset, so existing installs keep the cell-derived POR default.
+        # Lowering it below the pack voltage stops the converter from boosting
+        # the system rail above the battery: on a deeply discharged 2S pack
+        # that measured +30% charge current and -11 °C at identical input
+        # power. The trade-off is less brown-out headroom at the very end of
+        # discharge, so keep it at or above the profile's th_shutdown.
+        vsysmin_mv = self.battery_conf.get("vsysmin")
+        if vsysmin_mv:
+            try:
+                vsysmin_mv = int(vsysmin_mv)
+            except (TypeError, ValueError):
+                vsysmin_mv = 0
+            # BQ25792 REG00 spec: 2500-16000 mV range, 250 mV step
+            if 2500 <= vsysmin_mv <= 16000:
+                value = (vsysmin_mv - 2500) // 250
+                # Caught here like the CELL write: an I2C error used to abort write_defaults(), so
+                # the input current limit and the interrupt mask were never set and the service
+                # exited - with the chip watchdog then resetting everything to POR defaults.
+                try:
+                    self.safe_execute(self.bq.write_byte_data, self.i2c_addr, 0x00, value)
+                    self._verify_register(0x00, value, f"VSYSMIN ({value * 250 + 2500} mV)")
+                except I2CError:
+                    logging.error("VSYSMIN write failed, keeping the current value.")
+            else:
+                logging.warning(f"VSYSMIN value {vsysmin_mv} mV out of range (2500-16000), keeping POR default")
+
+        # Phase 13a: apply VREG (Charge Voltage Limit) from the active
+        # battery profile, when configured. 8300 mV = 4.15 V/cell on a 2S
+        # pack — Samsung INR21700-50E datasheet maps that to ~3x the cycle
+        # life vs. the 4.20 V/cell POR default. Profiles without a `vreg`
+        # field (legacy ones, USB-C-only, Custom-without-vreg) keep the
+        # POR default — no behavior change for those users.
+        vreg_mv = self.battery_conf.get("vreg")
+        if vreg_mv:
+            # BQ25792 REG01 spec: 3000-18800 mV range, 10 mV step
+            if 3000 <= vreg_mv <= 18800:
+                vreg_mv_aligned = (vreg_mv // 10) * 10
+                reg = self.REG01_Charge_Voltage_Limit
+                reg.set(vreg_mv_aligned // 10)
+                try:
+                    self.write_register_word(reg)
+                    logging.info(f"VREG (Charge Voltage Limit) set to {vreg_mv_aligned} mV from battery profile")
+                    vreg_ok = self._verify_register(0x01, vreg_mv_aligned // 10, f"VREG ({vreg_mv_aligned} mV)", width=2)
+                except I2CError:
+                    vreg_ok = False
+                    logging.error("VREG write failed, keeping the current value.")
+            else:
+                logging.warning(f"VREG value {vreg_mv} mV out of range (3000-18800), keeping POR default")
+
+        self.set_input_current_limit(2200) # 2.2A input current limit
+        # Expect this one to come back lower: with EN_EXTILIM set the external
+        # ILIM_HIZ resistor governs and the chip clamps to it (1790 mA on this
+        # HAT). Verifying it anyway turns a silent discrepancy into a log line.
+        self._verify_register(0x06, 220, "Input current limit (2200 mA)", width=2)
+
+        self.mask_all_INTERRUPTS()
+        return cell_ok, vreg_ok
 
     def MuPiHAT_Default(self):
-        ''' 
-        Write MuPiHAT Default Settings to Charger IC
+        '''
+        Write MuPiHAT Default Settings to Charger IC.
+        Returns (cell_ok, vreg_ok): whether the cell count and the charge voltage limit from the
+        battery profile are verified on the chip (True when the profile does not set them).
         '''
         self.soft_reset()
         self.read_all_register()
-        self.write_defaults()
-        return
+        return self.write_defaults()
+
+    def disable_charging(self):
+        '''
+        Safe state when the cell count cannot be corrected: the system keeps running from the input,
+        only the battery is not charged (EN_CHG = 0).
+        '''
+        reg = self.REG0F_Charger_Control_0
+        reg.set_EN_CHG(0)
+        self.write_register(reg)
+        logging.error("Charging DISABLED: the charger's cell count does not match the battery profile.")
 
     def get_IC_temperature(self):
         '''
         reads and return IC temperature of charger IC 
         '''
         self.read_all_register()
-        return self.get_reg("REG41_TDIE_ADC").get_IC_temperature()
+        return self.REG41_TDIE_ADC.get_IC_temperature()
 
     
     
@@ -5601,7 +6102,7 @@ class bq25792:
           0h = VBAT NOT present 
           1h = VBAT present
         '''
-        return self.get_reg("REG1D_Charger_Status_2").get_VBAT_PRESENT_STAT()
+        return self.REG1D_Charger_Status_2.get_VBAT_PRESENT_STAT()
 
 
     def set_input_current_limit(self, input_current_limit: int) -> None:
@@ -5625,7 +6126,7 @@ class bq25792:
             input_current_limit = (input_current_limit // 10) * 10
 
             # Set the input current limit in the register
-            reg = self.get_reg("REG06_Input_Current_Limit")
+            reg = self.REG06_Input_Current_Limit
             reg.set_input_current_limit(input_current_limit)
 
             # Write the high and low bytes of the register value
@@ -5648,29 +6149,29 @@ class bq25792:
         """
         Get the IBAT current in mA, reports positive value for the battery charging current, and negative value for the battery discharging current
         """
-        return self.get_reg("REG33_IBAT_ADC").IBAT_ADC
+        return self.REG33_IBAT_ADC.IBAT_ADC
     
     def get_ibus(self) -> int:
         """
         Get the IBUS current in mA
         """
-        return self.get_reg("REG31_IBUS_ADC").IBUS_ADC
+        return self.REG31_IBUS_ADC.IBUS_ADC
     
     def get_vbat(self) -> int:
         """
         Get the VBAT Battery Voltage  in mV
         """
-        return self.get_reg("REG3B_VBAT_ADC").VBAT_ADC
+        return self.REG3B_VBAT_ADC.VBAT_ADC
     def get_vbus(self) -> int:
         """
         Get the VBUS Bus Voltage  in mV
         """
-        return self.get_reg("REG35_VBUS_ADC").VBUS_ADC
+        return self.REG35_VBUS_ADC.VBUS_ADC
     
     def bq25792_REG1C_Charger_Status_1(self, i2c_read=True):
         if i2c_read:
             self.read_all_register()
-        val = self.registers[self.get_reg("REG1C_Charger_Status_1")._addr]
+        val = self.registers[self.REG1C_Charger_Status_1._addr]
         CHG_STAT = val >> 5
         if CHG_STAT == 0x0: ret = 'Not Charging'
         elif CHG_STAT == 0x01: ret = 'Trickle Charge'
@@ -5686,7 +6187,7 @@ class bq25792:
     def bq25792_REG0F_Charger_Control_0(self, i2c_read=True):
         if i2c_read:
             self.read_all_register()
-        val = self.registers[self.get_reg("REG0F_Charger_Control_0")._addr]
+        val = self.registers[self.REG0F_Charger_Control_0._addr]
         EN_AUTO_IBATDIS = ((val & 0b10000000) == 128)
         FORCE_IBATDIS   = ((val & 0b01000000) == 64)
         EN_CHG          = ((val & 0b00100000) == 32)
@@ -5735,6 +6236,7 @@ class bq25792:
             Input Current Limit obtained from ICO or ILIM_HIZ pin setting
         '''
         bat_SOC, bat_Stat = self.battery_soc()
+        bat_Percent, bat_PercentSource = self.battery_percent_granular()
         return {
             'Charger_Status': self.read_ChargerStatus(),
             'Vbat': self.read_Vbat(),
@@ -5746,7 +6248,19 @@ class bq25792:
             'Bat_SOC' : bat_SOC,
             'Bat_Stat' : bat_Stat,
             'Bat_Type' : self.battery_conf['battery_type'],
-            'Input_Current_Limit' : self.read_InputCurrentLimit()
+            'Input_Current_Limit' : self.read_InputCurrentLimit(),
+            # Phase-12: granular 5%-step percent + charging-state hint for
+            # the frontend. Bat_SOC stays for backwards-compat (Telegram bot
+            # messages, legacy Admin-UI bits).
+            'Bat_Percent' : bat_Percent,
+            'Bat_PercentSource' : bat_PercentSource,
+            # charge estimate: the phase of the charge (idle, precharge, cc, cv, topoff, done), the minutes until full
+            # (None when it cannot be told) and the capacity of the profile that the time is calculated with
+            'Charge_Phase' : self._charge.phase if self._charge is not None else 'idle',
+            'Charge_Eta_Min' : self._charge.eta_min if self._charge is not None else None,
+            'Bat_Capacity_mAh' : self.battery_conf.get('capacity_mah'),
+            # True while the percent of a charge rests on a starting point that is only guessed from the voltage
+            'Charge_Start_Uncertain' : bool(self._charge is not None and self._charge.percent is not None and self._charge.start_uncertain),
         }
     
     def to_json_registers(self):
@@ -5756,14 +6270,17 @@ class bq25792:
         """
         registers_data = {}
 
-        # Iterate over all register instances in the map
-        for name, reg in self.reg.items():
-            if isinstance(reg, self.BQ25795_REGISTER):
+        # Iterate over all attributes of the bq25792 class
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            # Check if the attribute is an instance of BQ25795_REGISTER
+            if isinstance(attr, self.BQ25795_REGISTER):
+                # Collect all variables and their values from the instance
                 register_values = {}
-                for var_name, var_value in vars(reg).items():
-                    if not var_name.startswith("_"):
+                for var_name, var_value in vars(attr).items():
+                    if not var_name.startswith("_"):  # Skip private/internal variables
                         register_values[var_name] = var_value
-                registers_data[name] = register_values
+                registers_data[attr_name] = register_values
 
         # Add battery_conf to the JSON output
         registers_data["battery_conf"] = self.battery_conf
